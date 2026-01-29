@@ -1,0 +1,228 @@
+{% load customtags %}
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <title>Invoice</title>
+        <style>
+            .clearfix:after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+    
+    a {
+      color: #5D6975;
+      text-decoration: underline;
+    }
+    
+    body {
+      position: relative;
+      
+      margin: 0 auto; 
+      color: #001028;
+      background: #FFFFFF; 
+      font-family: Arial, sans-serif; 
+      font-size: 12px; 
+      font-family: Arial;
+    }
+    
+    header {
+      padding: 10px 0;
+      margin-bottom: 30px;
+    }
+    
+    .logo {
+      height: 50px;
+    }
+    
+    
+    h1 {
+      border-bottom: 1px solid  #5D6975;
+      color: #5D6975;
+      font-size: 1.8em;
+      line-height: 1.4em;
+      font-weight: normal;
+      text-align: center;
+      margin: 0 0 20px 0;
+    }
+    
+    #project {
+      float: left;
+    }
+    
+    #project span {
+      color: #5D6975;
+      text-align: right;
+      width: 82px;
+      margin-right: 10px;
+      display: inline-block;
+      font-size: 0.8em;
+    }
+    
+    #company {
+      float: right;
+      text-align: right;
+    }
+    
+    #project div,
+    #company div {
+      white-space: nowrap;        
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border-spacing: 0;
+      margin-top: 20px;
+    }
+    
+    table tr:nth-child(2n-1) td {
+      background: #F5F5F5;
+    }
+    
+    table th,
+    table td {
+      text-align: center;
+    }
+    
+    table th {
+      padding: 5px 5px;
+      color: #5D6975;
+      border: 1px solid #C1CED9;
+      white-space: nowrap;        
+      font-weight: normal;
+    }
+    
+    
+    table td {
+      padding: 5px;
+      border: 1px solid #C1CED9;
+    }
+    
+    table td.service,
+    table td.desc {
+      vertical-align: top;
+    }
+    
+    table td.unit,
+    table td.qty,
+    table td.total {
+      font-size: 1.2em;
+    }
+    
+    table td.grand {
+      border-top: 1px solid #5D6975;;
+    }
+    
+    #notices .notice {
+      color: #5D6975;
+      font-size: 1.2em;
+    }
+    
+    footer {
+      color: #5D6975;
+      width: 100%;
+      height: 30px;
+      position: absolute;
+      bottom: 0;
+      border-top: 1px solid #C1CED9;
+      padding: 8px 0;
+      text-align: center;
+    }
+        </style>
+    </head>
+    <body>
+        <header class="clearfix">
+          <div id="project" class="logo">
+            <img height="42" src="https://www.kcglobed.com/assets/logo_kcglobed.c8ace51a.svg" alt="">
+          </div>
+          <div id="company">
+            <div>KC Global Edutech Private Limited </div>
+            <div>Registered Office: 1122, Sector-3, Huda <br /> Colony, Faridabad, Haryana -121004 </div>
+            <div>Contact No. 9667583222/ 9773576111 </div>
+            <div><a href="mailto:info@kcglobed.com">info@kcglobed.com</a></div>
+            <div><a href="https://kcglobed.com">https://kcglobed.com</a></div>
+          </div>
+          
+          <h1>INVOICE</h1>
+          <div style="margin-bottom: 20px;">
+            <div style="display: inline-block;">Invoice No.: KCG/{{order_info.orderID}}</div>
+            <div style="display: inline-block;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+            <div style="display: inline-block;">Date: {{isssue_date}}</div>
+          </div>
+          <div id="project">
+            <div>Name : {{order_info.first_name}} {{order_info.last_name}}</div>
+            <div>Email : <a href="mailto:{{order_info.email}}">{{order_info.email}}</a></div>
+            <div>Phone : {{order_info.mobile}}</div>
+            <div>Address : {{order_info.address}}, {{order_info.city}}, {{order_info.country}}, {{order_info.postal_code}}</div>
+          </div>
+          <div style="margin-bottom: 25px;"></div>
+          <br><br>
+          <div id="project">
+            <div>GST No: 09AAGCA8035Q1Z2</div>
+          </div>
+        </header>
+        <main>
+          <table>
+            <thead>
+              <tr>
+                <th class="desc">Subscription Name </th>
+                <th class="desc">Price</th>
+                <th class="desc">Quantity</th>
+                <th>Total Amount in INR</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="desc">{{order_list.plan_name}}</td>
+                <td class="unit">INR {{order_list.amount_without_gst}}</td>
+                <td class="qty">1</td>
+                <td class="qty">INR {{order_list.amount_without_gst}}</td>
+              </tr>
+              <tr>
+                <td colspan="3">GST</td>
+                <td class="total">INR {{order_info.tax_amount}}</td>
+              </tr>
+              {% if order_info.discount_amount %}
+                <tr>
+                  <td colspan="3">Discount (Coupon Code: {{order_info.coupon_code}})</td>
+                  <td class="total">INR {{order_info.discount_amount}}</td>
+                </tr>
+              {% endif %}
+
+              <tr>
+                <td colspan="3">Total Amount</td>
+                <td class="total">INR {{order_info.total_amount}}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="margin-bottom: 25px;"></div><br>
+          <br><br>
+          <div id="project">
+            <div>FOR KC Global Edutech Private Limited </div>
+          </div>
+          <br><br>
+          <div style="margin-bottom: 25px;"></div>
+          <div id="company">
+            <div>Bank Details of KC Global Edutech Private Limited </div>
+            <div>Bank: ICICI Bank               <br />Bank Branch Address: Ballabgarh Chawla Colony
+              Faridabad </div>
+            <div>Bank Account Type: Current Account  </div>
+            <div>Bank Account Number: 140105501738 </div>
+            <div>Bank IFSC Code: ICIC0001401  </div>
+          </div><br><br>
+          <div style="margin-bottom: 25px;"></div>
+          <div id="project">
+            <div>GSTIN: 06AAICK0432B1Z6  </div>
+            <div>SAC Code: 998222  </div>
+            <div>MSME: HR03D0024344</div>
+            <div>PAN No: AAICK0432B </div>
+          </div><br><br><br>
+          <div id="notices">
+            <!-- <div>NOTICE:</div> -->
+            <div class="notice">This is electronic generated invoice, so no signature required. 
+            </div>
+          </div>
+        </main>
+      </body>
+</html>

@@ -1,0 +1,175 @@
+{% load customtags %}
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <title>Video Report</title>
+        <style type="text/css">
+            body {
+                font-weight: 200;
+                font-size: 11.5px;
+            }
+            .header {
+                font-size: 20px;
+                font-weight: 100;
+                text-align: center;
+                color: #007cae;
+            }
+            .title {
+                font-size: 22px;
+                font-weight: 100;
+               /* text-align: right;*/
+               padding: 10px 20px 0px 20px;  
+            }
+            .title span {
+                color: #007cae;
+            }
+            .details {
+                padding: 10px 20px 0px 20px;
+                text-align: left !important;
+                /*margin-left: 40%;*/
+            }
+            .hrItem {
+                border: none;
+                height: 1px;
+                /* Set the hr color */
+                color: #333; /* old IE */
+                background-color: #fff; /* Modern Browsers */
+            }
+            table {
+                border-collapse: collapse;
+                border-spacing: 0;
+                width: 100%;
+                border: 1px solid #ddd;
+                }
+
+                th, td {
+                text-align: left;
+                padding: 3px;
+                }
+
+                tr:nth-child(even) {
+                    background-color: #f2f2f2;
+                }
+                .card {
+                    
+                    background-color: #eaecee;
+                    border:white 10px solid;
+                }
+        </style>
+    </head>
+    <body>
+        <style>
+            #header,
+            #footer {
+              padding: 0 !important;
+            }
+          </style>
+          <table style="width: 100%; padding-left: 0px; padding-right: 0px; padding-top: 5px;padding-bottom: 8px;margin: 0px!important;font-size: 15px; border:0;">
+            <tr>
+              <td style="text-align:left; width:25%!important;">
+                <div>
+                    <img height="42" src="https://www.kcglobed.com/assets/logo_kcglobed.c8ace51a.svg" alt="">
+                </div>
+              </td>
+              <td style="text-align:center; width:50%!important;font-size: 17px; color: #007cae;">
+                <div>
+                    <p class='title'>Video Report </p>
+                </div>
+              </td>
+              <td style="text-align:right; width:25%!important;font-size: 14px">
+                <div>
+                    {{ready_score|today_date}}
+                </div>
+              </td>
+            </tr>
+          </table>
+            <div class='wrapper'>
+                <h2 style="font-weight: 100;"><b>Name:</b> {{username}} <br> <b>User ID:</b> {{user_id}}<br> <b>Course:</b> {{course}}</h2>
+            <div>
+
+            <div class='wrapper' style="margin-bottom: 20px;">
+                <div>
+                    <table class="card">
+                        <thead>
+                            <tr>
+                                <th style="display: inline-block; text-align: center; margin-top: 40px; height: 120px; color: #302c2c;"><span style="font-size: 20px;">
+                                    {% if watch_video_duration %}
+                                        {{watch_video_duration|convert}}
+                                    {% else %}
+                                        00:00:00
+                                    {% endif %}
+                                </span><br><span style="font-size: 12px;">Hours Watched</span></th>
+                                <th style="display: inline-block; text-align: center; margin-top: 40px; height: 120px; color: #302c2c;"><span style="font-size: 20px;">
+                                    {% if watched_videos %}
+                                        {{watched_videos}}
+                                        {% else %}
+                                        0
+                                    {% endif %}
+                                </span><br><span style="font-size: 12px;">Videos Watched</span></th>
+                                
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            <div>
+
+            
+
+           
+        <div class='details'>
+            <div>
+                <table style="padding-top: 70px;">
+                    <tr>
+                        <td width="25%">
+                            <b>Chapters</b>
+                        </td>
+                        <td width="25%">
+                            <b>Topics</b>
+                        </td>
+                        <td>
+                            <b>Total Videos</b>
+                        </td>
+                        <td>
+                            <b>Videos Watched</b>
+                        </td>
+                        <td>
+                            <b>Watch Time</b>
+                        </td>
+                    </tr>
+                    {% for topic in  video_report %}
+                    <tr>
+                        <td><h3>{{topic.chapter_info.name}}</h3></td>
+                        <td>&nbsp;</td>
+                        <td><h3>{{topic.no_of_videos}}</h3></td>
+                        <td><h3>{{topic.total_watched_videos}}</h3></td>
+                        <td><h3>
+                            {% if topic.total_duration_watched_videos %}
+                                {{topic.total_duration_watched_videos|convert_minutes}}
+                            {% else %}
+                                0s
+                            {% endif %}
+                        </h3></td>
+                    </tr>
+                    {% for comp in  topic.topics %}
+                    <tr>
+                        <td>&nbsp;</td>
+                      <td>{{comp.topic_info.name}}</td>
+                      <td>{{comp.no_of_videos}}</td>
+                      <td>{{comp.total_watched_videos}}</td>
+                      <td>{% if comp.total_duration_watched_videos %}
+                        {{comp.total_duration_watched_videos|convert_minutes}}
+                        {% else %}
+                            0s
+                    {% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        
+
+        
+    </div>
+    </body>
+</html>
