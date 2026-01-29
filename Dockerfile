@@ -15,9 +15,6 @@ ENV PYTHONUNBUFFERED 1
 
 USER django-user
 
-# Gunicorn as app server
-# CMD exec gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 0 mini_lms.wsgi:application
-
 CMD exec gunicorn mini_lms.wsgi:application \
   --bind 0.0.0.0:$PORT \
   --workers 3 \
