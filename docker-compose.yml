@@ -1,0 +1,16 @@
+version: '3.9'
+
+services:
+  app:
+    container_name: django-app
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./credentail_bucket.json:/secrets/credentail_bucket.json
+    env_file:
+      - ./.env.dev
+      - ./.env.prod
+    restart: always
