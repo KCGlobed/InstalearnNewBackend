@@ -1,28 +1,26 @@
 FROM python:3.10-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV PATH="/py/bin:$PATH"
-
+COPY ./requirements.txt /requirements.txt
+COPY . /app
 WORKDIR /app
 
-# Install dependencies
-COPY ./requirements.txt /requirements.txt
 RUN python -m venv /py && \
-    /py/bin/pip install --upgrade pip && \
-    /py/bin/pip install -r /requirements.txt
+  /py/bin/pip install --upgrade pip && \
+  /py/bin/pip install -r /requirements.txt && \
+  adduser --disabled-password --no-create-home django-user
 
-# Copy project and set permissions
-COPY . /app
-RUN adduser --disabled-password --no-create-home django-user && \
-    chown -R django-user:django-user /app
+ENV PATH="/py/bin:$PATH"
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
 USER django-user
 
-# Note: The $PORT variable is injected by Cloud Run at runtime
+# Gunicorn as app server
+# CMD exec gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 0 mini_lms.wsgi:application
+
 CMD exec gunicorn mini_lms.wsgi:application \
-    --bind 0.0.0.0:$PORT \
-    --workers 3 \
-    --threads 4 \
-    --timeout 120
+  --bind 0.0.0.0:$PORT \
+  --workers 3 \
+  --threads 4 \
+  --worker-class gthread \
+  --timeout 120
