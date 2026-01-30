@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-COPY ./requirements.txt /requirements.txt
+COPY requirements.txt /requirements.txt
 COPY . /app
 WORKDIR /app
 
@@ -10,16 +10,13 @@ RUN python -m venv /py && \
   adduser --disabled-password --no-create-home django-user
 
 ENV PATH="/py/bin:$PATH"
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 USER django-user
 
-# Gunicorn as app server
-# CMD exec gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 0 mini_lms.wsgi:application
-
 CMD exec gunicorn mini_lms.wsgi:application \
-  --bind 0.0.0.0:$PORT \
+  --bind 0.0.0.0:8080 \
   --workers 3 \
   --threads 4 \
   --worker-class gthread \
