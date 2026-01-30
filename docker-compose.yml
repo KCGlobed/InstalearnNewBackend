@@ -11,5 +11,6 @@ services:
       - .:/app
       - ./credentail_bucket.json:/secrets/credentail_bucket.json
     env_file:
-      - ./.env
+      - ./.env.dev
+      - ./.env.prod
     restart: always
