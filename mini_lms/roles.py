@@ -126,7 +126,7 @@ class SuperAdmin(AbstractUserRole):
         "subscription_plan_listing":True,
         "create_subscription_plan":True,
         "update_subscription_plan":True,
-        "delete_subscription_plan":False,
+        "delete_subscription_plan":True,
         
     }
     @classmethod
