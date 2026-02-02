@@ -163,9 +163,9 @@ STORAGES = {
 }
 
 GS_PROJECT_ID = "kcglobed-web"
-GS_BUCKET_NAME = 'static_files_backend'
-GS_BUCKET_NAME_2 = 'private-book-bucket'
-GS_STATIC_BUCKET_NAME = 'static_files_backend'
+GS_BUCKET_NAME = 'public-media-files'
+GS_BUCKET_NAME_2 = 'private-media-files'
+GS_STATIC_BUCKET_NAME = 'public-media-files'
 GS_FILE_OVERWRITE = False
 MEDIA_ROOT = "media/"
 STATIC_ROOT = "static/"
