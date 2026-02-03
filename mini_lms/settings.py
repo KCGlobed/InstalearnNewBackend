@@ -148,10 +148,20 @@ ROLEPERMISSIONS_MODULE = 'mini_lms.roles'
 
 # Static files (CSS, JavaScript, Images)
 from google.oauth2 import service_account
+import json
+import os
 
-GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
-    os.path.join(BASE_DIR, 'credentail_bucket.json')
-)
+creds_raw = env("GOOGLE_CREDENTIALS_JSON")
+
+if creds_raw:
+    # 1. Parse the string into a dict
+    creds_dict = json.loads(creds_raw)
+    
+    # 2. Use .from_service_account_info() for dictionaries
+    GS_CREDENTIALS = service_account.Credentials.from_service_account_info(creds_dict)
+else:
+    GS_CREDENTIALS = None
+
 
 STORAGES = {
     "default": {
