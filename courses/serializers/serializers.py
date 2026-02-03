@@ -6,23 +6,7 @@ from django.core.validators import FileExtensionValidator
 import os
 from django.conf import settings
 from google.cloud import storage
-import environ
-env = environ.Env()
-environ.Env.read_env()
-
-ENV = os.getenv('DJANGO_ENV', 'dev')
-if ENV == 'prod':
-    environ.Env.read_env(os.path.join(settings.BASE_DIR, '.env.prod'))
-else:
-    environ.Env.read_env(os.path.join(settings.BASE_DIR, '.env.dev'))
-
-from google.oauth2 import service_account
-import json
-import os
-creds_raw = env("GOOGLE_CREDENTIALS_JSON")
-creds_dict = json.loads(creds_raw)
-client = service_account.Credentials.from_service_account_info(creds_dict)
-
+client = settings.GS_CREDENTIALS
 import calendar
 import time
 from mini_lms.utils import *
