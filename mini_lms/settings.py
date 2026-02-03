@@ -162,7 +162,6 @@ STORAGES = {
     },
 }
 
-GS_PROJECT_ID = "kcglobed-web"
 GS_BUCKET_NAME = 'public-media-files'
 GS_BUCKET_NAME_2 = 'private-media-files'
 GS_STATIC_BUCKET_NAME = 'public-media-files'

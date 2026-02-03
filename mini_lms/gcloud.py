@@ -3,7 +3,7 @@ from storages.backends.gcloud import GoogleCloudStorage
 from storages.utils import setting
 from urllib.parse import urljoin
 
-Static = lambda: GoogleCloudStorage(location='phase_2_static')
+Static = lambda: GoogleCloudStorage(location='static')
 Media = lambda: GoogleCloudStorage(location='media')
 
 
