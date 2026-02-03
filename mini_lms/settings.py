@@ -18,7 +18,7 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = env.bool('DEBUG', default=True)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', "instalearnnewbackend-114109844441.asia-south1.run.app"])
 
-CSRF_TRUSTED_ORIGINS = ["https://instalearnnewbackend-114109844441.asia-south1.run.app/"]
+CSRF_TRUSTED_ORIGINS = ["https://instalearnnewbackend-114109844441.asia-south1.run.app"]
 
 # Application definition
 
