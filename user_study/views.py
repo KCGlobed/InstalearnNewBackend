@@ -16,7 +16,23 @@ from rest_framework.permissions import IsAuthenticated
 import time , calendar
 import pandas as pd
 from google.cloud import storage
-client = storage.Client.from_service_account_json(os.path.join(settings.BASE_DIR, 'credentail_bucket.json'))
+import environ
+env = environ.Env()
+environ.Env.read_env()
+
+ENV = os.getenv('DJANGO_ENV', 'dev')
+if ENV == 'prod':
+    environ.Env.read_env(os.path.join(settings.BASE_DIR, '.env.prod'))
+else:
+    environ.Env.read_env(os.path.join(settings.BASE_DIR, '.env.dev'))
+
+from google.oauth2 import service_account
+import json
+import os
+creds_raw = env("GOOGLE_CREDENTIALS_JSON")
+creds_dict = json.loads(creds_raw)
+client = service_account.Credentials.from_service_account_info(creds_dict)
+
 
 class PurchasedCoursesView(APIView):
     renderer_classes = [ReportRenderer]

@@ -9,7 +9,6 @@ services:
       - "8080:8080"
     volumes:
       - .:/app
-      - ./credentail_bucket.json:/secrets/credentail_bucket.json
     env_file:
       - ./.env.dev
       - ./.env.prod
