@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from subscription.serializers import *
 from subscription.models import *
 from courses.models import *
-from subscription.renderers import OrderRenderer
+from subscription.renderers import SubscriptionRenderer
 from django.template import loader
 from django.core.mail import send_mail
 from xhtml2pdf import pisa
@@ -18,7 +18,7 @@ from datetime import date, datetime, timedelta
 
 
 class AddtoCartView(APIView):
-    renderer_classes = [OrderRenderer]
+    renderer_classes = [SubscriptionRenderer]
     def post(self, request,format=None):
         serializer = AddtoCartSerializer(data = request.data)
         if serializer.is_valid(raise_exception = True):
@@ -29,7 +29,7 @@ class AddtoCartView(APIView):
     
 
 class ViewCartView(APIView):
-    renderer_classes = [OrderRenderer]
+    renderer_classes = [SubscriptionRenderer]
     def post(self, request,format=None):
         course = Cart.objects.filter(device_id = request.data.get('device_id'))
         serializer = CartSerializer(course, many=True)
@@ -38,7 +38,7 @@ class ViewCartView(APIView):
 
 # Remove Book From Cart
 class RemoveCartView(APIView):
-    renderer_classes = [OrderRenderer]
+    renderer_classes = [SubscriptionRenderer]
     def delete(self, request, cid, format=None):
         try:
             cart = Cart.objects.get(id = cid)
@@ -50,7 +50,7 @@ class RemoveCartView(APIView):
 
 # Check Course In Cart Frontend
 class CheckCourseInCartView(APIView):
-    renderer_classes = [OrderRenderer]
+    renderer_classes = [SubscriptionRenderer]
     def post(self, request,format=None):
         cart_count = Cart.objects.filter(device_id = request.data.get('device_id'), course_id = request.data.get('course_id')).count()
         if cart_count > 0:
@@ -62,7 +62,7 @@ class CheckCourseInCartView(APIView):
         
 
 class GetPaymentGatewayView(APIView):
-    renderer_classes = [OrderRenderer]
+    renderer_classes = [SubscriptionRenderer]
     def get(self, request, format=None):
         category = Settings.objects.filter(active = 1)
         serializer = GatewayListSerializer(category, many=True)
@@ -70,7 +70,7 @@ class GetPaymentGatewayView(APIView):
     
 
 class StartPaymentView(APIView):
-    renderer_classes = [OrderRenderer]
+    renderer_classes = [SubscriptionRenderer]
     def post(self, request, format=None):
         serializer = StartPaymentSerializer(data = request.data)
         if serializer.is_valid(raise_exception = True):
@@ -81,7 +81,7 @@ class StartPaymentView(APIView):
     
 
 class CompletePaymentView(APIView):
-    renderer_classes = [OrderRenderer]
+    renderer_classes = [SubscriptionRenderer]
     def post(self, request, format=None):
         serializer = CompletePaymentSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
@@ -101,7 +101,7 @@ class CompletePaymentView(APIView):
 
 
 class WebhookResponseView(APIView):
-    renderer_classes = [OrderRenderer]
+    renderer_classes = [SubscriptionRenderer]
     def post(self, request, format=None):
 
         if request.data['event'] == 'order.paid':
@@ -303,7 +303,7 @@ class WebhookResponseView(APIView):
 
 
 class ApplyCouponView(APIView):
-    renderer_classes = [OrderRenderer]
+    renderer_classes = [SubscriptionRenderer]
     def post(self, request, format=None):
         serializer = ApplyCouponSerializer(data = request.data)
         if serializer.is_valid(raise_exception = True):
@@ -326,7 +326,7 @@ class ApplyCouponView(APIView):
 
 
 class StartSubscriptionView(APIView):
-    renderer_classes = [OrderRenderer]
+    renderer_classes = [SubscriptionRenderer]
     def post(self, request, format=None):
         serializer = StartSubscriptionSerializer(data = request.data)
         if serializer.is_valid(raise_exception = True):
@@ -337,7 +337,7 @@ class StartSubscriptionView(APIView):
     
 
 class CompleteSubscriptionView(APIView):
-    renderer_classes = [OrderRenderer]
+    renderer_classes = [SubscriptionRenderer]
     def post(self, request, format=None):
         serializer = CompleteSubscriptionSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
@@ -353,3 +353,6 @@ class CompleteSubscriptionView(APIView):
             return success_response(message="Payment successfully received!", data={"order_info":order_data.data, "ordered_courses": book_info.data}, status_code=status.HTTP_200_OK)
 
         return error_response(message="", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+

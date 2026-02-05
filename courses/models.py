@@ -384,3 +384,32 @@ class Testimonials(SoftDeleteModel):
     class Meta:
         verbose_name = 'Testimonials'
         verbose_name_plural = 'Testimonials'
+
+
+
+class TrailCourses(models.Model):
+    course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    history = HistoricalRecords()
+
+    
+    class Meta:
+        verbose_name = 'Trail Courses'
+        verbose_name_plural = 'Trail Courses'
+        
+    def __str__(self):
+        return '%s' % self.id
+    
+
+class TrailCourseChapters(models.Model):
+    trail_course = models.ForeignKey('TrailCourses', null=True, blank=True, on_delete=models.CASCADE)
+    chapter = models.ForeignKey('CourseChapters', null=True, blank=True, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name = 'Trail Course Chapters'
+        verbose_name_plural = 'Trail Course Chapters'
+        
+    def __str__(self):
+        return '%s' % self.id

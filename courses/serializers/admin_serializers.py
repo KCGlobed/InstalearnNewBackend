@@ -1289,16 +1289,92 @@ class CourseListSerializer(serializers.ModelSerializer):
         fields = ["id",'name']
 
 
+class CreateTrailCourseSerializer(serializers.ModelSerializer) :
+    course_id = serializers.IntegerField(required=True)
+    chapter_id = serializers.ListField(child=serializers.IntegerField(required=True))
+
+    class Meta:
+        model = TrailCourses
+        fields = ["course_id", "chapter_id"]
+    
+    def validate(self, data):
+        course = data.get('course_id')
+        trail = Course.objects.filter(id = course).count()
+        if trail == 0:
+            raise serializers.ValidationError(
+                "Course ID not exists."
+            )
+            
+        return data
+
+
+    def create(self, validate_data):
+        
+        course_instance = Course.objects.get(id=validate_data.get('course_id'))
+        chapter_data = validate_data.get('chapter_id', []) 
+        chap, created = TrailCourses.objects.update_or_create(
+                            course=course_instance,
+                            defaults={'course': course_instance}
+                        )
+
+        info = []
+        if len(chapter_data) > 0:
+            processed_chapter_ids = []
+
+            for index, chapter_id in enumerate(chapter_data):
+                chapter_obj = CourseChapters.objects.get(id=chapter_id)
+                
+                chap_instance, created = TrailCourseChapters.objects.update_or_create(
+                    chapter=chapter_obj,
+                    trail_course=chap,
+                    defaults={
+                        'trail_course': chap,
+                        "chapter":chapter_obj,
+                    }
+                )
+                
+                processed_chapter_ids.append(chap_instance.id)
+
+            TrailCourseChapters.objects.filter(course_id=course_data).exclude(id__in=processed_chapter_ids).delete()
+           
+        return info
+    
+
+
+class SubjectsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Chapters
+        fields = ["id","name","status","created_at"]
+
+
+
+class SubjectChapterInfoSerializer(serializers.ModelSerializer):
+    chapter_detail = serializers.SerializerMethodField('get_chapter_detail')
+    
+    def get_chapter_detail(self, obj):
+        category = Chapters.objects.filter(id=obj.chapter.id).first()
+        return ChaptersSerializer(category).data
+    
+    class Meta:
+        model = CourseChapters
+        fields = ['id','chapter',"chapter_detail"]
+
 
 class TrailCoursesSerializer(serializers.ModelSerializer):
     course_detail = serializers.SerializerMethodField('get_course_detail')
+    chapter_detail = serializers.SerializerMethodField('get_chapter_detail')
+
+    def get_chapter_detail(self, obj):
+        category = CourseChapters.objects.filter(trail_course_id=obj.id)
+        return CourseListSerializer(category).data
+    
     def get_course_detail(self, obj):
         category = Course.objects.filter(id=obj.course.id).first()
         return CourseListSerializer(category).data
     
     class Meta:
-        model = CourseChapters
-        fields = ['id',"course_detail"]
+        model = TrailCourses
+        fields = ['id',"course_detail","chapter_detail"]
 
 
 

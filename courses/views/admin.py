@@ -1236,3 +1236,52 @@ class UpdateFAQStatusView(APIView):
             
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
+
+
+class TrailCourseListView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "manage_trail_course",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    def get(self, request, format=None):
+        
+        chapters = TrailCourses.objects.all().order_by('-id')
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(chapters, request, view=self)
+        serializer = TrailCoursesSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+
+class CreateTrailCourseView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "manage_trail_course",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = CreateTrailCourseSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Course Added Successfully for trail", data=TrailCoursesSerializer(user,many=True).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class DeleteTrailCourseView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "manage_trail_course",
+                            [SuperAdmin]
+                        )]
+    def delete(self, request, cid, format=None):
+        try:
+            course = TrailCourses.objects.get(id = cid)
+            course.delete()
+            return success_response(message="Trial Course Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
+        except TrailCourses.DoesNotExist:
+            return error_response(message="Trial Course not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)

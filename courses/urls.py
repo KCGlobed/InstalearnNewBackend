@@ -61,7 +61,10 @@ urlpatterns = [
 
     
     path('generate-upload-signed-url/', GenerateUploadSignedUrlView.as_view(), name="generate-upload-signed-url"),
-
+    path('get-trail-course-list/', TrailCourseListView.as_view(), name="get-trail-course-list"),
+    path('create-trail-course/', CreateTrailCourseView.as_view(), name="create-trail-course"),
+    path('delete-trail-course/<cid>', DeleteTrailCourseView.as_view(), name="delete-trail-course"),
+    
 
     # Manage Chapters Books APIS
     path('get-chapter-book-listing/', ChapterBookListingView.as_view(), name="chapters-listing"),

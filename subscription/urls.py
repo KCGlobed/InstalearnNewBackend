@@ -15,4 +15,7 @@ urlpatterns = [
     path('start-subscription/', StartSubscriptionView.as_view(), name="start-subscription"),
     path('complete-subscription/', CompleteSubscriptionView.as_view(), name="complete-subscription"),
 
+    path('get-setting/', GetSettingView.as_view(), name="get-setting"),
+    path('update-setting/', UpdateSettingView.as_view(), name="update-setting"),
+
 ]
