@@ -2,28 +2,27 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from user_study.serializers import *
-from user_study.renderers import ReportRenderer
-from django.template import loader
-from django.core.mail import send_mail
+from user_study.renderers import UserStudyRenderer
 from xhtml2pdf import pisa
 from io import BytesIO
 from django.template.loader import get_template
-from django.template import loader
-from django.core.mail import EmailMessage
 import os
+from mini_lms.utils import *
 from rolepermissions.checkers import has_role
 from rest_framework.permissions import IsAuthenticated
 import time , calendar
 import pandas as pd
 from google.cloud import storage
+from mini_lms.permissions import RoleOrPermissionCheck
 client = settings.GS_CREDENTIALS
 
 class PurchasedCoursesView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def get(self, request,format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
         
         course_list = UserCourses.objects.filter(user__email = request.user.email, paid = 1).values_list('course', flat=True)
         category = Course.objects.filter(id__in=course_list)
@@ -31,17 +30,18 @@ class PurchasedCoursesView(APIView):
 
         info = FrequentlyBoughtCourse.objects.filter(course_id__in = course_list).exclude(bought_course_id__in = course_list)
         frequntly = FrequentlyBoughtCourseSerializer(info, many=True)
-    
 
-        return Response({"status":"success",'message':'',"data":{"purchased_courses":serializer.data,"suggested_courses":frequntly.data}}, status = status.HTTP_200_OK)
+        return success_response(message="Success", data={"purchased_courses":serializer.data,"suggested_courses":frequntly.data}, status_code=status.HTTP_200_OK)
+    
     
 
 class DashboardCoursesView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def get(self, request, id = None, format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
         
         course_list = UserCourses.objects.filter(course_id = id, paid = 1).count()
         if course_list == 0:
@@ -49,15 +49,18 @@ class DashboardCoursesView(APIView):
         
         category = CourseChapters.objects.filter(course_id=id)
         serializer = DashboardCourseChapterListingSerializer(category, many=True, context={'user':request.user})
-        return Response({"status":"success",'message':'',"data":serializer.data}, status = status.HTTP_200_OK)
+
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+
     
 
 class DashboardCoursesCounterView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def get(self, request, id = None, format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
         
         course_list = UserCourses.objects.filter(course_id = id, paid = 1).count()
         if course_list == 0:
@@ -84,16 +87,19 @@ class DashboardCoursesCounterView(APIView):
             "total_duration_video_watched":total_duration_video_watched,
             "total_video_progress":video_duration_progress
         }
-        return Response({"status":"success",'message':'',"data":data}, status = status.HTTP_200_OK)
+
+        return success_response(message="Success", data=data, status_code=status.HTTP_200_OK)
+    
     
 
     
 class GetTopicVideosView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def get(self, request, cid = None, tid=None, format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
         
         if cid is None:
             return Response({"errors": {"non_field_errors": ["Chapter ID is required"]}}, status.HTTP_403_FORBIDDEN)
@@ -105,15 +111,16 @@ class GetTopicVideosView(APIView):
             category = TopicVideos.objects.filter(chapter_topics_id__in = chapter_list).order_by('order','id')
         
         serializer = TopicVideosSerializer(category, many=True)
-        return Response({"status":"success",'message':'',"data":serializer.data}, status=status.HTTP_200_OK)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
 
 class GetChapterVideoReportView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def get(self, request, cid = None, format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
         
         category = CourseChapters.objects.filter(course_id=cid)
         serializer = ChapterVideoReportSerializer(category, many=True,context={'user':request.user})
@@ -125,14 +132,16 @@ class GetChapterVideoReportView(APIView):
                 'watch_video_duration':total_duration_video_watched,
                 'video_report': serializer.data,
             }
-        
-        return Response({"status":"success","message":"","data":result}, status=status.HTTP_200_OK)
+        return success_response(message="Success", data=result, status_code=status.HTTP_200_OK)
     
 
 
 class DownloadChapterVideoReportView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def get(self, request, cid = None, sid = None, format=None):
         if not has_role(request.user, [Student]):
             return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
@@ -170,13 +179,17 @@ class DownloadChapterVideoReportView(APIView):
         
         blob.upload_from_filename(destination + str(request.user.id) +"_"+str(ts)+'_video_report.pdf')
 
-        return Response({"status":"success","message":"","data":{'file_url':blob.public_url}}, status=status.HTTP_200_OK)
+        return success_response(message="Success", data={'file_url':blob.public_url}, status_code=status.HTTP_200_OK)
+    
     
 
 
 class DownloadChapterVideoReportCSVView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def get(self, request, cid = None,  format=None):
         if not has_role(request.user, [Student]):
             return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
@@ -362,38 +375,44 @@ class DownloadChapterVideoReportCSVView(APIView):
         
         blob.upload_from_filename(destination + str(request.user.id) +"_"+str(ts)+'_video_report.csv')
 
-        return Response({"status":"success","message":"","data":{'file_url':blob.public_url}}, status=status.HTTP_200_OK)
+        return success_response(message="Success", data={'file_url':blob.public_url}, status_code=status.HTTP_200_OK)
 
 
 class GetChapterVideoDetailView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def get(self, request, cid = None, format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
-            
+        
         category = TopicVideos.objects.filter(id = cid).first()
         serializer = ChapterSingleVideosSerializer(category,context={'user':request.user})
-        return Response({"status":"success","message":"","data":serializer.data}, status=status.HTTP_200_OK)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
     
 class WatchVideoView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def post(self, request, format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
-
+        
         serializer = WatchVideoSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
             serializer.save()
-            return Response({"status":"success",'message':'',"data":[] }, status = status.HTTP_201_CREATED)
+            return success_response(message="Success", data={}, status_code=status.HTTP_200_OK)
 
         return Response({"status":"failed","message":"","data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     
 
 class CreateNoteView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def post(self, request, format=None):
         if not has_role(request.user, [Student]):
             return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
@@ -401,48 +420,53 @@ class CreateNoteView(APIView):
         serializer = CreateNoteSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
             serializer.save()
-            return Response({"status":"success",'message':'Note created successfully',"data":[] }, status = status.HTTP_201_CREATED)
-
+            return success_response(message="Note created successfully", data={}, status_code=status.HTTP_200_OK)
+        
         return Response({"status":"failed","message":"","data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class EditNoteView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def post(self, request,  cid , format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
         
         course = Notes.objects.get(id=cid)
         serializer = EditNoteSerializer(course, data = request.data, partial=True)
         if serializer.is_valid(raise_exception = True):
             user  = serializer.save()
-            return Response({"status":"success",'message':'Note updated successfully',"data":[]}, status = status.HTTP_200_OK)
+            return success_response(message="Note Updated successfully", data={}, status_code=status.HTTP_200_OK)
 
         return Response({"status":"failed",'message':'',"data":serializer.errors}, status.HTTP_400_BAD_REQUEST)
     
     
 class GetUserNotesView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def get(self, request, cid=None):
         if not has_role(request.user, [Student]):
             return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
 
         notes = Notes.objects.filter(user = request.user, course_id = cid)
         serializer = GetUserNotesSerializer(notes, many= True)
-        return Response({"status":"success","message":"",'data': serializer.data}, status = status.HTTP_200_OK)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
 
 
 class PerformaceReportView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def get(self, request, id = None, format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
         
-        course_list = OrderCourses.objects.filter(course_id = id, paid = 1).count()
+        course_list = UserCourses.objects.filter(course_id = id, paid = 1).count()
         if course_list == 0:
             return Response({"errors": {"non_field_errors": ["Invalid Course ID"]}}, status.HTTP_403_FORBIDDEN)
         
@@ -476,11 +500,12 @@ class PerformaceReportView(APIView):
 
 
 class GetCourseCertificateView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def get(self, request, id = None, format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
         
         course_list = OrderCourses.objects.filter(course_id = id, paid = 1).count()
         if course_list == 0:
@@ -548,11 +573,12 @@ class GetCourseCertificateView(APIView):
         
 
 class GetCompleteVideoListView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def get(self, request, cid = None, format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
         
         course_list = OrderCourses.objects.filter(course_id = cid, paid = 1).count()
         if course_list == 0:
@@ -564,11 +590,12 @@ class GetCompleteVideoListView(APIView):
     
 
 class CreateMyListView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def post(self, request, format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
         
         serializer = CreateMyListSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
@@ -580,11 +607,12 @@ class CreateMyListView(APIView):
 
 
 class CreateMyListView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def post(self, request, format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
         
         serializer = CreateMyListSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
@@ -595,11 +623,12 @@ class CreateMyListView(APIView):
     
 
 class UpdateMyListView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def post(self, request, cid = None, format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
         
         serializer = UpdateMyListSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
@@ -610,11 +639,12 @@ class UpdateMyListView(APIView):
     
 
 class GetMyListView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def get(self, request,format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
         
         info = MyList.objects.filter(user_id = request.user)
         serializer = MyListCourseSerializer(info, many=True)
@@ -624,11 +654,12 @@ class GetMyListView(APIView):
 
 
 class DeleteMyListView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def delete(self, request, cid, format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
         
         try:
             course = MyList.objects.get(id = cid)
@@ -639,11 +670,12 @@ class DeleteMyListView(APIView):
         
 
 class AddReviewAndRatingView(APIView):
-    renderer_classes = [ReportRenderer]
-    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
     def post(self, request, format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
         
         serializer = AddReviewAndReviewSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
@@ -651,3 +683,33 @@ class AddReviewAndRatingView(APIView):
             return Response({"status":"success",'message':'Review added successfully',"data":[] }, status = status.HTTP_201_CREATED)
 
         return Response({"status":"failed","message":"","data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class GetUserWishlistView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def get(self, request, format=None):
+        if not has_role(request.user, [Student]):
+            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
+
+        category = UserWishlist.objects.filter(user=request.user).order_by("-id")
+        serializer = WishlistSerializer(category, many=True)
+        return Response({"status":"success",'message':'',"data":serializer.data}, status = status.HTTP_200_OK)
+
+
+class AddUserWishlistView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def post(self, request, format=None):
+        serializer = AddUserWishlistSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            serializer.save()
+            return Response({"status":"success",'message':'Success',"data":[]}, status = status.HTTP_200_OK)
+        return Response({"status":"failed",'message':'',"data":serializer.errors}, status.HTTP_400_BAD_REQUEST) 

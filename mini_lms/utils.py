@@ -22,7 +22,15 @@ URL_ROLE_CLASS_MAPPING = { SalesUser: "sales_user", MarketingUser: "marketing_us
 
 DEVICES_ROLE_MAPPING = { SuperAdmin: "SuperAdmin", SubAdmin: "SubAdmin", SalesUser: "SalesUser", MarketingUser: "MarketingUser", Manager: "Manager", CustomerSupportUser: "CustomerSupportUser", ContentManagementUser: "ContentManagementUser", FinanceUser: "FinanceUser", UniversityAdmin: "UniversityAdmin", UniversityStaff: "UniversityStaff", CorporateAdmin: "CorporateAdmin", CorporateStaff: "CorporateStaff", ATPAdmin: "ATPAdmin", ATPStaff: "ATPStaff"}
 
-
+def plan_interval(value):
+    if value == 1:
+        return {"period": "monthly", "interval": 1}
+    elif value == 2:
+        return {"period": "monthly", "interval": 6}
+    else:
+        return {"period": "yearly", "interval": 1}
+    
+    
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
     return {

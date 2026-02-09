@@ -24,4 +24,10 @@ urlpatterns = [
     path('mylist/get-my-list/', GetMyListView.as_view(), name="get-my-list"),
     path('mylist/delete/<cid>', DeleteMyListView.as_view(), name="delete-my-list"),
     path('review/add/', AddReviewAndRatingView.as_view(), name="add-review-rating"),
+
+
+    path('get-user-wishlist/', GetUserWishlistView.as_view(), name="user-wishlist"),
+    path('update-wishlist/', AddUserWishlistView.as_view(), name="add-user-wishlist"),
+
+    
 ]

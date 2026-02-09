@@ -602,3 +602,46 @@ class AddReviewAndReviewSerializer(serializers.ModelSerializer) :
         categ.save()
 
         return True
+    
+
+
+class CourseInfoListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ['id','name',"image","avg_rating","total_reviews"]
+
+
+class WishlistSerializer(serializers.ModelSerializer):
+    course_info = serializers.SerializerMethodField('get_course_info')
+    def get_course_info(self, obj):
+        category = Course.objects.filter(id=obj.course.id).first()
+        return CourseInfoListSerializer(category).data
+    
+    class Meta:
+        model = UserWishlist
+        fields = ['id',"course_info"]
+
+
+
+class AddUserWishlistSerializer(serializers.ModelSerializer) :
+    course_id = serializers.IntegerField(required=True)
+    class Meta:
+        model = UserWishlist
+        fields = ['course_id']
+
+    def validate(self, data):
+        return data
+
+
+    def create(self , validate_data):
+        user = self.context.get('user')
+        wishlist = UserWishlist.objects.filter(course_id = validate_data.get("course_id"), user = self.context.get('user')).count()
+        if wishlist > 0:
+            UserWishlist.objects.filter(course_id = validate_data.get("course_id"), user = self.context.get('user')).delete()
+        else:
+            noti = UserWishlist()
+            noti.user = user
+            noti.course = Course.objects.filter(id = validate_data.get("course_id")).first()
+            noti.save()
+
+        return True

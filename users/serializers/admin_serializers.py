@@ -14,6 +14,7 @@ from mini_lms.utils import *
 from rolepermissions.permissions import grant_permission,revoke_permission
 import random
 import string
+import re
 from mini_lms.utils import *
 from subscription.models import *
 from django.core.validators import FileExtensionValidator
@@ -231,3 +232,203 @@ class UpdateInstructorPublicProfileSerializer(serializers.ModelSerializer) :
         instructor.save()
 
         return info
+    
+
+
+
+class MyCourseDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ["id",'name']
+
+
+
+class UserCoursesListSerializer(serializers.ModelSerializer):
+    course_detail = MyCourseDetailSerializer(source="course", read_only=True)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Pass the context to the nested serializer
+        if 'context' in kwargs:
+            self.fields['course_detail'].context.update(kwargs['context'])
+
+    class Meta:
+        model = UserCourses
+        fields = ["id", "course_detail"]
+
+
+class UserDevicesListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserDevices
+        fields = ["id", "device_id","device_type","created_at"]
+
+
+class StudentProfileSerializer(serializers.ModelSerializer):
+    active_subscriptions = serializers.SerializerMethodField('get_active_subscriptions')
+    courses = serializers.SerializerMethodField('get_courses')
+    user_devices = serializers.SerializerMethodField('get_user_devices')
+    
+    def get_user_devices(self, obj):
+        users_courses = UserDevices.objects.only("id","device_id","device_type","created_at").filter(user=obj).order_by("-id")
+        return UserDevicesListSerializer(users_courses, many=True, context={"user": obj.id}).data
+    
+    
+    def get_courses(self, obj):
+        users_courses = UserCourses.objects.filter(user=obj).select_related("course").order_by("-id")
+        return UserCoursesListSerializer(users_courses, many=True, context={"user": obj.id}).data
+    
+    
+    def get_active_subscriptions(self, obj):
+        order_list = Order.objects.filter(user = obj, subscription_status = OrderStatus.Active).order_by("-id").first()
+        if order_list is not None:
+            return OrderListingSerializer(order_list).data
+        return {}
+    
+
+    class Meta:
+        model = User
+        fields = ['id','first_name','last_name', 'email','phone1','phone2','address','city','state','country','image','banner_image','pincode',"dob","active_subscriptions","courses","user_devices"]
+
+
+class CreateStudentSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(max_length = 255, required=True)
+    last_name = serializers.CharField(max_length = 255, required=True)
+    email = serializers.EmailField(max_length = 255, required=True)
+    address = serializers.CharField(max_length = 255, required=False, allow_blank=True)
+    city = serializers.CharField(max_length = 255, required=False, allow_blank=True)
+    state = serializers.CharField(max_length = 255, required=False, allow_blank=True)
+    country = serializers.CharField(max_length = 255, required=False, allow_blank=True)
+    dob = serializers.DateField(required=False)
+    pincode = serializers.CharField(max_length = 8, required=False, allow_blank=True)
+
+    class Meta:
+        model = User
+        fields = ['email','first_name','last_name',"address","city","state","country","pincode","dob"]
+        
+
+    def validate(self, data):
+        user_count = User.objects.filter(email = data.get('email').lower()).count()
+        if user_count > 0:
+            raise serializers.ValidationError('Email address is already registered with Us')
+        
+        return data
+
+
+    def create(self, validate_data):
+        password = generate_random_password(8)
+        info = { "first_name": validate_data.get('first_name'),"last_name": validate_data.get('last_name'), 'email': validate_data.get('email').lower(), 'password': password}
+        user = User.objects.create_user(**info)
+        assign_role(user, "Student")
+
+        user.role = User.Student
+        user.email_verified = 1
+        user.is_active = True
+        user.address = validate_data.get('address')
+        user.country = validate_data.get('country')
+        user.state = validate_data.get('state')
+        user.city = validate_data.get('city')
+        user.pincode = validate_data.get('pincode')
+        user.dob = validate_data.get('dob')
+        user.save()
+
+        subject = 'Welcome to KCGLOBED!'
+
+        message = f''
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [user.email, ]
+        html_message = loader.render_to_string(
+            'user_login_detail_email.html',
+            {
+                'name': user.first_name +' '+ user.last_name,
+                'verification_link': settings.BASE_URL,
+                "email": user.email,
+                "password": password,               
+
+            }
+        )
+
+        send_mail( subject, message, email_from, recipient_list,html_message=html_message )
+
+        return user
+    
+
+
+class UpdateStudentSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(max_length = 255, required=True)
+    last_name = serializers.CharField(max_length = 255, required=True)
+    address = serializers.CharField(max_length = 255, required=False, allow_blank=True)
+    city = serializers.CharField(max_length = 255, required=False, allow_blank=True)
+    state = serializers.CharField(max_length = 255, required=False, allow_blank=True)
+    country = serializers.CharField(max_length = 255, required=False, allow_blank=True)
+    pincode = serializers.CharField(max_length = 8, required=False, allow_blank=True)
+    dob = serializers.DateField(required=True)
+
+    class Meta:
+        model = User
+        fields = ['first_name','last_name',"address","city","state","country","pincode","dob"]
+        
+
+    def validate(self, data):
+        
+        return data
+
+    def update(self, info, validate_data):
+
+        info.first_name = validate_data.get('first_name', info.first_name)
+        info.last_name = validate_data.get('last_name', info.last_name)
+        info.address = validate_data.get('address', info.address)
+        info.city = validate_data.get('city', info.city)
+        info.state = validate_data.get('state', info.state)
+        info.country = validate_data.get('country', info.country)
+        info.pincode = validate_data.get('pincode', info.pincode)
+        info.dob = validate_data.get('dob', info.dob)
+        info.save()
+        return info
+
+
+class ChangeStudentStatusSerializer(serializers.ModelSerializer) :
+    status = serializers.BooleanField(required=True)
+    class Meta:
+        model = User
+        fields = ['status']
+        
+    def validate(self, data):
+        return data
+
+    def update(self , category, validate_data):
+        category.is_active = validate_data.get('status', category.is_active)
+        category.save()
+
+        return category    
+
+
+
+class AdminUpdateStudentPasswordSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(required=False)
+    password = serializers.CharField(style = { 'input_type': 'password'}, write_only = True, min_length=8)
+    confirm_password = serializers.CharField(style = { 'input_type': 'password'}, write_only = True,min_length=8)
+    class Meta:
+        model = User
+        fields = ['password','confirm_password','user_id']
+
+    def validate_password(self, value):
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
+            raise serializers.ValidationError("Password must contain at least one special character.")
+        return value
+
+    
+    def validate(self, data):
+        password = data.get('password')
+        confirm_password = data.get('confirm_password')
+        if password != confirm_password:
+            raise serializers.ValidationError("Password and confirm password doesn't match")
+        
+        return data
+    
+    
+    def create(self , validate_data):
+        user = User.objects.get(id = validate_data.get('user_id'))
+        user.set_password(validate_data.get('password'))
+        user.save()
+
+        return user

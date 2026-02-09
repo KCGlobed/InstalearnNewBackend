@@ -679,7 +679,19 @@ class CategoryListView(APIView):
                             [SuperAdmin]
                         )]
     def get(self, request, format=None):
-        subject = Categories.objects.filter(status=True, parent__isnull=False).order_by("-id")
+        subject = Categories.objects.filter(status=True, parent__isnull=True).order_by("-id")
+        serializer = CategoryListSerializer(subject, many=True)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class SubCategoryListView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [SuperAdmin]
+                        )]
+    def get(self, request, cid=None):
+        subject = Categories.objects.filter(status=True, parent_id = cid).order_by("-id")
         serializer = CategoryListSerializer(subject, many=True)
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     

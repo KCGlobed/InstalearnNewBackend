@@ -20,7 +20,7 @@ urlpatterns = [
 
 
     # Manage Subjects APIS
-    path('get-chapter-list/', ChapterListView.as_view(), name="chapter-list"),
+    path('get-chapters-list/', ChapterListView.as_view(), name="chapter-list"),
     
 
     # Manage Videos APIS
@@ -47,6 +47,7 @@ urlpatterns = [
 
     path('get-course-listing/', CourseListingView.as_view(), name="course-listing"),
     path('get-category-list/', CategoryListView.as_view(), name="category-list"),
+    path('get-subcategory-list/<int:cid>', SubCategoryListView.as_view(), name="subcategory-list"),
     path('view-course-detail/<int:cid>', ViewCourseDetailView.as_view(), name="view-course-detail"),
     path('create-course/', CreateCourseView.as_view(), name="create-course"),
     path('edit-course/<int:cid>', EditCourseView.as_view(), name="edit-course"),

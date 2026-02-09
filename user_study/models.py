@@ -76,3 +76,17 @@ class MyListCourses(models.Model):
         
     def __str__(self):
         return '%s' % self.id
+    
+
+
+class UserWishlist(models.Model):
+    user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
+    course = models.ForeignKey('courses.Course', null=True, blank=True, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'User Whishlist'
+        verbose_name_plural = 'User Whishlist'
+        
+    def __str__(self):
+        return '%s' % self.id

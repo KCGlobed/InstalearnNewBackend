@@ -33,9 +33,15 @@ urlpatterns = [
     path('create-user/<str:user_type>', CreateUserView.as_view(), name="create-user"),
     path('update-user/<str:user_type>/<int:id>', UpdateUserView.as_view(), name="update-user"),
     path('change-user-status/<str:user_type>/<int:id>', UpdateUserStatustView.as_view(), name="change-user-status"),
+    path('admin-update-password/', AdminUpdateStudentPasswordView.as_view(), name="admin-update-password"),
 
     path('admin-reset-user-devices/<cid>', AdminResetUserDevicesView.as_view(), name="admin-reset-user-devices"),
     
-
+    path('get-student-listing/', GetStudentListingView.as_view(), name="get-student"),
+    path('view-student-detail/<int:id>', GetStudentDetailView.as_view(), name="get-student-detail"),
+    path('create-student/', CreateStudentView.as_view(), name="create-student"),
+    path('update-student/<int:id>', UpdateStudentView.as_view(), name="update-student"),
+    path('change-student-status/<int:id>', UpdateStudenStatustView.as_view(), name="change-student-status"),
+    
     
 ]

@@ -278,6 +278,158 @@ class UpdateInstructorPublicProfileView(APIView):
 
 
 
+class GetStudentListingView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "student_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['first_name','last_name',"email"]
+    ordering_fields = ['first_name',"last_name","email", 'created_at', 'id', 'status'] 
+    def get(self, request, format=None):
+        
+        users_list = User.objects.filter(role = User.Student, corporate__isnull = True, institute_id__isnull =True)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        category = request.query_params.get('category')
+
+        reference_ids_param = request.query_params.get('reference_id')
+        if reference_ids_param:
+            search_terms = [
+                term.strip() for term in reference_ids_param.split(',') if term.strip()
+            ]
+            if search_terms:
+                q_objects = Q()
+                for term in search_terms:
+                    q_objects |= Q(**{'reference_id__icontains': term})
+                
+                users_list = users_list.filter(q_objects)
 
 
+        if category:
+            category = category.split(',')
+            topics = topics.filter(user__category__in = category)
+
+        student_type = request.query_params.get('student_type')
+        if student_type:
+            student_type = student_type.split(',')
+            topics = topics.filter(user__student_type__in =student_type)
+
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                start_datetime_aware = timezone.make_aware(start_datetime, timezone.get_current_timezone())
+                topics = topics.filter(created_at__gte=start_datetime_aware)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                end_datetime_aware = timezone.make_aware(end_datetime, timezone.get_current_timezone())
+                topics = topics.filter(created_at__lte=end_datetime_aware)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+
+        search_filter = filters.SearchFilter()
+        users_list = search_filter.filter_queryset(request, users_list, self)
+
+        ordering_filter = filters.OrderingFilter()
+        users_list = ordering_filter.filter_queryset(request, users_list, self)
+
+        if not users_list.ordered:
+            users_list = users_list.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(users_list, request, view=self)
+        serializer = StudentListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
     
+
+
+class GetStudentDetailView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "student_listing",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, id=None,format=None):
+        subadmin_list = User.objects.filter(role = User.Student, id=id).first()
+        serializer = StudentProfileSerializer(subadmin_list)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class CreateStudentView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_student",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = CreateStudentSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="User Created Successfully", data=StudentProfileSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class UpdateStudentView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_student",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, id=None, format=None):
+        user_info = User.objects.filter(id = id , role = User.Student).first()
+        if user_info is None:
+            raise NotFound("Invalid User ID!")
+        
+        serializer = UpdateStudentSerializer(user_info ,data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="User Updated Successfully", data=StudentProfileSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class UpdateStudenStatustView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_student",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  id , format=None):
+        user_info = User.objects.filter(id = id , role = User.Student).first()
+        if user_info is None:
+            raise NotFound("Invalid User ID!")
+        
+        serializer = ChangeStudentStatusSerializer(user_info, data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Student Status Updated Successfully", data=StudentProfileSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class AdminUpdateStudentPasswordView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "student_change_password",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = AdminUpdateStudentPasswordSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user = serializer.save()
+            return success_response(message="Password Updated successfully!", data={}, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
