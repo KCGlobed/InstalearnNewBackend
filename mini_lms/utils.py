@@ -10,6 +10,9 @@ from urllib.parse import urlparse
 import random
 import string
 import math
+from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+from courses.models import *
 
 
 CHUNK_SIZE = 1024 * 1024 * 10
@@ -191,7 +194,40 @@ def custom_round(number):
             return math.floor(number)
         else:
             return math.ceil(number)
+    
         
+def generate_random_password(length=8):
+    letters = string.ascii_letters 
+    digits = string.digits       
+    special_characters = '@#$%&*'
+    password = [
+        random.choice(special_characters),  
+        random.choice(letters),             
+        random.choice(digits)
+    ]
+    all_characters = letters + digits + special_characters
+    password += random.choices(all_characters, k=length - 3)
+    random.shuffle(password)
+    return ''.join(password)
+
+
+def validate_course_id_list(id_list):
+    if not isinstance(id_list, list):
+        raise serializers.ValidationError("Expected a list of IDs.")
+
+    if len(id_list) == 0:
+        raise serializers.ValidationError("Course IDs is required field!")
+    
+    existing_tag_ids = set(Course.objects.filter(id__in=id_list).values_list('id', flat=True))
+    non_existent_ids = [str(tag_id) for tag_id in id_list if tag_id not in existing_tag_ids]
+
+    if non_existent_ids:
+        raise serializers.ValidationError(
+            f"The following Course IDs do not exist: {', '.join(non_existent_ids)}."
+        )
+
+    return id_list
+
 
 def new_alert_login(user, ip_address):
     pass

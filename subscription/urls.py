@@ -10,6 +10,11 @@ urlpatterns = [
     path('update-subscription-plan-status/<int:cid>', UpdateSubscriptionPlanStatusView.as_view(), name="update-plan-status"),
     path('delete-subscription-plan/<int:cid>', DeleteSubscriptionPlanView.as_view(), name="delete-plan"),
 
+    path('get-trail-user-listing/', TrailUserListingView.as_view(), name="trail-user-listing"),
+    path('get-trail-user-report-pdf/', ExportPDFTrailUserListingView.as_view(), name="get-trail-user-report-pdf"),
+    path('get-trail-user-report-excel/', ExportExcelTrailUserListingView.as_view(), name="get-trail-user-report-excel"),
+    path('register-for-trail/', RegisterTrailUserView.as_view(), name="register-for-trail"),
+
     
     path('add-to-cart/', AddtoCartView.as_view(), name="add-to-cart"),
     path('remove-to-cart/<cid>', RemoveCartView.as_view(), name="remove-to-cart"),
@@ -27,5 +32,7 @@ urlpatterns = [
 
     path('get-setting/', GetSettingView.as_view(), name="get-setting"),
     path('update-setting/', UpdateSettingView.as_view(), name="update-setting"),
+
+    path('trail-registration/', TrailRegistrationView.as_view(), name="trail-registration"),
 
 ]

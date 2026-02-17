@@ -1171,9 +1171,12 @@ class GetCoursesFAQsListingView(APIView):
     def get(self, request, cid=None, format=None):
         
         category = CourseFaqs.objects.filter(course_id = cid).order_by("-id")
-        results = self.paginate_queryset(category, request, view=self)
-        serializer = CourseFaqsListingSerializer(results, many=True)
-        return self.get_paginated_response(serializer.data)
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(category, request, view=self)
+        serializer = CourseFaqsListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
     
 
 

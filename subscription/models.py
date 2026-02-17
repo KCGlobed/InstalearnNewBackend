@@ -199,3 +199,36 @@ class Cart(models.Model):
         
     def __str__(self):
         return '%s' % self.id
+    
+
+
+class TrailUser(models.Model):
+    user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
+    first_name = models.CharField(max_length=255, null=True, blank=True)
+    last_name = models.CharField(max_length=255, null=True, blank=True)
+    email = models.CharField(max_length=255, null=True, blank=True)
+    phone = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add = True)
+    updated_at = models.DateTimeField(auto_now = True)
+    
+    class Meta:
+        verbose_name = 'Trail User'
+        verbose_name_plural = 'Trail User'
+        
+    def __str__(self):
+        return '%s' % self.id
+    
+    
+
+class TrailUserCourses(models.Model):
+    trail_user = models.ForeignKey('TrailUser', null=True, blank=True, on_delete=models.CASCADE)
+    course = models.ForeignKey('courses.Course', null=True, blank=True, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add = True)
+    updated_at = models.DateTimeField(auto_now = True)
+    
+    class Meta:
+        verbose_name = 'Trail User Courses'
+        verbose_name_plural = 'Trail User Courses'
+        
+    def __str__(self):
+        return '%s' % self.id
