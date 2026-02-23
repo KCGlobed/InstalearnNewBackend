@@ -4,6 +4,8 @@ from subscription.models import *
 from mini_lms.validator import *
 from django.core.validators import FileExtensionValidator
 import os
+from instructor.models import *
+from cms.models import *
 from django.conf import settings
 from google.cloud import storage
 client = settings.GS_CREDENTIALS

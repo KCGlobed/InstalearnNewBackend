@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from courses.models import *
+from instructor.models import *
 from mini_lms.validator import *
 from django.core.validators import FileExtensionValidator
 import os
