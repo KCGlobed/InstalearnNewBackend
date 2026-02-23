@@ -105,6 +105,7 @@ class Order(models.Model):
     order_payment_id = models.CharField(max_length=255,null=True, blank=True)
     razorpay_payment_id = models.CharField(max_length=255,null=True, blank=True)
     razorpay_signature = models.TextField(null=True, blank=True)
+    coupon = models.ForeignKey('Coupon', null=True, blank=True, on_delete=models.SET_NULL)
     plan = models.ForeignKey('SubscriptionPlans', null=True, blank=True, on_delete=models.SET_NULL)
     subscription_id = models.CharField(max_length=255, null=True, blank=True)
     subscription_response = models.JSONField(null=True, blank=True)
@@ -159,6 +160,9 @@ class UserCourses(models.Model):
     course = models.ForeignKey('courses.Course', null=True, blank=True, on_delete=models.CASCADE)
     order = models.ForeignKey('Order', null=True, blank=True, on_delete=models.CASCADE)
     trail = models.BooleanField(default=False)
+    progress_percentage = models.FloatField(null=True, blank=True, default=0.0)
+    completed = models.BooleanField(default=False)
+    expired_at = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)
     

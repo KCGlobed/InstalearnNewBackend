@@ -88,14 +88,9 @@ class TopicSerializer(serializers.ModelSerializer):
             return math.ceil(total_video_watched * 100 / obj.no_of_video_duration)
         
     class Meta:
-        model = ChapterTopics
+        model = Chapters
         fields = ['id','name',"no_of_video_duration","no_of_videos","progress"]
 
-
-class TopicsSerializer(serializers.ModelSerializer) :
-    class Meta:
-        model = Topics
-        fields = ['name']
 
 
 class ChapterTopicsSerializer(serializers.ModelSerializer) :
@@ -111,18 +106,9 @@ class ChapterTopicsSerializer(serializers.ModelSerializer) :
             if parent.no_of_video_duration == 0:
                 return 0
             return math.ceil(total_video_watched * 100 / parent.no_of_video_duration)
-        
-
-    def get_topic_info(self, parent):
-        info = Topics.objects.get(id = parent.topics.id)
-        return TopicsSerializer(info).data
-    
-    def get_topic_videos(self, parent):
-        info = TopicVideos.objects.filter(chapter_topics_id = parent.id).order_by('order','id')
-        return TopicVideosSerializer(info,many=True).data
     
     class Meta:
-        model = ChapterTopics
+        model = Chapters
         fields = ['id','topic_info',"progress","topic_videos","no_of_videos","no_of_video_duration"]
 
 
@@ -146,10 +132,7 @@ class DashboardCourseChapterListingSerializer(serializers.ModelSerializer) :
                 return 0
             return math.ceil(total_video_watched * 100 / parent.no_of_video_duration)
 
-    def get_topics(self, parent):
-        info = ChapterTopics.objects.filter(course_chapters_id = parent.id)
-        return ChapterTopicsSerializer(info,many=True,context={'user':self.context.get('user')}).data
-
+    
     def get_chapter_info(self, parent):
         info = Chapters.objects.get(id = parent.chapters.id)
         return ChapterInfoSerializer(info).data
@@ -166,7 +149,7 @@ class TopicVideosRelationSerializer(serializers.ModelSerializer):
     total_watched_duration = serializers.SerializerMethodField('get_total_watched_duration')
 
     def get_total_videos(self, parent):
-        count = TopicVideos.objects.filter(chapter_topic = parent.id).count()
+        count = Videos.objects.filter(chapter_topic = parent.id).count()
         return count
 
     def get_total_watched_videos(self, parent):
@@ -178,7 +161,7 @@ class TopicVideosRelationSerializer(serializers.ModelSerializer):
         return count
 
     class Meta:
-        model = TopicVideos
+        model = Videos
         fields = ['id','name','total_videos','total_watched_videos','total_watched_duration']
 
 
@@ -194,14 +177,9 @@ class ChapterTopicsReportSerializer(serializers.ModelSerializer) :
     def get_total_duration_watched_videos(self, parent):
         total_video_watched = UserWatchedTopicVideos.objects.filter(chapter_topic_id = parent.id, course_chapters_id = parent.course_chapters.id, course_id = parent.course_chapters.course.id, user = self.context.get('user')).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
         return total_video_watched
-        
-
-    def get_topic_info(self, parent):
-        info = Topics.objects.get(id = parent.topics.id)
-        return TopicsSerializer(info).data
     
     class Meta:
-        model = ChapterTopics
+        model = Chapters
         fields = ['id','topic_info',"total_watched_videos","total_duration_watched_videos","no_of_videos","no_of_video_duration"]
 
 
@@ -221,7 +199,7 @@ class ChapterVideoReportSerializer(serializers.ModelSerializer):
         
 
     def get_topics(self, parent):
-        info = ChapterTopics.objects.filter(course_chapters_id = parent.id)
+        info = Chapters.objects.filter(course_chapters_id = parent.id)
         return ChapterTopicsReportSerializer(info,many=True, context={'user':self.context.get('user')}).data
 
     def get_chapter_info(self, parent):
@@ -247,7 +225,7 @@ class TopicVideosSerializer(serializers.ModelSerializer):
         return VideoDetailSerializer(video_detail).data
         
     class Meta:
-        model = TopicVideos
+        model = Videos
         fields = ['id',"video_info"]
 
 class SingleVideoDetailSerializer(serializers.ModelSerializer):
@@ -271,7 +249,7 @@ class ChapterSingleVideosSerializer(serializers.ModelSerializer):
         return 0
 
     class Meta:
-        model = TopicVideos
+        model = Videos
         fields = ['id','video_info','last_watch_videos']
 
 
@@ -279,7 +257,7 @@ class ChapterSingleVideosSerializer(serializers.ModelSerializer):
 class GetUserNotesSerializer(serializers.ModelSerializer):
     video_title = serializers.SerializerMethodField('get_video')
     def get_video(self, obj):
-        video_detail  = TopicVideos.objects.filter(id = obj.chapter_video.id).first()
+        video_detail  = Videos.objects.filter(id = obj.chapter_video.id).first()
         if video_detail is not None:
             return video_detail.name
         return ""
@@ -308,7 +286,7 @@ class CreateNoteSerializer(serializers.ModelSerializer) :
             raise serializers.ValidationError("Course does not exists")
 
         chapter_id = data.get('video_id')
-        chapter_count = TopicVideos.objects.filter(id=chapter_id).count()
+        chapter_count = Videos.objects.filter(id=chapter_id).count()
         if chapter_count == 0:
             raise serializers.ValidationError("Video ID "+str(chapter_id)+" does not exists")
 
@@ -317,7 +295,7 @@ class CreateNoteSerializer(serializers.ModelSerializer) :
     def create(self , validate_data):
 
         courseInfo = Course.objects.get(id=validate_data.get('course_id'))
-        chaptervideo = TopicVideos.objects.get(id=validate_data.get('video_id'))
+        chaptervideo = Videos.objects.get(id=validate_data.get('video_id'))
         
         user = User.objects.get(id = self.context.get('user').id)
 
@@ -354,7 +332,7 @@ class WatchVideoSerializer(serializers.ModelSerializer) :
     duration = serializers.IntegerField(required=True)
     video_id = serializers.CharField(required=True)
     class Meta:
-        model = TopicVideos
+        model = Videos
         fields = ['duration','video_id']
         
     def validate(self, data):
@@ -363,7 +341,7 @@ class WatchVideoSerializer(serializers.ModelSerializer) :
 
     def create(self, validate_data):
         
-        category = TopicVideos.objects.get(id=validate_data.get('video_id'))
+        category = Videos.objects.get(id=validate_data.get('video_id'))
 
         watch_video_count = UserWatchedTopicVideos.objects.filter(video_id=category.id,user_id = self.context.get('user').id, chapter_topic_id = category.chapter_topics.id, course_chapters_id = category.chapter_topics.course_chapters.id, course_id = category.chapter_topics.course_chapters.course.id).count()
 
@@ -425,7 +403,7 @@ class CompleteVideoListingSerializer(serializers.ModelSerializer) :
     topics = serializers.SerializerMethodField()
     
     def get_topics(self, parent):
-        info = ChapterTopics.objects.filter(course_chapters_id = parent.id)
+        info = Chapters.objects.filter(course_chapters_id = parent.id)
         return CompleteVideoChapterTopicsSerializer(info,many=True,context={'user':self.context.get('user')}).data
 
     def get_chapter_info(self, parent):
@@ -442,16 +420,12 @@ class CompleteVideoChapterTopicsSerializer(serializers.ModelSerializer) :
     topic_info = serializers.SerializerMethodField()
     topic_videos = serializers.SerializerMethodField()
     
-    def get_topic_info(self, parent):
-        info = Topics.objects.get(id = parent.topics.id)
-        return TopicsSerializer(info).data
-    
     def get_topic_videos(self, parent):
-        info = TopicVideos.objects.filter(chapter_topics_id = parent.id).order_by('order','id')
+        info = Videos.objects.filter(chapter_topics_id = parent.id).order_by('order','id')
         return CompleteTopicVideosSerializer(info,many=True, context={'user':self.context.get('user')}).data
     
     class Meta:
-        model = ChapterTopics
+        model = Chapters
         fields = ['id','topic_info',"topic_videos"]
 
 
@@ -471,7 +445,7 @@ class CompleteTopicVideosSerializer(serializers.ModelSerializer):
         return VideoDetailSerializer(video_detail).data
         
     class Meta:
-        model = TopicVideos
+        model = Videos
         fields = ['id',"video_info","video_progress"]
 
 

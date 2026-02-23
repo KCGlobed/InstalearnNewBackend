@@ -24,8 +24,15 @@ class Categories(SoftDeleteModel):
         return '%s' % self.id
     
 
+class CourseLevel(models.IntegerChoices):
+    All = 1, 'All'
+    Beginner = 2, 'Beginner'
+    Intermediate = 3, 'Intermediate'
+    Expert = 4, 'Expert'
+
 class Course(SoftDeleteModel):
     name = models.CharField(max_length=255, null=True, blank=True)
+    level = models.IntegerField(choices=CourseLevel.choices,default=CourseLevel.All)
     short_description = models.TextField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     requirements = models.TextField(null=True, blank=True)
@@ -45,6 +52,8 @@ class Course(SoftDeleteModel):
     status = models.BooleanField(default=True)
     image = models.FileField(upload_to='mini_lms/images/', null=True, blank=True)
     banner_image = models.FileField(upload_to='mini_lms/images/', null=True, blank=True)
+    created_by = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
+    approved_by = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)  
     history = HistoricalRecords()  
@@ -56,6 +65,19 @@ class Course(SoftDeleteModel):
     def __str__(self):
         return '%s' % self.name
     
+    
+
+class CourseInstructors(SoftDeleteModel):
+    course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
+    instructor = models.ForeignKey('instructor.InstructorProfile', null=True, blank=True, on_delete=models.SET_NULL)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Course Instructors'
+        verbose_name_plural = 'Course Instructors'
+
+    def __str__(self):
+        return '%s' % self.id
     
 
 class CourseCategories(SoftDeleteModel):
@@ -170,23 +192,16 @@ class CourseReviewRating(SoftDeleteModel):
     def __str__(self):
         return '%s' % self.id
     
-
-class ChapterType(models.IntegerChoices):
-    Regular = 1, 'Regular'
-    ACCA = 2, 'ACCA'
     
 class Chapters(SoftDeleteModel):
     name = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     no_of_chapter_videos = models.IntegerField(default=0)
-    no_of_topic_videos = models.IntegerField(default=0)
     no_of_videos = models.IntegerField(default=0)
     no_of_videos_duration = models.IntegerField(default=0)
     no_of_mcqs = models.IntegerField(default=0)
-    no_of_simulations = models.IntegerField(default=0)
     total_questions = models.IntegerField(default=0)
     status = models.BooleanField(default=True)
-    chapter_type = models.IntegerField(choices=ChapterType.choices,default=ChapterType.Regular)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     history = HistoricalRecords()
@@ -200,7 +215,29 @@ class Chapters(SoftDeleteModel):
         return '%s' % self.name
     
 
+
+class LectureType(models.IntegerChoices):
+    Video = 1, 'Video'
+    Ebook = 2, 'Ebook'
+
+
+class ChapterLectures(SoftDeleteModel):
+    chapter = models.ForeignKey('Chapters', null=True, blank=True, on_delete=models.CASCADE)
+    video = models.ForeignKey('Videos', null=True, blank=True, on_delete=models.CASCADE)
+    ebook = models.ForeignKey('ChapterBooks', null=True, blank=True, on_delete=models.CASCADE)
+    lecture_type = models.IntegerField(choices=LectureType.choices,default=LectureType.Video)
+    order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    history = HistoricalRecords()
     
+    class Meta:
+        verbose_name = 'Chapters Lectures'
+        verbose_name_plural = 'Chapters Lectures'
+        
+    def __str__(self):
+        return '%s' % self.id
+
+
 
 class CourseChapters(SoftDeleteModel):
     chapter = models.ForeignKey('Chapters', null=True, blank=True, on_delete=models.CASCADE)
@@ -212,43 +249,6 @@ class CourseChapters(SoftDeleteModel):
     class Meta:
         verbose_name = 'Course Chapters'
         verbose_name_plural = 'Course Chapters'
-        
-    def __str__(self):
-        return '%s' % self.id
-    
-
-
-class Topics(SoftDeleteModel):
-    name = models.CharField(max_length=255, null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-    no_of_videos = models.IntegerField(default=0)
-    no_of_videos_duration = models.IntegerField(default=0)
-    status = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = 'Topics'
-        verbose_name_plural = 'Topics'
-
-    def __str__(self):
-        return '%s' % self.name
-    
-    
-
-class ChapterTopics(SoftDeleteModel):
-    chapter = models.ForeignKey('Chapters', null=True, blank=True, on_delete=models.CASCADE)
-    topic = models.ForeignKey('Topics', null=True, blank=True, on_delete=models.CASCADE)
-    order = models.IntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
-    history = HistoricalRecords()
-
-    
-    class Meta:
-        verbose_name = 'Chapter Topics'
-        verbose_name_plural = 'Chapter Topics'
         
     def __str__(self):
         return '%s' % self.id
@@ -271,7 +271,6 @@ class ChapterBooks(SoftDeleteModel):
 
     def __str__(self):
         return '%s' % self.name
-    
     
 
 
@@ -300,90 +299,6 @@ class Videos(SoftDeleteModel):
 
     def __str__(self):
         return '%s' % self.name
-    
-    
-
-
-class TopicVideos(SoftDeleteModel):
-    video = models.ForeignKey('Videos', null=True, blank=True, on_delete=models.CASCADE)
-    topic = models.ForeignKey('Topics', null=True, blank=True, on_delete=models.CASCADE)
-    chapter = models.ForeignKey('Chapters', null=True, blank=True, on_delete=models.CASCADE)
-    order = models.IntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
-    history = HistoricalRecords()
-
-    class Meta:
-        verbose_name = 'Chapter Topic Videos'
-        verbose_name_plural = 'Chapter Topic Videos'
-        
-    def __str__(self):
-        return '%s' % self.id
-    
-
-
-class InstructorProfile(SoftDeleteModel):
-    user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
-    text_1 = models.CharField(max_length=255, null=True, blank=True)
-    text_2 = models.CharField(max_length=255, null=True, blank=True)
-    text_3 = models.CharField(max_length=255, null=True, blank=True)
-    experience = models.CharField(max_length=255, null=True, blank=True)
-    linkedin_url = models.CharField(max_length=255, null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-    image = models.FileField(upload_to="landing/", null=True, blank=True)
-    company_image_1 = models.FileField(upload_to="landing/", null=True, blank=True)
-    company_image_2 = models.FileField(upload_to="landing/", null=True, blank=True)
-    visible = models.IntegerField(default=1)
-    order = models.IntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = 'Instructor Profile'
-        verbose_name_plural = 'Instructor Profile'
-
-    def __str__(self):
-        return '%s' % self.id
-    
-
-class CourseInstructors(SoftDeleteModel):
-    course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
-    instructor = models.ForeignKey('InstructorProfile', null=True, blank=True, on_delete=models.SET_NULL)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = 'Course Instructors'
-        verbose_name_plural = 'Course Instructors'
-
-    def __str__(self):
-        return '%s' % self.id
-    
-
-
-class PartnerImages(SoftDeleteModel):
-    title = models.CharField(max_length=255, null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-    image = models.FileField(upload_to="landing/", null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = 'Partner Images'
-        verbose_name_plural = 'Partner Images'
-
-
-
-class Testimonials(SoftDeleteModel):
-    testimonials_type = models.CharField(max_length=255, null=True, blank=True)
-    name = models.CharField(max_length=255, null=True, blank=True)
-    qualification = models.CharField(max_length=255, null=True, blank=True)
-    college = models.CharField(max_length=255, null=True, blank=True)
-    content = models.TextField(null=True, blank=True)
-    image = models.FileField(upload_to="landing/", null=True, blank=True)
-    featured = models.IntegerField(default=0)
-    visible = models.IntegerField(default=1)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = 'Testimonials'
-        verbose_name_plural = 'Testimonials'
 
 
 

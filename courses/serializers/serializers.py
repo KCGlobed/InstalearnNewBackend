@@ -28,21 +28,9 @@ class StudentChapterInfoSerializer(serializers.ModelSerializer):
 
 
 
-
-class StudentTopicInfoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Topics
-        fields = ["name"]
-
-
 class StudentTopicListSerializer(serializers.ModelSerializer):
-    topic_detail = serializers.SerializerMethodField('get_topic_detail')
-    def get_topic_detail(self, obj):
-        category = Topics.objects.filter(id=obj.topic.id).first()
-        return StudentTopicInfoSerializer(category).data
-    
     class Meta:
-        model = ChapterTopics
+        model = Chapters
         fields = ['id',"topic_detail"]
 
 

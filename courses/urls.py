@@ -2,16 +2,9 @@ from django.urls import path , include
 from courses.views import *
 
 urlpatterns = [
-    # Manage Topics APIs
-    path('get-topics-listing/', TopicsListingView.as_view(), name="topics-listing"),
-    path('create-topic/', CreateTopicView.as_view(), name="create-topic"),
-    path('edit-topic/<int:cid>', EditTopicView.as_view(), name="edit-topic"),
-    path('update-topic-status/<int:cid>', UpdateTopicStatusView.as_view(), name="update-topic-status"),
-    path('delete-topic/<int:cid>', DeleteTopicView.as_view(), name="delete-topic"),
-
+    
     # Manage Chapters APIS
     path('get-chapter-listing/', ChapterListingView.as_view(), name="chapters-listing"),
-    path('get-topics-list/', TopicsListView.as_view(), name="topics-list"),
     path('view-chapter-detail/<int:cid>', ViewChapterView.as_view(), name="view-chapter-detail"),
     path('create-chapter/', CreateChapterView.as_view(), name="create-chapter"),
     path('edit-chapter/<int:cid>', EditChapterView.as_view(), name="edit-chapter"),

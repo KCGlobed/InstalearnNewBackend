@@ -12,78 +12,6 @@ import time
 from mini_lms.utils import *
 from datetime import datetime,timezone, timedelta
 
-class TopicListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Topics
-        fields = ["id","name","description"]
-
-
-class TopicsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Topics
-        fields = ["id","name","description","status","created_at"]
-
-
-class CreateTopicSerializer(serializers.ModelSerializer) :
-    name = serializers.CharField(max_length = 255, required=True)
-    description = serializers.CharField(required=False)
-    
-    class Meta:
-        model = Topics
-        fields = ['name',"description"]
-        
-    def validate(self, data):
-        return data
-
-    def create(self , validate_data):
-        topic = Topics(
-            name = validate_data.get('name'),
-            description = validate_data.get('description'),
-            status = True
-        )
-        topic.save()
-
-        return topic
-    
-
-class EditTopicSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(max_length = 255, required=True)
-    description = serializers.CharField(required=False)
-
-    class Meta:
-        model = Topics
-        fields = ['name',"description"]
-        
-    def validate(self, data):
-        return data
-
-
-    def update(self , category, validate_data):
-        
-        category.name = validate_data.get('name', category.name)
-        category.description = validate_data.get('description', category.description)
-        category.save()
-
-        return category
-
-
-class ChangeTopicStatusSerializer(serializers.ModelSerializer) :
-    status = serializers.BooleanField(required=True)
-    class Meta:
-        model = Topics
-        fields = ['status']
-        
-    def validate(self, data):
-        return data
-
-    def update(self , category, validate_data):
-        category.status = validate_data.get('status', category.status)
-        category.save()
-
-        return category
-    
-
-
 class ChapterListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chapters
@@ -96,30 +24,9 @@ class ChaptersSerializer(serializers.ModelSerializer):
         fields = ["id","name","status","created_at"]
 
 
-class TopicInfoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Topics
-        fields = ["id","name"]
-
-
-class ChapterTopicInfoSerializer(serializers.ModelSerializer):
-    topic_detail = serializers.SerializerMethodField('get_topic_detail')
-    
-    def get_topic_detail(self, obj):
-        category = Topics.objects.filter(id=obj.topic.id).first()
-        return TopicInfoSerializer(category).data
-    
-    class Meta:
-        model = ChapterTopics
-        fields = ['id','order',"topic_detail"]
-
 
 class ViewChapterDetailSerializer(serializers.ModelSerializer):
     topic_info = serializers.SerializerMethodField('get_topic_info')
-    
-    def get_topic_info(self, obj):
-        category = ChapterTopics.objects.filter(chapter_id=obj.id).order_by("order")
-        return ChapterTopicInfoSerializer(category, many=True).data
     
     class Meta:
         model = Chapters
@@ -147,15 +54,6 @@ class CreateChapterSerializer(serializers.ModelSerializer) :
         chapter_info.save()
         topics_data = validate_data.pop('topic_id', []) 
 
-        if len(topics_data) > 0:
-            for index , topic_id in enumerate(topics_data):
-                topic = ChapterTopics(
-                        chapter = chapter_info,
-                        topic = Topics.objects.get(id = topic_id),
-                        order = index + 1
-                    )
-                topic.save()
-
         return chapter_info
     
 
@@ -180,50 +78,7 @@ class EditChapterSerializer(serializers.ModelSerializer):
 
         topics_data = validate_data.pop('topic_id', None) 
 
-        if topics_data is not None:
-            current_topic_links = {
-                link.topic_id: link for link in chapter_info.chaptertopics_set.all()
-            }
-
-            # Lists for batch operations
-            links_to_create = []
-            links_to_update = []
-            received_topic_ids = set()
-
-           
-            for index, topic_link_data in enumerate(topics_data):
-                topic_obj = Topics.objects.get(id = topic_link_data)
-                order_for_topic = index + 1
-                received_topic_ids.add(topic_obj.id) 
-
-                if topic_obj.id in current_topic_links:
-                    link_instance = current_topic_links[topic_obj.id]
-                    if link_instance.order != order_for_topic:
-                        link_instance.order = order_for_topic
-                        links_to_update.append(link_instance)
-                else:
-                    links_to_create.append(
-                        ChapterTopics(
-                            chapter=chapter_info,
-                            topic=topic_obj,
-                            order=order_for_topic
-                        )
-                    )
-            
-            # Perform bulk operations
-            if links_to_create:
-                ChapterTopics.objects.bulk_create(links_to_create)
-            
-            if links_to_update:
-                ChapterTopics.objects.bulk_update(links_to_update, ['order'])
-            
-            topic_ids_to_delete = current_topic_links.keys() - received_topic_ids
-            if topic_ids_to_delete:
-                ChapterTopics.objects.filter(
-                    chapter=chapter_info,
-                    topic_id__in=topic_ids_to_delete
-                ).delete()
-
+        
         return chapter_info
     
 
@@ -270,14 +125,9 @@ class VideosSerializer(serializers.ModelSerializer):
     topic_detail = serializers.SerializerMethodField('get_topic_detail')
     
     def get_chapter_detail(self, obj):
-        chapter_list = TopicVideos.objects.only("id","chapter").select_related("chapter").filter(video=obj, topic__isnull=True).values_list("chapter",flat=True)
+        chapter_list = Videos.objects.only("id","chapter").select_related("chapter").filter(video=obj, topic__isnull=True).values_list("chapter",flat=True)
         category = Chapters.objects.only("id","name").filter(id__in = chapter_list)
         return ChaptersSerializer(category,many=True).data
-    
-    def get_topic_detail(self, obj):
-        topic_list = TopicVideos.objects.only("id","topic").select_related("topic").filter(video=obj, chapter__isnull=True).values_list("topic",flat=True)
-        category = Topics.objects.only("id","name").filter(id__in = topic_list)
-        return TopicListSerializer(category,many=True).data
     
     class Meta:
         model = Videos
@@ -286,15 +136,7 @@ class VideosSerializer(serializers.ModelSerializer):
 
 
 class VideoTopicInfoSerializer(serializers.ModelSerializer):
-    topic_detail = serializers.SerializerMethodField('get_topic_detail')
     chapter_detail = serializers.SerializerMethodField('get_chapter_detail')
-    
-    def get_topic_detail(self, obj):
-        if obj.topic is not None:
-            category = Topics.objects.filter(id=obj.topic.id).first()
-            return TopicInfoSerializer(category).data
-        return []
-    
     
     
     def get_chapter_detail(self, obj):
@@ -305,7 +147,7 @@ class VideoTopicInfoSerializer(serializers.ModelSerializer):
     
     
     class Meta:
-        model = TopicVideos
+        model = Videos
         fields = ['id','order',"topic_detail","chapter_detail"]
 
 
@@ -313,7 +155,7 @@ class ViewVideoDetailSerializer(serializers.ModelSerializer):
     chapter_topic_info = serializers.SerializerMethodField('get_chapter_topic_info')
     
     def get_chapter_topic_info(self, obj):
-        category = TopicVideos.objects.filter(video_id=obj.id).order_by("order")
+        category = Videos.objects.filter(video_id=obj.id).order_by("order")
         return VideoTopicInfoSerializer(category, many=True).data
     
     class Meta:
@@ -344,10 +186,6 @@ class CreateVideoSerializer(serializers.ModelSerializer) :
         # Check if either topic_id or chapter_id is provided
         if not topic_ids and not chapter_ids:
             raise serializers.ValidationError("Either 'topic_id' or 'chapter_id' is required.")
-
-        # If topic_id is provided, validate it
-        if topic_ids:
-            data['topic_id'] = self._validate_list(topic_ids, 'Topic', Topics)
 
         # If chapter_id is provided, validate it
         if chapter_ids:
@@ -403,31 +241,6 @@ class CreateVideoSerializer(serializers.ModelSerializer) :
         video_info.video_file = path+"/"+unique_file_name
         video_info.video_duration = validate_data.get('duration')
         video_info.save()
- 
-        topics_data = validate_data.pop('topic_id', []) 
-
-        if len(topics_data) > 0:
-            for index , topic_id in enumerate(topics_data):
-                topic = TopicVideos(
-                        video = video_info,
-                        topic = Topics.objects.get(id = topic_id),
-                        order = index + 1
-                    )
-                topic.save()
-                calculate_video_duration(topic_id)
-
-
-        chapters_data = validate_data.pop('chapter_id', []) 
-
-        if len(chapters_data) > 0:
-            for index , chapter_id in enumerate(chapters_data):
-                topic = TopicVideos(
-                        video = video_info,
-                        chapter = Chapters.objects.get(id = chapter_id),
-                        order = index + 1
-                    )
-                topic.save()
-                calculate_video_duration_chapter(chapter_id)
                     
         return video_info
             
@@ -592,102 +405,6 @@ class EditVideoserializer(serializers.ModelSerializer):
             video_info.include_in_reference = validate_data.get('include_in_reference', video_info.description)
             video_info.description = validate_data.get('description', video_info.description)
             video_info.save()
-
-
-
-        topics_data = validate_data.pop('topic_id', None) 
-
-        if topics_data is not None:
-            current_topic_links = {
-                link.topic_id: link for link in video_info.topicvideos_set.all()
-            }
-
-            # Lists for batch operations
-            links_to_create = []
-            links_to_update = []
-            received_topic_ids = set()
-
-        
-            for index, topic_link_data in enumerate(topics_data):
-                topic_obj = Topics.objects.get(id = topic_link_data)
-                calculate_video_duration(topic_link_data)
-                order_for_topic = index + 1
-                received_topic_ids.add(topic_obj.id) 
-
-                if topic_obj.id in current_topic_links:
-                    link_instance = current_topic_links[topic_obj.id]
-                    if link_instance.order != order_for_topic:
-                        link_instance.order = order_for_topic
-                        links_to_update.append(link_instance)
-                else:
-                    links_to_create.append(
-                        TopicVideos(
-                            video=video_info,
-                            topic=topic_obj,
-                            order=order_for_topic
-                        )
-                    )
-            
-            # Perform bulk operations
-            if links_to_create:
-                TopicVideos.objects.bulk_create(links_to_create)
-            
-            if links_to_update:
-                TopicVideos.objects.bulk_update(links_to_update, ['order'])
-            
-            topic_ids_to_delete = current_topic_links.keys() - received_topic_ids
-            if topic_ids_to_delete:
-                TopicVideos.objects.filter(
-                    video=video_info,
-                    topic_id__in=topic_ids_to_delete
-                ).delete()
-
-
-        chapters_data = validate_data.pop('chapter_id', None) 
-
-        if chapters_data is not None:
-            current_chapter_links = {
-                link.chapter_id: link for link in video_info.topicvideos_set.all()
-            }
-
-            # Lists for batch operations
-            links_to_create = []
-            links_to_update = []
-            received_chapter_ids = set()
-
-            for index, chapter_link_data in enumerate(chapters_data):
-                chapter_obj = Chapters.objects.get(id = chapter_link_data)
-                calculate_video_duration_chapter(chapter_link_data)
-                order_for_chapter = index + 1
-                received_chapter_ids.add(chapter_obj.id) 
-
-                if chapter_obj.id in current_chapter_links:
-                    link_instance = current_chapter_links[chapter_obj.id]
-                    if link_instance.order != order_for_chapter:
-                        link_instance.order = order_for_chapter
-                        links_to_update.append(link_instance)
-                else:
-                    links_to_create.append(
-                        TopicVideos(
-                            video=video_info,
-                            chapter=chapter_obj,
-                            order=order_for_chapter
-                        )
-                    )
-            
-            # Perform bulk operations
-            if links_to_create:
-                TopicVideos.objects.bulk_create(links_to_create)
-            
-            if links_to_update:
-                TopicVideos.objects.bulk_update(links_to_update, ['order'])
-            
-            chapter_ids_to_delete = current_chapter_links.keys() - received_chapter_ids
-            if chapter_ids_to_delete:
-                TopicVideos.objects.filter(
-                    video=video_info,
-                    chapter_id__in=chapter_ids_to_delete
-                ).delete()
 
         return video_info
     
@@ -1423,20 +1140,9 @@ class GenerateUploadSignedUrlSerializer(serializers.ModelSerializer) :
         return signed_url
 
 
-
-class TopicDropdownListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Topics
-        fields = ["id","name"]
-
 class ChapterDropdownListSerializer(serializers.ModelSerializer):
     topic_list = serializers.SerializerMethodField('get_topic_list')
-    
-    def get_topic_list(self, obj):
-        topic_list = ChapterTopics.objects.filter(chapter_id=obj.id).values_list('topic', flat=True)
-        chapter = Topics.objects.filter(id__in = topic_list).order_by("name")
-        return TopicDropdownListSerializer(chapter, many=True).data
-    
+
     class Meta:
         model = Chapters
         fields = ["id","name","topic_list"]
@@ -1451,16 +1157,6 @@ class UserMinimalSerializer(serializers.ModelSerializer):
 
 
 
-
-
-
-class TopicsHistorySerializer(serializers.ModelSerializer):
-    history_user = UserMinimalSerializer(read_only=True)
-    history_date = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
-
-    class Meta:
-        model = Topics.history.model 
-        fields = ['id',"history_id","history_change_reason","history_type","history_user","history_date"]
 
 
 class ChaptersHistorySerializer(serializers.ModelSerializer):

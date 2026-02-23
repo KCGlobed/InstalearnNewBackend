@@ -1,11 +1,10 @@
 from django.db import models
 
-class UserWatchedTopicVideos(models.Model):
+class UserLectureProgress(models.Model):
     course = models.ForeignKey('courses.Course', null=True, blank=True, on_delete=models.CASCADE)
     course_chapters = models.ForeignKey('courses.CourseChapters', null=True, blank=True, on_delete=models.CASCADE)
-    chapter_topic = models.ForeignKey('courses.ChapterTopics', null=True, blank=True, on_delete=models.CASCADE)
     user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
-    video = models.ForeignKey('courses.TopicVideos', null=True, blank=True, on_delete=models.CASCADE)
+    lecture_chapter_id = models.ForeignKey('courses.ChapterLectures', null=True, blank=True, on_delete=models.CASCADE)
     total_duration = models.IntegerField(default=0,null=True, blank=True)
     start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField(blank=True, null=True)
@@ -14,8 +13,8 @@ class UserWatchedTopicVideos(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = 'User Watched Chapter Videos'
-        verbose_name_plural = 'User Watched Chapter Videos'
+        verbose_name = 'User Lecture Progress'
+        verbose_name_plural = 'User Lecture Progress'
 
     def __str__(self):
         return '%s' % self.id
@@ -24,7 +23,7 @@ class UserWatchedTopicVideos(models.Model):
 class Notes(models.Model):
     user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
     course = models.ForeignKey('courses.Course', null=True, blank=True, on_delete=models.CASCADE)
-    chapter_video = models.ForeignKey('courses.TopicVideos', null=True, blank=True, on_delete=models.SET_NULL)
+    chapter_video = models.ForeignKey('courses.ChapterLectures', null=True, blank=True, on_delete=models.SET_NULL)
     note_type = models.CharField(max_length=255, null=True, blank=True,default="video")
     note_content = models.TextField(null=True, blank=True)
     duration = models.CharField(max_length=255, null=True, blank=True)
@@ -47,6 +46,22 @@ class UserCertificates(models.Model):
     class Meta:
         verbose_name = 'User Certificates'
         verbose_name_plural = 'User Certificates'
+        
+    def __str__(self):
+        return '%s' % self.id
+    
+
+
+class UserNotifications(models.Model):
+    user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
+    course = models.ForeignKey('courses.Course', null=True, blank=True, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'User Notifications'
+        verbose_name_plural = 'User Notifications'
         
     def __str__(self):
         return '%s' % self.id

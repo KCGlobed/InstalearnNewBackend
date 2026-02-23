@@ -16,134 +16,6 @@ from mini_lms.permissions import RoleOrPermissionCheck
 from mini_lms.pagination import CustomPageNumberPagination
 from rest_framework import filters
 
-class TopicsListingView(APIView):
-    renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_permission_or_roles(
-                              "topic_listing",
-                            [SuperAdmin]
-                        )]
-    pagination_class = CustomPageNumberPagination
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name']
-    ordering_fields = ['name', 'created_at', 'id', 'status'] 
-    def get(self, request, format=None):
-        
-        topics = Topics.objects.all()
-            
-        course_id = request.query_params.get('course_id')
-        chapter_id = request.query_params.get('chapter_id')
-        if course_id:
-            if chapter_id:
-                topic_list = ChapterTopics.objects.filter(chapter_id = chapter_id).values_list("topic",flat=True)
-                chapters = chapters.filter(id__in=topic_list)
-            else:
-                chapter_list = CourseChapters.objects.filter(course_id = course_id).values_list("chapter",flat=True)
-                topic_list = ChapterTopics.objects.filter(chapter_id__in = chapter_list).values_list("topic",flat=True)
-                chapters = chapters.filter(id__in=topic_list)
-        
-        status = request.query_params.get('status')
-        if status:
-            videos = videos.filter(status=status)
-
-        
-        search_filter = filters.SearchFilter()
-        topics = search_filter.filter_queryset(request, topics, self)
-
-        ordering_filter = filters.OrderingFilter()
-        topics = ordering_filter.filter_queryset(request, topics, self)
-
-        if not topics.ordered:
-            topics = topics.order_by('-id')
-
-        paginator = self.pagination_class()
-        page = paginator.paginate_queryset(topics, request, view=self)
-        serializer = TopicsSerializer(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
-    
-
-class TopicsListView(APIView):
-    renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
-    def get(self, request, format=None):
-        topic = Topics.objects.filter(status=True).order_by("-id")
-        serializer = TopicListSerializer(topic, many=True)
-        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
-        
-
-class CreateTopicView(APIView):
-    renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_permission_or_roles(
-                              "create_topic",
-                            [SuperAdmin]
-                        )]
-    def post(self, request, format=None):
-        serializer = CreateTopicSerializer(data = request.data)
-        if serializer.is_valid(raise_exception = True):
-            user  = serializer.save()
-            return success_response(message="Topic Created Successfully", data=TopicsSerializer(user).data, status_code=status.HTTP_200_OK)
-        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
-    
-
-class EditTopicView(APIView):
-    renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_topic",
-                            [SuperAdmin]
-                        )]
-    def post(self, request,  cid , format=None):
-        topic = Topics.objects.filter(id=cid).first()
-        if topic is None:
-            raise ValidationError("Invalid Topic ID!")
-        
-        serializer = EditTopicSerializer(topic, data = request.data, partial=True)
-        if serializer.is_valid(raise_exception = True):
-            user= serializer.save()
-            return success_response(message="Topic Updated Successfully", data=TopicsSerializer(user).data, status_code=status.HTTP_200_OK)
-        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
-    
-
-class UpdateTopicStatusView(APIView):
-    renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_topic",
-                            [SuperAdmin]
-                        )]
-    def post(self, request,  cid , format=None):
-        topic = Topics.objects.filter(id=cid).first()
-        if topic is None:
-            raise ValidationError("Invalid Topic ID!")
-        
-        serializer = ChangeTopicStatusSerializer(topic, data = request.data)
-        if serializer.is_valid(raise_exception = True):
-            user  = serializer.save()
-            return success_response(message="Topic Status Updated Successfully", data=TopicsSerializer(user).data, status_code=status.HTTP_200_OK)
-        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
-    
-
-class DeleteTopicView(APIView):
-    renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_permission_or_roles(
-                              "delete_topic",
-                            [SuperAdmin]
-                        )]
-    def delete(self, request, cid, format=None):
-        try:
-            course = Topics.objects.get(id = cid)
-            course.delete()
-            return success_response(message="Topic Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
-        except Topics.DoesNotExist:
-            return error_response(message="Topic not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)
-        
-
-
 
 class ChapterListingView(APIView):
     renderer_classes = [CourseRenderer]
@@ -308,26 +180,22 @@ class VideosListingView(APIView):
         course_id = request.query_params.get('course_id')
         subject_id = request.query_params.get('subject_id')
         chapter_id = request.query_params.get('chapter_id')
-        topic_id = request.query_params.get('topic_id')
         if course_id:
             if subject_id:
                 if chapter_id:
-                    if topic_id:
-                        videos = videos.filter(topicvideos__topic_id=topic_id)
-                    else:
-                        topic_list = ChapterTopics.objects.filter(chapter_id = chapter_id).values_list("topic",flat=True)
-                        topic_condition = Q(topicvideos__topic_id__in=topic_list)
-                        chapter_condition = Q(topicvideos__chapter_id=chapter_id)
-                        videos = videos.filter(topic_condition | chapter_condition).distinct()
+                    topic_list = Chapters.objects.filter(chapter_id = chapter_id).values_list("topic",flat=True)
+                    topic_condition = Q(topicvideos__topic_id__in=topic_list)
+                    chapter_condition = Q(topicvideos__chapter_id=chapter_id)
+                    videos = videos.filter(topic_condition | chapter_condition).distinct()
                 else:
                     chapter_list = CourseChapters.objects.filter(course_id = course_id).values_list("chapter",flat=True)
-                    topic_list = ChapterTopics.objects.filter(chapter_id__in = chapter_list).values_list("topic",flat=True)
+                    topic_list = Chapters.objects.filter(chapter_id__in = chapter_list).values_list("topic",flat=True)
                     topic_condition = Q(topicvideos__topic_id__in=topic_list)
                     chapter_condition = Q(topicvideos__chapter_id__in=chapter_list)
                     videos = videos.filter(topic_condition | chapter_condition).distinct()
             else:
                 chapter_list = CourseChapters.objects.filter(course_id__in = course_id).values_list("chapter",flat=True)
-                topic_list = ChapterTopics.objects.filter(chapter_id__in = chapter_list).values_list("topic",flat=True)
+                topic_list = Chapters.objects.filter(chapter_id__in = chapter_list).values_list("topic",flat=True)
                 topic_condition = Q(topicvideos__topic_id__in=topic_list)
                 chapter_condition = Q(topicvideos__chapter_id__in=chapter_list)
                 videos = videos.filter(topic_condition | chapter_condition).distinct()
