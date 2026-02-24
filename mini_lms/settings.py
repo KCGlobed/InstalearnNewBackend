@@ -48,7 +48,9 @@ INSTALLED_APPS = [
     "cms",
     "assessment",
     "questions",
-    "forums"
+    "forums",
+    "adminpanel.authentication",
+    "adminpanel.layout",
 ]
 
 MIDDLEWARE = [
@@ -222,6 +224,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 BASE_URL = "https://pro.kcglobed.com"
+STORAGE_URL = "https://storage.googleapis.com/static_files_backend/media/adminpanel/"
 
 # Google credentials from Google Cloud Console
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '187256667857-h90u4bc75ep3c7vlgihsludue2vimuco.apps.googleusercourses.com'
