@@ -1,22 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
     <title>{% block title %}Instalearn{% endblock %}</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <meta name="keyword" content="" />
+    <meta name="author" content="KCGLOBED" />
+    <link rel="shortcut icon" type="image/x-icon" href="{{ media_base_url }}/adminpanel/assets/images/logo/logo.png" />
+    <link rel="stylesheet" type="text/css" href="{{ media_base_url }}/adminpanel/assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="{{ media_base_url }}/adminpanel/assets/vendors/css/vendors.min.css" />
+    <link rel="stylesheet" type="text/css" href="{{ media_base_url }}/adminpanel/assets/vendors/css/daterangepicker.min.css" />
+    <link rel="stylesheet" type="text/css" href="{{ media_base_url }}/adminpanel/assets/css/theme.min.css" />
+
     </head>
 <body>
-    <header>
-            {% include 'includes/header.html' %}
+    {% include 'includes/sidebar.html' %}
 
-    </header>
+    {% include 'includes/header.html' %}
 
-    <main>
+    <main class="nxl-container">
         {% block content %}
         {% endblock %}
+
+        <footer class="footer">
+            {% include 'includes/footer.html' %}
+        </footer>
+
     </main>
 
-    <footer>
-        {% include 'includes/footer.html' %}
-    </footer>
+    <script src="{{ media_base_url }}/adminpanel/assets/vendors/js/vendors.min.js"></script>
+    <script src="{{ media_base_url }}/adminpanel/assets/vendors/js/daterangepicker.min.js"></script>
+    <script src="{{ media_base_url }}/adminpanel/assets/vendors/js/apexcharts.min.js"></script>
+    <script src="{{ media_base_url }}/adminpanel/assets/vendors/js/circle-progress.min.js"></script>
+    <script src="{{ media_base_url }}/adminpanel/assets/js/common-init.min.js"></script>
+    <script src="{{ media_base_url }}/adminpanel/assets/js/dashboard-init.min.js"></script>
+    <script src="{{ media_base_url }}/adminpanel/assets/js/theme-customizer-init.min.js"></script>
+    
 </body>
 </html>

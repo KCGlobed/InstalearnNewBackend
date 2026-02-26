@@ -20,6 +20,7 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', "in
 
 CSRF_TRUSTED_ORIGINS = ["https://instalearnnewbackend-114109844441.asia-south1.run.app"]
 
+ADMIN_URL = "https://instalearnnewbackend-114109844441.asia-south1.run.app"
 # Application definition
 
 INSTALLED_APPS = [
@@ -51,6 +52,7 @@ INSTALLED_APPS = [
     "forums",
     "adminpanel.authentication",
     "adminpanel.layout",
+    "adminpanel.course_app"
 ]
 
 MIDDLEWARE = [
@@ -78,6 +80,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+
+                'mini_lms.context_processors.global_settings',
             ],
         },
     },

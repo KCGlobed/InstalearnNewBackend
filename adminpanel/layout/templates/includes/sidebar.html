@@ -1,4 +1,103 @@
-{% extends "base.html" %}
-{% block sidebar %}
-<h1> Sidebar </h1>
-{% endblock %}
+<nav class="nxl-navigation">
+    <div class="navbar-wrapper">
+        <div class="m-header">
+            <a href="index.html" class="b-brand">
+                <!-- ========   change your logo hear   ============ -->
+                <img src="{{ media_base_url }}/adminpanel/assets/images/logo-full.svg" alt="" class="logo logo-lg" style="height:50px;"/>
+                <img src="{{ media_base_url }}/adminpanel/assets/images/logo/logo.png" alt="" class="logo logo-sm" />
+            </a>
+        </div>
+        <div class="navbar-content">
+            <ul class="nxl-navbar">
+                <li class="nxl-item nxl-caption">
+                    <label>Navigation</label>
+                </li>
+                <li class="nxl-item nxl-hasmenu">
+                    <a href="javascript:void(0);" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-airplay"></i></span>
+                        <span class="nxl-mtext">Dashboards</span><span class="nxl-arrow"></span>
+                    </a>
+                </li>
+                <li class="nxl-item nxl-hasmenu">
+                    <a href="javascript:void(0);" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-cast"></i></span>
+                        <span class="nxl-mtext">Reports</span><span class="nxl-arrow"><i class="feather-chevron-right"></i></span>
+                    </a>
+                    <ul class="nxl-submenu">
+                        <li class="nxl-item"><a class="nxl-link" href="javascript:void(0);">Subscription Report</a></li>
+                        <li class="nxl-item"><a class="nxl-link" href="javascript:void(0);">Students Report</a></li>
+                    </ul>
+                </li>
+                <li class="nxl-item nxl-hasmenu">
+                    <a href="javascript:void(0);" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-send"></i></span>
+                        <span class="nxl-mtext">Course Management</span><span class="nxl-arrow"><i class="feather-chevron-right"></i></span>
+                    </a>
+                    <ul class="nxl-submenu">
+                        <li class="nxl-item"><a class="nxl-link" href="javascript:void(0);">Manage Category</a></li>
+                        <li class="nxl-item"><a class="nxl-link" href="javascript:void(0);">Manage Chapters</a></li>
+                        <li class="nxl-item"><a class="nxl-link" href="javascript:void(0);">Manage Videos</a></li>
+                        <li class="nxl-item"><a class="nxl-link" href="javascript:void(0);">Manage Ebooks</a></li>
+                        <li class="nxl-item"><a class="nxl-link" href="javascript:void(0);">Manage Courses</a></li>
+                    </ul>
+                </li>
+                <li class="nxl-item nxl-hasmenu">
+                    <a href="javascript:void(0);" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-dollar-sign"></i></span>
+                        <span class="nxl-mtext">Payment</span><span class="nxl-arrow"><i class="feather-chevron-right"></i></span>
+                    </a>
+                    <ul class="nxl-submenu">
+                        <li class="nxl-item"><a class="nxl-link" href="javascript:void(0);">Payment</a></li>
+                    </ul>
+                </li>
+                <li class="nxl-item nxl-hasmenu">
+                    <a href="javascript:void(0);" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-users"></i></span>
+                        <span class="nxl-mtext">User Management</span><span class="nxl-arrow"><i class="feather-chevron-right"></i></span>
+                    </a>
+                    <ul class="nxl-submenu">
+                        <li class="nxl-item"><a class="nxl-link" href="javascript:void(0);">Students</a></li>
+                        <li class="nxl-item"><a class="nxl-link" href="javascript:void(0);">Instructors</a></li>
+                        <li class="nxl-item"><a class="nxl-link" href="javascript:void(0);">Staff Users</a></li>
+                    </ul>
+                </li>
+                <li class="nxl-item nxl-hasmenu">
+                    <a href="javascript:void(0);" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-alert-circle"></i></span>
+                        <span class="nxl-mtext">Content Management System</span><span class="nxl-arrow"><i class="feather-chevron-right"></i></span>
+                    </a>
+                    <ul class="nxl-submenu">
+                        <li class="nxl-item"><a class="nxl-link" href="javascript:void(0);">Landing Pages</a></li>
+                        <li class="nxl-item"><a class="nxl-link" href="javascript:void(0);">Partner Images</a></li>
+                    </ul>
+                </li>
+                <li class="nxl-item nxl-hasmenu">
+                    <a href="javascript:void(0);" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-settings"></i></span>
+                        <span class="nxl-mtext">System Setting</span><span class="nxl-arrow"><i class="feather-chevron-right"></i></span>
+                    </a>
+                    <ul class="nxl-submenu">
+                        <li class="nxl-item"><a class="nxl-link" href="projects.html">Payment Gategway</a></li>
+                        <li class="nxl-item"><a class="nxl-link" href="projects-view.html">General Setting</a></li>
+                    </ul>
+                </li>
+                <li class="nxl-item nxl-hasmenu">
+                    <a href="javascript:void(0);" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-layout"></i></span>
+                        <span class="nxl-mtext">Security & Access Control</span><span class="nxl-arrow"><i class="feather-chevron-right"></i></span>
+                    </a>
+                    <ul class="nxl-submenu">
+                        <li class="nxl-item"><a class="nxl-link" href="widgets-lists.html">Manage Permissions</a></li>
+                    </ul>
+                </li>
+                <li class="nxl-item nxl-hasmenu">
+                    <a href="javascript:void(0);" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-settings"></i></span>
+                        <span class="nxl-mtext">Support & Ticket Management </span>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</nav>
