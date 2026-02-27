@@ -10,4 +10,5 @@ urlpatterns = [
 
     #admin panel urls
     path('', include('adminpanel.authentication.urls')),
+    path('', include('adminpanel.course_app.urls')),
 ]

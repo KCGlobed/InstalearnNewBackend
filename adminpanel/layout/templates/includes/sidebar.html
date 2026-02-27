@@ -1,7 +1,7 @@
 <nav class="nxl-navigation">
     <div class="navbar-wrapper">
         <div class="m-header">
-            <a href="index.html" class="b-brand">
+            <a href="{% url 'dashboard' %}" class="b-brand">
                 <!-- ========   change your logo hear   ============ -->
                 <img src="{{ media_base_url }}/adminpanel/assets/images/logo-full.svg" alt="" class="logo logo-lg" style="height:50px;"/>
                 <img src="{{ media_base_url }}/adminpanel/assets/images/logo/logo.png" alt="" class="logo logo-sm" />
@@ -13,7 +13,7 @@
                     <label>Navigation</label>
                 </li>
                 <li class="nxl-item nxl-hasmenu">
-                    <a href="javascript:void(0);" class="nxl-link">
+                    <a href="{% url 'dashboard' %}" class="nxl-link">
                         <span class="nxl-micon"><i class="feather-airplay"></i></span>
                         <span class="nxl-mtext">Dashboards</span><span class="nxl-arrow"></span>
                     </a>
@@ -34,7 +34,8 @@
                         <span class="nxl-mtext">Course Management</span><span class="nxl-arrow"><i class="feather-chevron-right"></i></span>
                     </a>
                     <ul class="nxl-submenu">
-                        <li class="nxl-item"><a class="nxl-link" href="javascript:void(0);">Manage Category</a></li>
+                        <li class="nxl-item"><a class="nxl-link" href="{% url 'admin-manage-category' %}">Manage Category</a></li>
+                        <li class="nxl-item"><a class="nxl-link" href="{% url 'admin-manage-subcategory' %}">Manage SubCategory</a></li>
                         <li class="nxl-item"><a class="nxl-link" href="javascript:void(0);">Manage Chapters</a></li>
                         <li class="nxl-item"><a class="nxl-link" href="javascript:void(0);">Manage Videos</a></li>
                         <li class="nxl-item"><a class="nxl-link" href="javascript:void(0);">Manage Ebooks</a></li>

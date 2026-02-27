@@ -12,7 +12,23 @@
     <link rel="stylesheet" type="text/css" href="{{ media_base_url }}/adminpanel/assets/css/bootstrap.min.css" />
     <link rel="stylesheet" type="text/css" href="{{ media_base_url }}/adminpanel/assets/vendors/css/vendors.min.css" />
     <link rel="stylesheet" type="text/css" href="{{ media_base_url }}/adminpanel/assets/vendors/css/daterangepicker.min.css" />
+
+    <link rel="stylesheet" type="text/css" href="{{ media_base_url }}/adminpanel/assets/vendors/css/dataTables.bs5.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ media_base_url }}/adminpanel/assets/vendors/css/tagify.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ media_base_url }}/adminpanel/assets/vendors/css/tagify-data.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ media_base_url }}/adminpanel/assets/vendors/css/quill.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ media_base_url }}/adminpanel/assets/vendors/css/select2.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ media_base_url }}/adminpanel/assets/vendors/css/select2-theme.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Ladda/1.0.6/ladda-themeless.min.css">
+    
     <link rel="stylesheet" type="text/css" href="{{ media_base_url }}/adminpanel/assets/css/theme.min.css" />
+    <style>
+        .ladda-button {
+            border-radius: 0 0 0px 0px !important;
+        }
+
+
+    </style>
 
     </head>
 <body>
@@ -31,11 +47,35 @@
     </main>
 
     <script src="{{ media_base_url }}/adminpanel/assets/vendors/js/vendors.min.js"></script>
+    <script src="{{ media_base_url }}/adminpanel/assets/vendors/js/jquery.validate.min.js"></script>
     <script src="{{ media_base_url }}/adminpanel/assets/vendors/js/daterangepicker.min.js"></script>
     <script src="{{ media_base_url }}/adminpanel/assets/vendors/js/apexcharts.min.js"></script>
     <script src="{{ media_base_url }}/adminpanel/assets/vendors/js/circle-progress.min.js"></script>
+    <script src="{{ media_base_url }}/adminpanel/assets/vendors/js/dataTables.min.js"></script>
+    <script src="{{ media_base_url }}/adminpanel/assets/vendors/js/dataTables.bs5.min.js"></script>
+    <script src="{{ media_base_url }}/adminpanel/assets/vendors/js/tagify.min.js"></script>
+    <script src="{{ media_base_url }}/adminpanel/assets/vendors/js/tagify-data.min.js"></script>
+    <script src="{{ media_base_url }}/adminpanel/assets/vendors/js/quill.min.js"></script>
+    <script src="{{ media_base_url }}/adminpanel/assets/vendors/js/select2.min.js"></script>
+    <script src="{{ media_base_url }}/adminpanel/assets/vendors/js/select2-active.min.js"></script>
     <script src="{{ media_base_url }}/adminpanel/assets/js/common-init.min.js"></script>
-    <script src="{{ media_base_url }}/adminpanel/assets/js/dashboard-init.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Ladda/1.0.6/spin.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Ladda/1.0.6/ladda.min.js"></script>
+    
+
+    <script>
+        const t = Swal.mixin({
+            customClass: {
+                confirmButton: "btn btn-success m-1",
+                cancelButton: "btn btn-danger m-1"
+            },
+            buttonsStyling: !1
+        });
+    </script>
+    {% block scripts %}
+    {% endblock %}
+
+
     <script src="{{ media_base_url }}/adminpanel/assets/js/theme-customizer-init.min.js"></script>
     
 </body>

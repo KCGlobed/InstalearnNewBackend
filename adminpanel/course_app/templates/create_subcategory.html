@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Create New Category{% endblock %}
+
+{% block content %}
+
+    <div class="nxl-content">
+            <!-- [ page-header ] start -->
+            <div class="page-header">
+                <div class="page-header-left d-flex align-items-center">
+                    <div class="page-header-title">
+                        <h5 class="m-b-10">Create New SubCategory</h5>
+                    </div>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Manage SubCategory</a></li>
+                        <li class="breadcrumb-item">Create New SubCategory</li>
+                    </ul>
+                </div>
+                
+            </div>
+            <!-- [ page-header ] end -->
+            <!-- [ Main Content ] start -->
+            <div class="main-content">
+                <div class="row">
+                    <div class="col-8 offset-2">
+                        <div class="card stretch stretch-full">
+                            <div class="card-body">
+                                <div class="mb-4">
+                                    <h3>Create New SubCategory</h3>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label">Title <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" placeholder="Title" name="title" value="">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label">Parent Category <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="parent">
+                                        <option value="">Select Category</option>
+                                        <option value="lead">Lead</option>
+                                        <option value="coustomer">Coustomer</option>
+                                    </select>
+                                </div>
+                                <div class="d-flex justify-content-end gap-2 mt-3">
+                                    <a href="{% url 'admin-manage-category' %}" class="btn btn-md bg-soft-info text-info">Back</a>
+                                    <button id="add_row" class="btn btn-md btn-primary">Submit</button>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- [ Main Content ] end -->
+        </div>
+    
+
+{% endblock %}
+
+{% block scripts %}
+    
+
+{% endblock %}

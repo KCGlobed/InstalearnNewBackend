@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Category Management{% endblock %}
+
+{% block content %}
+
+    <div class="nxl-content">
+            <!-- [ page-header ] start -->
+            <div class="page-header">
+                <div class="page-header-left d-flex align-items-center">
+                    <div class="page-header-title">
+                        <h5 class="m-b-10">Manage Category</h5>
+                    </div>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+                        <li class="breadcrumb-item">Manage Category</li>
+                    </ul>
+                </div>
+                <div class="page-header-right ms-auto">
+                    <div class="page-header-right-items">
+                        <div class="d-flex d-md-none">
+                            <a href="javascript:void(0)" class="page-header-right-close-toggle">
+                                <i class="feather-arrow-left me-2"></i>
+                                <span>Back</span>
+                            </a>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 page-header-right-items-wrapper">
+                            <div class="dropdown">
+                                <a class="btn btn-icon btn-light-brand" data-bs-toggle="dropdown" data-bs-offset="0, 12" data-bs-auto-close="outside">
+                                    <i class="feather-paperclip"></i>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <a href="javascript:void(0);" class="dropdown-item">
+                                        <i class="bi bi-filetype-pdf me-3"></i>
+                                        <span>PDF</span>
+                                    </a>
+                                    <a href="javascript:void(0);" class="dropdown-item">
+                                        <i class="bi bi-filetype-csv me-3"></i>
+                                        <span>CSV</span>
+                                    </a>
+                                </div>
+                            </div>
+                            <a href="{% url 'admin-create-category' %}" class="btn btn-primary">
+                                <i class="feather-plus me-2"></i>
+                                <span>Create New Category</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="d-md-none d-flex align-items-center">
+                        <a href="javascript:void(0)" class="page-header-right-open-toggle">
+                            <i class="feather-align-right fs-20"></i>
+                        </a>
+                    </div>
+                </div>
+                
+            </div>
+            <!-- [ page-header ] end -->
+            <!-- [ Main Content ] start -->
+            <div class="main-content">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card stretch stretch-full">
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="proposalList">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Category Name</th>
+                                                <th>Date</th>
+                                                <th>Status</th>
+                                                <th class="text-end">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- [ Main Content ] end -->
+        </div>
+    
+
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        $(document).ready(function() {
+            var table = $('#proposalList').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "pageLength": 10,
+                "lengthMenu": [10, 20, 50, 100, 200, 500],
+                "ajax": {
+                    "url": "{% url 'admin-get-category-listing' %}",
+                    "type": "GET",
+                    "data": function (d) {
+                        d.category_filter = $('#categorySelect').val();
+                    }
+                },
+                "columns": [
+                    { 
+                        "data": "id",
+                        "render": function(data) {
+                            return `<a href="javascript:void(0);" class="fw-bold">#${data}</a>`;
+                        }
+                    },
+                    { "data": "name" },
+                    { "data": "date" },
+                    { 
+                        "data": "status",
+                        "render": function(data) {
+                            let sClass = data === true ? 'bg-soft-success text-success' : 'bg-soft-danger text-danger';
+                            let sText = data === true ? 'Active' : 'Inactive';
+                            return `<div class="badge ${sClass}">${sText}</div>`;
+                        }
+                    },
+                    { 
+                        "data": null,
+                        "orderable": false,
+                        "render": function (data, type, row) {
+                            return `
+                                <div class="hstack gap-2 justify-content-end">
+                                    <div class="dropdown">
+                                        <a href="javascript:void(0)" class="avatar-text avatar-md" data-bs-toggle="dropdown">
+                                            <i class="feather feather-more-horizontal"></i>
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item" href="/admin-create-new-category/${row.id}">
+                                                    <i class="feather feather-edit-3 me-3"></i><span>Edit</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item delete-record" href="javascript:void(0)" data-id="${row.id}">
+                                                    <i class="feather feather-trash-2 me-3"></i><span>Delete</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>`;
+                        }
+                    }
+                ],
+                "createdRow": function(row, data, dataIndex) {
+                    $(row).addClass('single-item'); // Matches your <tr class="single-item">
+                }
+            });
+
+            $(document).on('click', '.delete-record', function() {
+                const recordId = $(this).data('id');
+                const rowElement = $(this).closest('tr'); // To remove row from UI on success
+
+                t.fire({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, delete it!',
+                    showLoaderOnConfirm: true, // This adds a loader to the "Yes" button
+                    preConfirm: () => {
+                        // This is where the AJAX happens
+                        return $.ajax({
+                            url: `/admin-delete-category/${recordId}`, // Replace with your URL
+                            type: 'POST',
+                            data: {
+                                'csrfmiddlewaretoken': '{{ csrf_token }}'
+                            }
+                        }).done(response => {
+                            t.fire(
+                                'Deleted!',
+                                'The record has been deleted.',
+                                'success'
+                            );
+                            table.ajax.reload();
+                            return response;
+                        }).fail(error => {
+                            t.showValidationMessage(`Request failed: ${error.statusText}`);
+                        });
+                    },
+                    allowOutsideClick: () => !t.isLoading()
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        t.fire(
+                            'Deleted!',
+                            'The record has been deleted.',
+                            'success'
+                        );
+                        table.ajax.reload();
+                    }
+                });
+            });
+        });
+    </script>
+
+{% endblock %}
