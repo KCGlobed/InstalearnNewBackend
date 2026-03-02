@@ -149,13 +149,18 @@ def create_category(request, id=None):
         category_detail = Categories.objects.filter(id = id).first()
     if request.POST:
         request.session['data'] = request.POST
-        
-        category = Categories(
-            name = request.POST.get('name'),
-            description = request.POST.get('description'),
-            status = True
-        )
-        category.save()
+        if request.POST.get('id') is not None:
+            category = Categories.objects.filter(id=request.POST.get('id')).first()
+            category.name = request.POST.get('name')
+            category.description = request.POST.get('description')
+
+        else:
+            category = Categories(
+                name = request.POST.get('name'),
+                description = request.POST.get('description'),
+                status = True
+            )
+            category.save()
 
         return JsonResponse({
             "status": "success",
