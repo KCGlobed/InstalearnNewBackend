@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}SubCategory Management{% endblock %}
+{% block title %}Tags Management{% endblock %}
 
 {% block content %}
 
@@ -9,11 +9,11 @@
             <div class="page-header">
                 <div class="page-header-left d-flex align-items-center">
                     <div class="page-header-title">
-                        <h5 class="m-b-10">Manage SubCategory</h5>
+                        <h5 class="m-b-10">Manage Ebooks</h5>
                     </div>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
-                        <li class="breadcrumb-item">Manage SubCategory</li>
+                        <li class="breadcrumb-item">Manage Ebooks</li>
                     </ul>
                 </div>
                 <div class="page-header-right ms-auto">
@@ -40,9 +40,9 @@
                                     </a>
                                 </div>
                             </div>
-                            <a href="{% url 'admin-create-subcategory' %}" class="btn btn-primary">
+                            <a href="{% url 'admin-create-tags' %}" class="btn btn-primary">
                                 <i class="feather-plus me-2"></i>
-                                <span>Create New SubCategory</span>
+                                <span>Create New Ebooks</span>
                             </a>
                         </div>
                     </div>
@@ -66,15 +66,13 @@
                                         <thead>
                                             <tr>
                                                 <th>ID</th>
-                                                <th>Name</th>
-                                                <th>Parent Category</th>
+                                                <th>Ebooks Name</th>
                                                 <th>Date</th>
                                                 <th>Status</th>
                                                 <th class="text-end">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            
                                         </tbody>
                                     </table>
                                 </div>
@@ -98,7 +96,7 @@
                 "pageLength": 10,
                 "lengthMenu": [10, 20, 50, 100, 200, 500],
                 "ajax": {
-                    "url": "{% url 'admin-get-subcategory-listing' %}",
+                    "url": "{% url 'admin-get-ebooks-listing' %}",
                     "type": "GET",
                     "data": function (d) {
                         d.category_filter = $('#categorySelect').val();
@@ -112,7 +110,6 @@
                         }
                     },
                     { "data": "name" },
-                    { "data": "parent" },
                     { "data": "date" },
                     { 
                         "data": "status",
@@ -134,7 +131,7 @@
                                         </a>
                                         <ul class="dropdown-menu">
                                             <li>
-                                                <a class="dropdown-item" href="/admin-create-new-subcategory/${row.id}">
+                                                <a class="dropdown-item" href="/admin-create-new-tags/${row.id}">
                                                     <i class="feather feather-edit-3 me-3"></i><span>Edit</span>
                                                 </a>
                                             </li>
@@ -159,7 +156,7 @@
                 const rowElement = $(this).closest('tr'); // To remove row from UI on success
 
                 t.fire({
-                    title: 'Are you sure?',
+                    title: 'Are you sure? ',
                     text: "You won't be able to revert this!",
                     icon: 'warning',
                     showCancelButton: true,
@@ -170,7 +167,7 @@
                     preConfirm: () => {
                         // This is where the AJAX happens
                         return $.ajax({
-                            url: `/admin-delete-category/${recordId}`, // Replace with your URL
+                            url: `/admin-delete-tags/${recordId}`, // Replace with your URL
                             type: 'POST',
                             data: {
                                 'csrfmiddlewaretoken': '{{ csrf_token }}'
@@ -199,7 +196,6 @@
                     }
                 });
             });
-
         });
     </script>
 

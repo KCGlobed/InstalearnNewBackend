@@ -24,6 +24,20 @@ class Categories(SoftDeleteModel):
         return '%s' % self.id
     
 
+class Tags(SoftDeleteModel):
+    name = models.CharField(max_length=255, null=True, blank=True)
+    status = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Tags'
+        verbose_name_plural = 'Tags'
+        
+    def __str__(self):
+        return '%s' % self.name
+    
+
 class CourseLevel(models.IntegerChoices):
     All = 1, 'All'
     Beginner = 2, 'Beginner'
@@ -256,8 +270,8 @@ class CourseChapters(SoftDeleteModel):
 
 
 class ChapterBooks(SoftDeleteModel):
-    chapter = models.ForeignKey('Chapters', null=True, blank=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     book_file = models.FileField(storage=GoogleCloudPrivateMediaFileStorage(),upload_to='mini_lms/pdfs/', null=True, blank=True)
     status = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

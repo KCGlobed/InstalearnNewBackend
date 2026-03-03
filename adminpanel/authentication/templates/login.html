@@ -16,7 +16,7 @@
                             <h4 class="fs-13 fw-bold mb-2">Login to your account</h4>
                             <p class="fs-12 fw-medium text-muted">Thank you for get back <strong>Instalearn</strong>
                             </p>
-                            <form action="{% url 'login' %}" enctype="multipart/form-data" id="signup-form" class="w-100 mt-4 pt-2" method="POST">
+                            <form action="{% url 'login' %}" id="signup-form" class="w-100 mt-4 pt-2" method="POST">
                                 {% csrf_token %}
                                 <div class="mb-4">
                                     <input type="email" class="form-control" placeholder="Enter Email" name="email" required>
@@ -52,7 +52,7 @@
                                     </div>
                                 </div>
                                 <div class="mt-5">
-                                    <button type="submit" class="btn btn-lg btn-primary w-100">Login</button>
+                                    <button type="submit" class="btn btn-lg btn-primary w-100" id="loginSubmit">Login</button>
                                 </div>
                             </form>
                             
@@ -71,6 +71,20 @@
 
 {% block scripts %}
     
-    
+    <script>
+       $(document).ready(function () {
+        
+            $("#signup-form").validate({
+                errorClass: "error text-danger",
+                submitHandler: function (form, event) {
+                    var l = Ladda.create(document.querySelector('#loginSubmit'));
+                    l.start();
+                }
+            });
+
+        });
+        
+
+    </script>
 
 {% endblock %}

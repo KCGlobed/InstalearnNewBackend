@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Create New Category{% endblock %}
+{% block title %}Create & Update Ebook{% endblock %}
 
 {% block content %}
 
@@ -11,21 +11,21 @@
                     <div class="page-header-title">
                         <h5 class="m-b-10">
                             {% if category_detail %} 
-                                Update Category
+                                Update Ebook
                             {% else %}
-                                Create New Category
+                                Create New Ebook
                             {% endif %}
                         </h5>
                     </div>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
-                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Manage Category</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'admin-manage-ebooks' %}">Manage Ebooks</a></li>
                         <li class="breadcrumb-item">
                             
                             {% if category_detail %} 
-                                Update Category
+                                Update Ebook
                             {% else %}
-                                Create New Category
+                                Create New Ebook
                             {% endif %}
 
                         </li>
@@ -42,9 +42,9 @@
                             <div class="card-body">
                                 <div class="mb-4">
                                     {% if category_detail %} 
-                                        <h3>Update Category</h3>
+                                        <h3>Update Ebook</h3>
                                     {% else %}
-                                        <h3>Create New Category</h3>
+                                        <h3>Create New Ebook</h3>
                                     {% endif%}
                                     
                                 </div>
