@@ -114,10 +114,21 @@
                     { "data": "date" },
                     { 
                         "data": "status",
-                        "render": function(data) {
-                            let sClass = data === true ? 'bg-soft-success text-success' : 'bg-soft-danger text-danger';
-                            let sText = data === true ? 'Active' : 'Inactive';
-                            return `<div class="badge ${sClass}">${sText}</div>`;
+                        "render": function(data, type, row) {
+                            // Check if the status is true/active to mark the switch as 'checked'
+                            let checked = data === true ? 'checked' : '';
+                            
+                            return `
+                                <div class="form-check form-switch form-switch-sm ps-5">
+                                    <input class="form-check-input c-pointer status-switch" 
+                                        type="checkbox" 
+                                        data-id="${row.id}" 
+                                        id="statusSwitch${row.id}" 
+                                        ${checked}>
+                                    <label class="form-check-label fw-500 text-dark c-pointer" for="statusSwitch${row.id}">
+                                        ${data === true ? 'Active' : 'Inactive'}
+                                    </label>
+                                </div>`;
                         }
                     },
                     { 
@@ -151,6 +162,37 @@
                     $(row).addClass('single-item'); // Matches your <tr class="single-item">
                 }
             });
+            
+            $(document).on('change', '.status-switch', function() {
+                var checkbox = $(this);
+                var categoryId = checkbox.data('id');
+                var isChecked = checkbox.is(':checked');
+                var label = checkbox.next('label');
+
+                // Update label immediately for better UX
+                label.text(isChecked ? 'Active' : 'Inactive');
+
+                $.ajax({
+                    url: "{% url 'admin-update-category-status' %}", // Create this URL/View
+                    type: "POST",
+                    data: {
+                        'id': categoryId,
+                        'status': isChecked,
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    },
+                    success: function(response) {
+                        // Optional: Show a small toast notification
+                        console.log("Status updated successfully");
+                    },
+                    error: function() {
+                        // Revert the switch if the server fails
+                        checkbox.prop('checked', !isChecked);
+                        label.text(!isChecked ? 'Active' : 'Inactive');
+                        alert("Failed to update status.");
+                    }
+                });
+            });
+
 
             $(document).on('click', '.delete-record', function() {
                 const recordId = $(this).data('id');

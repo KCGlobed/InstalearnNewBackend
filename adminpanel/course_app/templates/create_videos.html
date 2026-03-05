@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Create & Update Video{% endblock %}
+
+{% block content %}
+    <div class="nxl-content">
+        <div class="page-header">
+            <div class="page-header-left d-flex align-items-center">
+                <div class="page-header-title">
+                    <h5 class="m-b-10">
+                        {% if video_detail %} Update Video {% else %} Create New Video {% endif %}
+                    </h5>
+                </div>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'admin-manage-videos' %}">Manage Videos</a></li>
+                    <li class="breadcrumb-item">{% if video_detail %} Update {% else %} Create {% endif %}</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="row">
+                <div class="col-8 offset-2">
+                    <div class="card stretch stretch-full">
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <h3>{% if video_detail %} Update Video {% else %} Create New Video {% endif %}</h3>
+                            </div>
+                            
+                            <form id="videoForm" method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="id" id="video_id" value="{% if video_detail %}{{video_detail.id}}{% endif%}">
+                                
+                                <div class="mb-4">
+                                    <label class="form-label">Title <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="name" id="name" value="{% if video_detail %}{{video_detail.name}}{% endif%}" required>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label">Description <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" name="description" id="description" required>{% if video_detail %}{{video_detail.description}}{% endif%}</textarea>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label">Video File {% if not video_detail %}<span class="text-danger">*</span>{% endif %}</label>
+                                    <input type="file" class="form-control" id="video_file" accept="video/mp4,video/x-m4v,video/*">
+                                    <small class="text-muted">Direct upload to storage for better performance.</small>
+                                </div>
+
+                                <div id="progressContainer" class="mb-4 d-none">
+                                    <label id="progressLabel">Uploading: 0%</label>
+                                    <div class="progress" style="height: 20px;">
+                                        <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2 mt-3">
+                                    <a href="{% url 'admin-manage-videos' %}" class="btn bg-soft-info text-info">Back</a>
+                                    <button type="submit" class="btn btn-primary ladda-button" data-style="expand-right" id="saveBtn">Submit</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function () {
+    // Note the use of "async" before the function keyword
+    $("#videoForm").validate({
+        errorClass: "error text-danger",
+        submitHandler: async function (form, event) {
+            event.preventDefault();
+            
+            const fileInput = document.getElementById('video_file');
+            const file = fileInput.files[0];
+            const btn = Ladda.create(document.querySelector('#saveBtn'));
+            const videoId = $("#video_id").val();
+            
+            // Basic Validation
+            if (!file && !videoId) {
+                alert("Please select a video file.");
+                return;
+            }
+
+            btn.start();
+
+            try {
+                let finalVideoUrl = "";
+
+                // 1. Upload to Cloud if a new file is selected
+                if (file) {
+                    $("#progressContainer").removeClass("d-none");
+                    
+                    // Fetch Signed URL from your Django View
+                    const signResponse = await $.ajax({
+                        url: "{% url 'admin-get-signed-url' %}",
+                        type: "POST",
+                        data: {
+                            filename: file.name,
+                            filetype: file.type,
+                            csrfmiddlewaretoken: '{{ csrf_token }}'
+                        }
+                    });
+
+                    // Direct Upload to GCS using XHR (to track progress)
+                    await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open("PUT", signResponse.signed_url, true);
+                        xhr.setRequestHeader("Content-Type", file.type);
+
+                        xhr.upload.onprogress = (e) => {
+                            if (e.lengthComputable) {
+                                const percent = Math.round((e.loaded / e.total) * 100);
+                                $("#progressBar").css("width", percent + "%");
+                                $("#progressLabel").text("Uploading: " + percent + "%");
+                            }
+                        };
+
+                        xhr.onload = () => (xhr.status === 200 || xhr.status === 204) ? resolve() : reject();
+                        xhr.onerror = () => reject();
+                        xhr.send(file);
+                    });
+
+                    // Use the public_url returned from your Django signed-url view
+                    finalVideoUrl = signResponse.public_url; 
+                }
+
+                // 2. Save metadata to your Django Backend
+                const postData = {
+                    id: videoId,
+                    name: $("#name").val(),
+                    description: $("#description").val(),
+                    video_url: finalVideoUrl, 
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                };
+
+                await $.ajax({
+                    url: "{% url 'admin-create-videos' %}",
+                    type: "POST",
+                    data: postData,
+                    success: function(response) {
+                        t.fire("Success!", response.message, "success");
+                        if (!videoId) form.reset();
+                        $("#progressContainer").addClass("d-none");
+                    }
+                });
+
+            } catch (error) {
+                console.error("Upload Error:", error);
+                t.fire("Error!", "Something went wrong during the upload.", "error");
+            } finally {
+                btn.stop();
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -10,7 +10,7 @@
                 <div class="page-header-left d-flex align-items-center">
                     <div class="page-header-title">
                         <h5 class="m-b-10">
-                            {% if category_detail %} 
+                            {% if ebook_detail %} 
                                 Update Ebook
                             {% else %}
                                 Create New Ebook
@@ -22,7 +22,7 @@
                         <li class="breadcrumb-item"><a href="{% url 'admin-manage-ebooks' %}">Manage Ebooks</a></li>
                         <li class="breadcrumb-item">
                             
-                            {% if category_detail %} 
+                            {% if ebook_detail %} 
                                 Update Ebook
                             {% else %}
                                 Create New Ebook
@@ -41,26 +41,31 @@
                         <div class="card stretch stretch-full">
                             <div class="card-body">
                                 <div class="mb-4">
-                                    {% if category_detail %} 
+                                    {% if ebook_detail %} 
                                         <h3>Update Ebook</h3>
                                     {% else %}
                                         <h3>Create New Ebook</h3>
                                     {% endif%}
                                     
                                 </div>
-                                <form id="categoryForm" method="POST" >
+                                <form id="categoryForm" method="POST" enctype="multipart/form-data">
                                     {% csrf_token %}
-                                    <input type="hidden" name="id" value="{% if category_detail %}{{category_detail.id}}{% endif%}">
+                                    <input type="hidden" name="id" value="{% if ebook_detail %}{{ebook_detail.id}}{% endif%}">
                                     <div class="mb-4">
                                         <label class="form-label">Title <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" placeholder="Title" name="name" value="{% if category_detail %}{{category_detail.name}}{% endif%}" required>
+                                        <input type="text" class="form-control" placeholder="Title" name="name" value="{% if ebook_detail %}{{ebook_detail.name}}{% endif%}" required>
                                     </div>
                                     <div class="mb-4">
                                         <label class="form-label">Description <span class="text-danger">*</span></label>
-                                        <textarea type="text" class="form-control" placeholder="Description" name="description" value="" required>{% if category_detail %}{{category_detail.description}}{% endif%}</textarea>
+                                        <textarea type="text" class="form-control" placeholder="Description" name="description" value="" required>{% if ebook_detail %}{{ebook_detail.description}}{% endif%}</textarea>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="form-label">Book File <span class="text-danger">*</span></label>
+                                        <input type="file" class="form-control" placeholder="eBook" name="book_file" accept="application/pdf"
+                                        {% if not ebook_detail %} required {% endif %}>
                                     </div>
                                     <div class="d-flex justify-content-end gap-2 mt-3">
-                                        <a href="{% url 'admin-manage-category' %}" class="btn bg-soft-info text-info">Back</a>
+                                        <a href="{% url 'admin-manage-ebooks' %}" class="btn bg-soft-info text-info">Back</a>
                                         <button tyep="submit" class="btn btn-primary ladda-button" data-style="expand-right" id="saveCategoryBtn">Submit</button>
                                     </div>
                                 </form>
@@ -89,15 +94,20 @@
                     var l = Ladda.create(document.querySelector('#saveCategoryBtn'));
                     l.start();
 
+                    // 1. Create FormData object from the form element
+                    var formData = new FormData(form);
+
                     $.ajax({
-                        url: "{% url 'admin-create-category' %}",
+                        url: "{% url 'admin-create-ebooks' %}",
                         type: "POST",
-                        data: $(form).serialize(), 
+                        data: formData, // 2. Use the FormData object here
+                        processData: false,  // 3. Tell jQuery NOT to process the data
+                        contentType: false,  // 4. Tell jQuery NOT to set contentType
                         success: function (response) {
                             t.fire("Success!", response.message, "success");
-                            {% if not category_detail %}
+                            {% if not ebook_detail %}
                                 form.reset();
-                            {% endif%}
+                            {% endif %}
                         },
                         error: function () {
                             t.fire("Error!", "Something went wrong.", "error");
