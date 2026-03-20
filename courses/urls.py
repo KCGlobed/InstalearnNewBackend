@@ -4,7 +4,7 @@ from courses.views import *
 urlpatterns = [
     
     # Manage Category SubCategory & Tags APIs
-    path('get-tags-listing/', TagsListingView.as_view(), name="tags-listing"),
+    path('get-tags-listing/', TagsListingView.as_view(), name="tags-listing"), 
     path('create-tags/', CreateTagsView.as_view(), name="create-tags"),
     path('edit-tags/<int:cid>', EditTagsView.as_view(), name="edit-tags"),
     path('update-tags-status/<int:cid>', UpdateTagsStatusView.as_view(), name="update-tags-status"),
