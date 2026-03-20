@@ -176,31 +176,7 @@ class VideosListingView(APIView):
     def get(self, request, format=None):
         
         videos = Videos.objects.all()
-        
-        course_id = request.query_params.get('course_id')
-        subject_id = request.query_params.get('subject_id')
-        chapter_id = request.query_params.get('chapter_id')
-        if course_id:
-            if subject_id:
-                if chapter_id:
-                    topic_list = Chapters.objects.filter(chapter_id = chapter_id).values_list("topic",flat=True)
-                    topic_condition = Q(topicvideos__topic_id__in=topic_list)
-                    chapter_condition = Q(topicvideos__chapter_id=chapter_id)
-                    videos = videos.filter(topic_condition | chapter_condition).distinct()
-                else:
-                    chapter_list = CourseChapters.objects.filter(course_id = course_id).values_list("chapter",flat=True)
-                    topic_list = Chapters.objects.filter(chapter_id__in = chapter_list).values_list("topic",flat=True)
-                    topic_condition = Q(topicvideos__topic_id__in=topic_list)
-                    chapter_condition = Q(topicvideos__chapter_id__in=chapter_list)
-                    videos = videos.filter(topic_condition | chapter_condition).distinct()
-            else:
-                chapter_list = CourseChapters.objects.filter(course_id__in = course_id).values_list("chapter",flat=True)
-                topic_list = Chapters.objects.filter(chapter_id__in = chapter_list).values_list("topic",flat=True)
-                topic_condition = Q(topicvideos__topic_id__in=topic_list)
-                chapter_condition = Q(topicvideos__chapter_id__in=chapter_list)
-                videos = videos.filter(topic_condition | chapter_condition).distinct()
 
-        
         status = request.query_params.get('status')
         if status:
             videos = videos.filter(status=status)
@@ -235,6 +211,65 @@ class ViewVideoDetailView(APIView):
         serializer = ViewVideoDetailSerializer(video)
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
+
+class UploadVideoView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_chapter_video",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, format=None):
+
+        info = json.loads(os.environ.get("GOOGLE_CREDENTIALS_JSON"))
+        credentials = service_account.Credentials.from_service_account_info(info)
+
+        storage_client = storage.Client(credentials=credentials, project=credentials.project_id)
+
+        bucket_name = settings.GS_BUCKET_NAME
+        bucket = storage_client.bucket(bucket_name)
+        bucket.cors = [
+            {
+                "origin": ["*"],
+                "responseHeader": [
+                    "Content-Type",
+                    "x-goog-resumable"],
+                "method": ['PUT', 'POST'],
+                "maxAgeSeconds": 36000
+            }
+        ]
+        bucket.patch()
+
+        current_GMT = time.gmtime()
+        ts = calendar.timegm(current_GMT)
+        unique_file_name = f"{ts}.mp4"
+        
+        path = "mini_lms/videos"
+        blob_path = f"media/{path}/{unique_file_name}"
+        blob = bucket.blob(blob_path)
+
+        content_type = 'video/mp4'
+
+        try:
+            # Generate the signed URL
+            signed_url = blob.generate_signed_url(
+                version='v4',
+                expiration=36000, # 1 hour is usually plenty for an upload start
+                method='PUT',
+                content_type=content_type
+            )
+
+            # This is the final URL where the file will live
+            public_url = f"https://storage.googleapis.com/{bucket_name}/{blob_path}"
+
+            return success_response(message="Video Created Successfully", data={
+                'signed_url': signed_url,
+                "video_file_url": path+"/"+unique_file_name
+            }, status_code=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return error_response(message="failed", data = str(e), status_code=status.HTTP_400_BAD_REQUEST)
+            
 
 class UploadVideoView(APIView):
     renderer_classes = [CourseRenderer]
@@ -324,7 +359,36 @@ class DeleteVideoView(APIView):
             return success_response(message="Video Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
         except Videos.DoesNotExist:
             return error_response(message="Video not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+
+
+class TagsListingView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "tags_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
+    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    def get(self, request, format=None):
+        category = Tags.objects.all()
         
+        search_filter = filters.SearchFilter()
+        category = search_filter.filter_queryset(request, category, self)
+
+        ordering_filter = filters.OrderingFilter()
+        category = ordering_filter.filter_queryset(request, category, self)
+
+        if not category.ordered:
+            category = category.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(category, request, view=self)
+        serializer = TagsListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+     
 
 class CategoryListingView(APIView):
     renderer_classes = [CourseRenderer]
@@ -338,7 +402,36 @@ class CategoryListingView(APIView):
     search_fields = ['name']
     ordering_fields = ['name', 'created_at', 'id', 'status'] 
     def get(self, request, format=None):
-        category = Categories.objects.all()
+        category = Categories.objects.filter(parent__isnull = True)
+        
+        search_filter = filters.SearchFilter()
+        category = search_filter.filter_queryset(request, category, self)
+
+        ordering_filter = filters.OrderingFilter()
+        category = ordering_filter.filter_queryset(request, category, self)
+
+        if not category.ordered:
+            category = category.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(category, request, view=self)
+        serializer = CategorySerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+class SubCategoryListingView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "subcategory_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
+    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    def get(self, request, format=None):
+        category = Categories.objects.filter(parent__isnull = False)
         
         search_filter = filters.SearchFilter()
         category = search_filter.filter_queryset(request, category, self)
@@ -355,6 +448,74 @@ class CategoryListingView(APIView):
         return paginator.get_paginated_response(serializer.data)
     
     
+class CreateTagsView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_tag",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = CreateTagsSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Tag Created Successfully", data=TagsListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class EditTagsView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_tag",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = Tags.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Tag ID!")
+        
+        serializer = EditTagsSerializer(category, data = request.data, partial=True)
+        if serializer.is_valid(raise_exception = True):
+            user= serializer.save()
+            return success_response(message="Tag Updated Successfully", data=TagsListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class UpdateTagsStatusView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_tag",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = Tags.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Tag ID!")
+        
+        serializer = ChangeTagStatusSerializer(category, data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Tag Status Updated Successfully", data=CategorySerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class DeleteTagsView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "delete_Tag",
+                            [SuperAdmin]
+                        )]
+    def delete(self, request, cid, format=None):
+        try:
+            course = Tags.objects.get(id = cid)
+            course.delete()
+            return success_response(message="Tags Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
+        except Tags.DoesNotExist:
+            return error_response(message="Tags not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+        
 
 class CreateCategoryView(APIView):
     renderer_classes = [CourseRenderer]
@@ -388,6 +549,41 @@ class EditCategoryView(APIView):
             user= serializer.save()
             return success_response(message="Category Updated Successfully", data=CategorySerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class CreateSubCategoryView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_category",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = CreateSubCategorySerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Category Created Successfully", data=CategorySerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class EditSubCategoryView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_category",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = Categories.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Category ID!")
+        
+        serializer = EditSubCategorySerializer(category, data = request.data, partial=True)
+        if serializer.is_valid(raise_exception = True):
+            user= serializer.save()
+            return success_response(message="Category Updated Successfully", data=CategorySerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
     
 
 class UpdateCategoryStatusView(APIView):

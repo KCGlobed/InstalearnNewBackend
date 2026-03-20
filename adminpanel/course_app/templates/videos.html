@@ -142,7 +142,7 @@
                                         </a>
                                         <ul class="dropdown-menu">
                                             <li>
-                                                <a class="dropdown-item" href="/admin-create-new-ebooks/${row.id}">
+                                                <a class="dropdown-item" href="/admin-create-new-videos/${row.id}">
                                                     <i class="feather feather-edit-3 me-3"></i><span>Edit</span>
                                                 </a>
                                             </li>
@@ -172,7 +172,7 @@
                 label.text(isChecked ? 'Active' : 'Inactive');
 
                 $.ajax({
-                    url: "{% url 'admin-update-ebook-status' %}", // Create this URL/View
+                    url: "{% url 'admin-update-video-status' %}", // Create this URL/View
                     type: "POST",
                     data: {
                         'id': categoryId,
@@ -208,7 +208,7 @@
                     preConfirm: () => {
                         // This is where the AJAX happens
                         return $.ajax({
-                            url: `/admin-delete-ebooks/${recordId}`, // Replace with your URL
+                            url: `/admin-delete-video/${recordId}`, // Replace with your URL
                             type: 'POST',
                             data: {
                                 'csrfmiddlewaretoken': '{{ csrf_token }}'

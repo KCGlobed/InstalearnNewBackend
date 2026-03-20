@@ -44,10 +44,11 @@
                                 
                                 <div class="mb-4">
                                     <label class="form-label">Video File {% if not video_detail %}<span class="text-danger">*</span>{% endif %}</label>
-                                    <input type="file" class="form-control" id="video_file" accept="video/mp4,video/x-m4v,video/*">
-                                    <small class="text-muted">Direct upload to storage for better performance.</small>
+                                    <input type="file" class="form-control" id="video_file" accept="video/mp4,video/x-m4v,video/*" {% if not video_detail %}  required {% endif %}>
+                                    {% if video_detail %} <a class="text-muted" href="{{video_detail.video_file.url}}">Click Here to view Uploaded Video.</a> {% endif %}
+                                    
                                 </div>
-
+                                
                                 <div id="progressContainer" class="mb-4 d-none">
                                     <label id="progressLabel">Uploading: 0%</label>
                                     <div class="progress" style="height: 20px;">
@@ -82,9 +83,26 @@ $(document).ready(function () {
             const btn = Ladda.create(document.querySelector('#saveBtn'));
             const videoId = $("#video_id").val();
             
+            console.log(file);
+            console.log(videoId);
             // Basic Validation
-            if (!file && !videoId) {
-                alert("Please select a video file.");
+            if (file == undefined && videoId) {
+                const postData = {
+                    id: videoId,
+                    name: $("#name").val(),
+                    description: $("#description").val(),
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                };
+
+                await $.ajax({
+                    url: "{% url 'admin-create-videos' %}",
+                    type: "POST",
+                    data: postData,
+                    success: function(response) {
+                        t.fire("Success!", response.message, "success");
+                        $("#progressContainer").addClass("d-none");
+                    }
+                });
                 return;
             }
 
@@ -95,6 +113,18 @@ $(document).ready(function () {
 
                 // 1. Upload to Cloud if a new file is selected
                 if (file) {
+                    
+                    videoDuration = await new Promise((resolve) => {
+                        const video = document.createElement('video');
+                        video.preload = 'metadata';
+                        video.onloadedmetadata = function () {
+                            window.URL.revokeObjectURL(video.src);
+                            resolve(Math.round(video.duration)); // Returns duration in seconds
+                        };
+                        video.onerror = () => resolve(0); // Fallback if file is unreadable
+                        video.src = URL.createObjectURL(file);
+                    });
+                    
                     $("#progressContainer").removeClass("d-none");
                     
                     // Fetch Signed URL from your Django View
@@ -128,7 +158,7 @@ $(document).ready(function () {
                     });
 
                     // Use the public_url returned from your Django signed-url view
-                    finalVideoUrl = signResponse.public_url; 
+                    finalVideoUrl = signResponse.video_file_url; 
                 }
 
                 // 2. Save metadata to your Django Backend
@@ -137,6 +167,7 @@ $(document).ready(function () {
                     name: $("#name").val(),
                     description: $("#description").val(),
                     video_url: finalVideoUrl, 
+                    duration: videoDuration,
                     csrfmiddlewaretoken: '{{ csrf_token }}'
                 };
 

@@ -109,7 +109,7 @@ class CourseCategories(SoftDeleteModel):
 
 class CourseTags(SoftDeleteModel):
     course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
-    name = models.CharField(max_length=255, null=True, blank=True)
+    tags = models.ForeignKey('Tags', null=True, blank=True, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

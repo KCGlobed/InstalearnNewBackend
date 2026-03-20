@@ -19,6 +19,49 @@ from rest_framework import filters
 
 
 
+class GetHomepageCategoryListing(APIView):
+    renderer_classes = [CourseRenderer]
+    def get(self, request, format=None):
+        category = Categories.objects.filter(
+                            status=True, 
+                            parent__isnull=True
+                        ).order_by('?')[:12]
+        serializer = HomepageCategorySerializer(category, many=True)
+        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class GetHomepageTagsListing(APIView):
+    renderer_classes = [CourseRenderer]
+    def get(self, request, format=None):
+        category = Tags.objects.filter(
+                            status=True,
+                        ).order_by('?')[:6]
+        serializer = HomepageTagsSerializer(category, many=True)
+        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class GetHomepageTagWiseCoursesListing(APIView):
+    renderer_classes = [CourseRenderer]
+    def get(self, request, id=None):
+        category = CourseTags.objects.filter(
+                            tags__status=True,
+                            tags_id = id,
+                            course__status=True,
+                        ).order_by('?')[:10]
+        serializer = HomepageTagWiseCoursesSerializer(category, many=True)
+        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class GetHomepageRecentCoursesListing(APIView):
+    renderer_classes = [CourseRenderer]
+    def get(self, request, id=None):
+        category = Course.objects.filter(
+                            status=True
+                        ).order_by('created_by')[:4]
+        serializer = HomepageCourseDetailSerializer(category, many=True)
+        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
 class GetCourseCategory(APIView):
     renderer_classes = [CourseRenderer]
     def get(self, request, format=None):

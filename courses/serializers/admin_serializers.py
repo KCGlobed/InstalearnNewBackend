@@ -7,6 +7,9 @@ import os
 from django.conf import settings
 from google.cloud import storage
 client = settings.GS_CREDENTIALS
+import json
+from google.oauth2 import service_account
+
 from google.cloud.video.transcoder_v1 import TranscoderServiceClient
 import calendar
 import time
@@ -122,17 +125,9 @@ class SubjectChapterInfoSerializer(serializers.ModelSerializer):
 
 
 class VideosSerializer(serializers.ModelSerializer):
-    chapter_detail = serializers.SerializerMethodField('get_chapter_detail')
-    topic_detail = serializers.SerializerMethodField('get_topic_detail')
-    
-    def get_chapter_detail(self, obj):
-        chapter_list = Videos.objects.only("id","chapter").select_related("chapter").filter(video=obj, topic__isnull=True).values_list("chapter",flat=True)
-        category = Chapters.objects.only("id","name").filter(id__in = chapter_list)
-        return ChaptersSerializer(category,many=True).data
-    
     class Meta:
         model = Videos
-        fields = ["id","name","video_duration","chapter_detail","topic_detail","status","created_at","include_in_reference"]
+        fields = ["id","name","video_duration","status","created_at","include_in_reference"]
 
 
 
@@ -153,77 +148,56 @@ class VideoTopicInfoSerializer(serializers.ModelSerializer):
 
 
 class ViewVideoDetailSerializer(serializers.ModelSerializer):
-    chapter_topic_info = serializers.SerializerMethodField('get_chapter_topic_info')
-    
-    def get_chapter_topic_info(self, obj):
-        category = Videos.objects.filter(video_id=obj.id).order_by("order")
-        return VideoTopicInfoSerializer(category, many=True).data
-    
     class Meta:
         model = Videos
-        fields = ["id","uuid","name","video_file","video_caption","transcoded_video","video_duration","status","is_uploaded","is_completed","created_at","chapter_topic_info","signed_url","include_in_reference"]
+        fields = ["id","uuid","name","video_file","video_caption","transcoded_video","video_duration","status","is_uploaded","is_completed","created_at","include_in_reference"]
 
 
 class CreateVideoSerializer(serializers.ModelSerializer) :
     name = serializers.CharField(max_length = 255, required=True)
     description = serializers.CharField(required=False, allow_blank=True)
-    topic_id = serializers.ListField(
-        child=serializers.IntegerField(), required=False, allow_empty=True
-    )
-    chapter_id = serializers.ListField(
-        child=serializers.IntegerField(), required=False, allow_empty=True
-    )
     duration = serializers.IntegerField(required=True)
     include_in_reference = serializers.BooleanField(required=True)
 
     class Meta:
         model = Videos
-        fields = ['name',"topic_id","duration","description","chapter_id","include_in_reference"]
+        fields = ['name',"duration","description","include_in_reference"]
     
     def validate(self, data):
-        topic_ids = data.get('topic_id')
-        chapter_ids = data.get('chapter_id')
-
-        # Check if either topic_id or chapter_id is provided
-        if not topic_ids and not chapter_ids:
-            raise serializers.ValidationError("Either 'topic_id' or 'chapter_id' is required.")
-
-        # If chapter_id is provided, validate it
-        if chapter_ids:
-            data['chapter_id'] = self._validate_list(chapter_ids, 'Chapter', Chapters)
-
         return data
-
-    def _validate_list(self, id_list, model_name, model):
-        # Ensure all IDs in the list correspond to existing records
-        valid_ids = []
-        for pk in id_list:
-            if not model.objects.filter(pk=pk).exists():
-                raise serializers.ValidationError(f"{model_name} with id {pk} does not exist.")
-            valid_ids.append(pk)
-        return valid_ids
-
-
 
     def create(self , validate_data):
         
-        storage_client = client
+        info = json.loads(os.environ.get("GOOGLE_CREDENTIALS_JSON"))
+        credentials = service_account.Credentials.from_service_account_info(info)
+
+        storage_client = storage.Client(credentials=credentials, project=credentials.project_id)
+
         bucket_name = settings.GS_BUCKET_NAME
         bucket = storage_client.bucket(bucket_name)
+        bucket.cors = [
+            {
+                "origin": ["*"],
+                "responseHeader": [
+                    "Content-Type",
+                    "x-goog-resumable"],
+                "method": ['PUT', 'POST'],
+                "maxAgeSeconds": 36000
+            }
+        ]
+        bucket.patch()
 
         current_GMT = time.gmtime()
         ts = calendar.timegm(current_GMT)
         unique_file_name = str(ts)+".mp4"
         file_name = validate_data.get('name')
         
-        path = "lms_2/videos"
+        path = "mini_lms/videos"
         blob_path = f"media/{path}/{unique_file_name}"
         blob = bucket.blob(blob_path)
 
         content_type = 'video/mp4'
         
-
-        # Generate the signed URL for a PUT request (uploading)
         signed_url = blob.generate_signed_url(
             version='v4',
             expiration=86400,
@@ -263,8 +237,8 @@ class MarkVideoUploadCompleteSerializer(serializers.ModelSerializer) :
             
         bucketName, file_name = parse_gcs_url(video_info.video_file.url)
         
-        input_uri = f'gs://static_files_backend/'+str(file_name)
-        output_uri = f'gs://static_files_backend/media/lms_2/transcoder/'
+        input_uri = f'gs://public-media-files/'+str(file_name)
+        output_uri = f'gs://public-media-files/media/mini_lms/transcoder/'
 
         current_GMT = time.gmtime()
         unique_id = str(calendar.timegm(current_GMT))
@@ -326,7 +300,7 @@ class MarkVideoUploadCompleteSerializer(serializers.ModelSerializer) :
         )
         
         
-        video_info.transcoded_video = 'media/lms_2/transcoder/'+f'{video_file_name}.m3u8'
+        video_info.transcoded_video = 'media/mini_lms/transcoder/'+f'{video_file_name}.m3u8'
         video_info.is_completed = True
         video_info.save()
         
@@ -534,6 +508,30 @@ class ChangeChapterBookstatusSerializer(serializers.ModelSerializer) :
         return category
     
 
+
+class HomepageCategorySerializer(serializers.ModelSerializer):
+    total_courses = serializers.SerializerMethodField('get_total_courses')
+    
+    def get_total_courses(self, obj):
+        return CourseCategories.objects.filter(category_id = obj.id).count()
+    
+    class Meta:
+        model = Categories
+        fields = ["id","name","total_courses","status","created_at"]
+
+
+class HomepageTagsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tags
+        fields = ["id","name","status"]
+
+
+class TagsListingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tags
+        fields = ["id","name","status","created_at"]
+
+
 class ParentCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Categories
@@ -555,10 +553,162 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 
+class CourseInstructorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id","first_name","last_name","image"]
+
+
+class HomepageCourseCategorySerializer(serializers.ModelSerializer):
+    category_info = serializers.SerializerMethodField('get_category_info')
+    def get_category_info(self, obj):
+        category = Categories.objects.filter(id=obj.category.id).first()
+        return ParentCategorySerializer(category).data
+    
+    class Meta:
+        model = Course
+        fields = ["id","category_info"]
+
+class HomepageCourseDetailSerializer(serializers.ModelSerializer):
+    categories = serializers.SerializerMethodField('get_categories')
+    created_by = serializers.SerializerMethodField('get_created_by')
+
+    def get_categories(self, obj):
+        category = CourseCategories.objects.filter(course_id=obj.id)
+        return HomepageCourseCategorySerializer(category, many=True).data
+
+    def get_created_by(self, obj):
+        category = User.objects.filter(id=obj.created_by.id).first()
+        return CourseInstructorSerializer(category).data
+    
+    class Meta:
+        model = Course
+        fields = ['name',"price","discount","objectives_summary","image","categories","duration","level","created_by","avg_rating"]
+
+
+class HomepageTagWiseCoursesSerializer(serializers.ModelSerializer):
+    courses = serializers.SerializerMethodField('get_courses')
+    
+    def get_courses(self, obj):
+        category = Course.objects.filter(id=obj.course.id).first()
+        return HomepageCourseDetailSerializer(category).data
+        
+    class Meta:
+        model = Categories
+        fields = ["id","courses"]
+
+
+class CreateTagsSerializer(serializers.ModelSerializer) :
+    name = serializers.CharField(max_length = 255, required=True)
+    
+    class Meta:
+        model = Tags
+        fields = ['name']
+        
+    def validate(self, data):
+        name_count = Tags.objects.filter(name = data.get('name')).count()
+        if name_count > 0:
+            raise serializers.ValidationError("Tag Name Already Exists!")
+
+        return data
+
+    def create(self , validate_data):
+        topic = Tags(
+            name = validate_data.get('name'),
+            status = True
+        )
+        topic.save()
+
+        return topic
+    
+
+
+class EditTagsSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(max_length = 255, required=True)
+    
+    class Meta:
+        model = Categories
+        fields = ['name']
+        
+    def validate(self, data):
+        return data
+
+
+    def update(self , category, validate_data):
+        category.name = validate_data.get('name', category.name)
+        category.save()
+
+        return category
+    
+
+class ChangeTagStatusSerializer(serializers.ModelSerializer) :
+    status = serializers.BooleanField(required=True)
+    class Meta:
+        model = Tags
+        fields = ['status']
+        
+    def validate(self, data):
+        return data
+
+    def update(self , category, validate_data):
+        category.status = validate_data.get('status', category.status)
+        category.save()
+
+        return category
+
+
 class CreateCategorySerializer(serializers.ModelSerializer) :
     name = serializers.CharField(max_length = 255, required=True)
     description = serializers.CharField(max_length = 255, required=False, allow_blank=True)
-    parent = serializers.IntegerField(required=False,allow_null=True)
+    
+    class Meta:
+        model = Categories
+        fields = ['name',"description"]
+        
+    def validate(self, data):
+        name_count = Categories.objects.filter(name = data.get('name')).count()
+        if name_count > 0:
+            raise serializers.ValidationError("Category Name Already Exists!")
+
+        return data
+
+    def create(self , validate_data):
+        topic = Categories(
+            name = validate_data.get('name'),
+            description = validate_data.get('description'),
+            status = True
+        )
+        topic.save()
+
+        return topic
+    
+
+
+class EditCategorySerializer(serializers.ModelSerializer):
+    name = serializers.CharField(max_length = 255, required=True)
+    description = serializers.CharField(max_length = 255, required=False, allow_blank=True)
+    
+    class Meta:
+        model = Categories
+        fields = ['name',"description"]
+        
+    def validate(self, data):
+        return data
+
+
+    def update(self , category, validate_data):
+        category.name = validate_data.get('name', category.name)
+        category.description = validate_data.get('description', category.description)
+        category.save()
+
+        return category
+    
+
+
+class CreateSubCategorySerializer(serializers.ModelSerializer) :
+    name = serializers.CharField(max_length = 255, required=True)
+    description = serializers.CharField(max_length = 255, required=False, allow_blank=True)
+    parent = serializers.IntegerField(required=True)
     
     class Meta:
         model = Categories
@@ -597,10 +747,10 @@ class CreateCategorySerializer(serializers.ModelSerializer) :
     
 
 
-class EditCategorySerializer(serializers.ModelSerializer):
+class EditSubCategorySerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length = 255, required=True)
     description = serializers.CharField(max_length = 255, required=False, allow_blank=True)
-    parent = serializers.IntegerField(required=False,allow_null=True)
+    parent = serializers.IntegerField(required=True)
     
     class Meta:
         model = Categories
@@ -648,15 +798,9 @@ class ChangeCategoryStatusSerializer(serializers.ModelSerializer) :
 
 
 class CourseInfoSerializer(serializers.ModelSerializer):
-    tags = serializers.SerializerMethodField('get_tags')
-    
-    def get_tags(self, obj):
-        category = CourseTags.objects.filter(course_id=obj.id)
-        return CourseTagsSerializer(category, many=True).data
-    
     class Meta:
         model = Course
-        fields = ["id",'name','description',"short_description","duration","requirements","price","discount","feature_json","image","banner_image","objectives_summary","tags","status","created_at"]
+        fields = ["id",'name','description',"short_description","duration","requirements","price","discount","feature_json","image","banner_image","objectives_summary","status","created_at"]
 
 
 class CourseCategorySerializer(serializers.ModelSerializer):

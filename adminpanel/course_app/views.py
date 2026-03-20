@@ -576,6 +576,17 @@ def get_signed_url(request):
 
         bucket_name = settings.GS_BUCKET_NAME
         bucket = storage_client.bucket(bucket_name)
+        bucket.cors = [
+            {
+                "origin": ["*"],
+                "responseHeader": [
+                    "Content-Type",
+                    "x-goog-resumable"],
+                "method": ['PUT', 'POST'],
+                "maxAgeSeconds": 36000
+            }
+        ]
+        bucket.patch()
 
         current_GMT = time.gmtime()
         ts = calendar.timegm(current_GMT)
@@ -591,7 +602,7 @@ def get_signed_url(request):
             # Generate the signed URL
             signed_url = blob.generate_signed_url(
                 version='v4',
-                expiration=3600, # 1 hour is usually plenty for an upload start
+                expiration=36000, # 1 hour is usually plenty for an upload start
                 method='PUT',
                 content_type=content_type
             )
@@ -626,14 +637,117 @@ def create_videos(request, id=None):
             video.description = description
             if video_url:
                 video.video_file = video_url
+                video.video_duration = request.POST.get('duration')
             video.save()
+            return JsonResponse({'message': 'Video updated successfully!'})
         else:
             Videos.objects.create(
                 name=name,
                 description=description,
-                video_file=video_url
+                video_duration = request.POST.get('duration'),
+                video_file=video_url,
+                is_uploaded = True,
+                is_completed = True
             )
             
-        return JsonResponse({'message': 'Video saved successfully!'})
+            return JsonResponse({'message': 'Video saved successfully!'})
     
     return render(request, 'create_videos.html', locals())
+
+
+@require_POST
+def delete_video(request, pk):
+    try:
+        category = Videos.objects.get(pk=pk)
+        category.delete()
+        return JsonResponse({'status': 'success', 'message': 'Deleted successfully'})
+    except Videos.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Record not found'}, status=404)
+
+
+@require_POST
+def update_video_status(request):
+    category_id = request.POST.get('id')
+    new_status = request.POST.get('status') == 'true'
+
+    try:
+        # Fetch the object
+        category = Videos.objects.get(id=category_id)
+        category.status = new_status
+        category.save()
+
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Video is now {"Active" if new_status else "Inactive"}.'
+        })
+    except Videos.DoesNotExist:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Video not found.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
+    
+
+
+@login_required(login_url='/')
+def manage_chapters(request):
+    return render(request, 'videos.html', locals())
+
+
+@login_required(login_url='/')
+def get_chapters_listing(request):
+    draw = int(request.GET.get('draw', 1))
+    start = int(request.GET.get('start', 0))
+    length = int(request.GET.get('length', 10))
+    
+    column_mapping = {
+        '0': 'id',
+        '1': 'name',
+        '2': 'created_at', 
+        '3': 'status',
+    }
+    
+    order_index = request.GET.get('order[0][column]', '0')
+    order_dir = request.GET.get('order[0][dir]', 'desc')
+    
+    sort_field = column_mapping.get(order_index, 'id')
+    
+    if order_dir == 'desc':
+        sort_field = '-' + sort_field
+
+    queryset = Chapters.objects.all()
+
+    search_value = request.GET.get('search[value]', None)
+    if search_value:
+        # Filter by name or description
+        queryset = queryset.filter(
+            name__icontains=search_value
+        ) | queryset.filter(
+            description__icontains=search_value
+        )
+
+
+    queryset = queryset.order_by(sort_field)
+
+    total_records = queryset.count()
+    data_slice = queryset[start:start + length]
+
+    data = []
+    for obj in data_slice:
+        data.append({
+            "id": obj.id,
+            "name": obj.name or "N/A",
+            "date": obj.created_at.strftime("%Y-%m-%d, %I:%M%p"),
+            "status": obj.status, # Sending as boolean to handle in JS
+        })
+
+    return JsonResponse({
+        "draw": draw,
+        "recordsTotal": total_records,
+        "recordsFiltered": total_records, # Update this if you add search functionality
+        "data": data,
+    })

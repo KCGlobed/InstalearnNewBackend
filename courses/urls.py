@@ -3,6 +3,36 @@ from courses.views import *
 
 urlpatterns = [
     
+    # Manage Category SubCategory & Tags APIs
+    path('get-tags-listing/', TagsListingView.as_view(), name="tags-listing"),
+    path('create-tags/', CreateTagsView.as_view(), name="create-tags"),
+    path('edit-tags/<int:cid>', EditTagsView.as_view(), name="edit-tags"),
+    path('update-tags-status/<int:cid>', UpdateTagsStatusView.as_view(), name="update-tags-status"),
+    path('delete-tags/<int:cid>', DeleteTagsView.as_view(), name="delete-tags"),
+
+    path('get-category-listing/', CategoryListingView.as_view(), name="category-listing"),
+    path('create-category/', CreateCategoryView.as_view(), name="create-category"),
+    path('edit-category/<int:cid>', EditCategoryView.as_view(), name="edit-category"),
+    path('update-category-status/<int:cid>', UpdateCategoryStatusView.as_view(), name="update-category-status"),
+    path('delete-category/<int:cid>', DeleteCategoryView.as_view(), name="delete-category"),
+
+    path('get-subcategory-listing/', SubCategoryListingView.as_view(), name="category-listing"),
+    path('get-parent-category/', ParentCategoryListingView.as_view(), name="parent-category-listing"),
+    path('create-subcategory/', CreateSubCategoryView.as_view(), name="create-subcategory"),
+    path('edit-subcategory/<int:cid>', EditSubCategoryView.as_view(), name="edit-subcategory"),
+    path('update-subcategory-status/<int:cid>', UpdateCategoryStatusView.as_view(), name="update-subcategory-status"),
+    path('delete-subcategory/<int:cid>', DeleteCategoryView.as_view(), name="delete-subcategory"),
+
+    # Manage Chapters Books APIS
+    path('get-chapter-book-listing/', ChapterBookListingView.as_view(), name="chapters-listing"),
+    path('view-chapter-book-detail/<int:cid>', ViewChapterBookView.as_view(), name="view-chapter-book-detail"),
+    path('create-chapter-book/', CreateChapterBookView.as_view(), name="create-chapter-book"),
+    path('edit-chapter-book/<int:cid>', EditChapterBookView.as_view(), name="edit-chapter-book"),
+    path('update-chapter-book-status/<int:cid>', UpdateChapterBookStatusView.as_view(), name="update-chapter-book-status"),
+    path('delete-chapter-book/<int:cid>', DeleteChapterBookView.as_view(), name="delete-chapter-book"),
+
+
+
     # Manage Chapters APIS
     path('get-chapter-listing/', ChapterListingView.as_view(), name="chapters-listing"),
     path('view-chapter-detail/<int:cid>', ViewChapterView.as_view(), name="view-chapter-detail"),
@@ -30,12 +60,11 @@ urlpatterns = [
     path('delete-courses-sample-video/<int:cid>', DeleteCourseSampleVideoView.as_view(), name="delete-course-sample-video"),
     path('upload-course-sample-video/', UploadCourseSampleVideoView.as_view(), name="upload-course-sample-video"),
 
-    path('get-category-listing/', CategoryListingView.as_view(), name="category-listing"),
-    path('get-parent-category/', ParentCategoryListingView.as_view(), name="parent-category-listing"),
-    path('create-category/', CreateCategoryView.as_view(), name="create-category"),
-    path('edit-category/<int:cid>', EditCategoryView.as_view(), name="edit-category"),
-    path('update-category-status/<int:cid>', UpdateCategoryStatusView.as_view(), name="update-category-status"),
-    path('delete-category/<int:cid>', DeleteCategoryView.as_view(), name="delete-category"),
+    
+    
+    
+    
+    
 
 
     path('get-course-listing/', CourseListingView.as_view(), name="course-listing"),
@@ -58,15 +87,7 @@ urlpatterns = [
     path('get-trail-course-list/', TrailCourseListView.as_view(), name="get-trail-course-list"),
     path('create-trail-course/', CreateTrailCourseView.as_view(), name="create-trail-course"),
     path('delete-trail-course/<cid>', DeleteTrailCourseView.as_view(), name="delete-trail-course"),
-    
 
-    # Manage Chapters Books APIS
-    path('get-chapter-book-listing/', ChapterBookListingView.as_view(), name="chapters-listing"),
-    path('view-chapter-book-detail/<int:cid>', ViewChapterBookView.as_view(), name="view-chapter-book-detail"),
-    path('create-chapter-book/', CreateChapterBookView.as_view(), name="create-chapter-book"),
-    path('edit-chapter-book/<int:cid>', EditChapterBookView.as_view(), name="edit-chapter-book"),
-    path('update-chapter-book-status/<int:cid>', UpdateChapterBookStatusView.as_view(), name="update-chapter-book-status"),
-    path('delete-chapter-book/<int:cid>', DeleteChapterBookView.as_view(), name="delete-chapter-book"),
 
 
     path('get-course-list/', CourseListView.as_view(), name="get-course-list"),
@@ -91,6 +112,10 @@ urlpatterns = [
 
     
     #Student APIs
+    path('homepage-category-list/', GetHomepageCategoryListing.as_view(), name="homepage-category-listing"),
+    path('homepage-tags/', GetHomepageTagsListing.as_view(), name="homepage-tags-listing"),
+    path('homepage-tag-wise-courses/<int:id>', GetHomepageTagWiseCoursesListing.as_view(), name="homepage-tag-wise-courses/"),
+    path('homepage-recent-courses/', GetHomepageRecentCoursesListing.as_view(), name="homepage-recent-courses/"),
 
     path('category/listing/', GetCourseCategory.as_view(), name="category-listing"),
     path('sub-category/listing/<int:id>', GetSubCourseCategory.as_view(), name="subcategory-listing"),

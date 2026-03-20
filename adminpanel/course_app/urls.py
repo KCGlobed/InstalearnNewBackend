@@ -32,5 +32,11 @@ urlpatterns = [
     path('admin-create-new-videos', views.create_videos, name='admin-create-videos'),
     path('admin-get-video-signed-url/', views.get_signed_url, name='admin-get-signed-url'),
     path('admin-create-new-videos/<int:id>', views.create_videos, name='admin-create-videos'),
+    path('admin-delete-video/<int:pk>', views.delete_video, name='admin-delete-video'),
+    path('admin-video-update-status', views.update_video_status, name='admin-update-video-status'),
+
+
+    path('admin-manage-chapters', views.manage_chapters, name='admin-manage-chapters'),
+    path('admin-get-chapters-listing', views.get_chapters_listing, name='admin-get-chapters-listing'),
 
 ]
