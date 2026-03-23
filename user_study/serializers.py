@@ -608,6 +608,10 @@ class AddUserWishlistSerializer(serializers.ModelSerializer) :
 
 
     def create(self , validate_data):
+        course = Course.objects.filter(id = validate_data.get("course_id")).first()
+        if course is None:
+            raise serializers.ValidationError("Invalid course ID")
+
         user = self.context.get('user')
         wishlist = UserWishlist.objects.filter(course_id = validate_data.get("course_id"), user = self.context.get('user')).count()
         if wishlist > 0:

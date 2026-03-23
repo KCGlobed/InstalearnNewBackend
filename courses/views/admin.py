@@ -11,7 +11,7 @@ from django.db.models import Q
 from mini_lms.utils import *
 from rolepermissions import roles
 from mini_lms.roles import *
-from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError
 from mini_lms.permissions import RoleOrPermissionCheck
 from mini_lms.pagination import CustomPageNumberPagination
 from rest_framework import filters
@@ -796,20 +796,6 @@ class ChapterBookListingView(APIView):
         
         chapters = ChapterBooks.objects.all()
         
-        course_id = request.query_params.get('course_id')
-        chapter_id = request.query_params.get('chapter_id')
-        if course_id:
-            if chapter_id:
-                chapters = chapters.filter(chapter_id=chapter_id)
-            else:
-                chapter_list = CourseChapters.objects.filter(course_id = course_id).values_list("chapter",flat=True)
-                chapters = chapters.filter(chapter_id__in=chapter_list)
-        
-        status = request.query_params.get('status')
-        if status:
-            chapters = chapters.filter(status=status)
-
-
         search_filter = filters.SearchFilter()
         chapters = search_filter.filter_queryset(request, chapters, self)
 
@@ -836,7 +822,7 @@ class ViewChapterBookView(APIView):
     def get(self, request,  cid , format=None):
         chapter = ChapterBooks.objects.filter(id=cid).first()
         if chapter is None:
-            raise ValidationError("Invalid Chapter ID!")
+            raise ValidationError("Invalid Book ID!")
         
         serializer = ViewChapterBooksSerializer(chapter)
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)

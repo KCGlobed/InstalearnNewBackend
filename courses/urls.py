@@ -24,15 +24,24 @@ urlpatterns = [
     path('delete-subcategory/<int:cid>', DeleteCategoryView.as_view(), name="delete-subcategory"),
 
     # Manage Chapters Books APIS
-    path('get-chapter-book-listing/', ChapterBookListingView.as_view(), name="chapters-listing"),
-    path('view-chapter-book-detail/<int:cid>', ViewChapterBookView.as_view(), name="view-chapter-book-detail"),
-    path('create-chapter-book/', CreateChapterBookView.as_view(), name="create-chapter-book"),
-    path('edit-chapter-book/<int:cid>', EditChapterBookView.as_view(), name="edit-chapter-book"),
-    path('update-chapter-book-status/<int:cid>', UpdateChapterBookStatusView.as_view(), name="update-chapter-book-status"),
-    path('delete-chapter-book/<int:cid>', DeleteChapterBookView.as_view(), name="delete-chapter-book"),
+    path('get-book-listing/', ChapterBookListingView.as_view(), name="chapters-listing"),
+    path('view-book-detail/<int:cid>', ViewChapterBookView.as_view(), name="view-book-detail"),
+    path('create-book/', CreateChapterBookView.as_view(), name="create-book"),
+    path('edit-book/<int:cid>', EditChapterBookView.as_view(), name="edit-book"),
+    path('update-book-status/<int:cid>', UpdateChapterBookStatusView.as_view(), name="update-book-status"),
+    path('delete-book/<int:cid>', DeleteChapterBookView.as_view(), name="delete-book"),
 
+    # Manage Videos APIS
+    path('get-videos-listing/', VideosListingView.as_view(), name="Videos-listing"),
+    path('view-video-detail/<int:cid>', ViewVideoDetailView.as_view(), name="view-video-detail"),
+    path('upload-video/', UploadVideoView.as_view(), name="create-video"),
+    path('make-upload-complete/<int:cid>', MarkVideoUploadCompleteView.as_view(), name="make-upload-complete"),
+    path('update-video/<int:cid>', UpdateVideoView.as_view(), name="edit-video"),
+    path('update-video-status/<int:cid>', UpdateVideoStatusView.as_view(), name="update-video-status"),
+    path('delete-video/<int:cid>', DeleteVideoView.as_view(), name="delete-video"),
+    
 
-
+    
     # Manage Chapters APIS
     path('get-chapter-listing/', ChapterListingView.as_view(), name="chapters-listing"),
     path('view-chapter-detail/<int:cid>', ViewChapterView.as_view(), name="view-chapter-detail"),
@@ -46,14 +55,6 @@ urlpatterns = [
     path('get-chapters-list/', ChapterListView.as_view(), name="chapter-list"),
     
 
-    # Manage Videos APIS
-    path('get-videos-listing/', VideosListingView.as_view(), name="Videos-listing"),
-    path('view-video-detail/<int:cid>', ViewVideoDetailView.as_view(), name="view-video-detail"),
-    path('upload-video/', UploadVideoView.as_view(), name="create-video"),
-    path('make-upload-complete/<int:cid>', MarkVideoUploadCompleteView.as_view(), name="make-upload-complete"),
-    path('update-video/<int:cid>', UpdateVideoView.as_view(), name="edit-video"),
-    path('update-video-status/<int:cid>', UpdateVideoStatusView.as_view(), name="update-video-status"),
-    path('delete-video/<int:cid>', DeleteVideoView.as_view(), name="delete-video"),
     
 
     path('get-courses-sample-video-listing/<int:cid>', GetCourseSampleVideoView.as_view(), name="get-course-sample-video"),

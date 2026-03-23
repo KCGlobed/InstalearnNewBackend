@@ -40,11 +40,10 @@ class ViewChapterDetailSerializer(serializers.ModelSerializer):
 class CreateChapterSerializer(serializers.ModelSerializer) :
     name = serializers.CharField(max_length = 255, required=True)
     description = serializers.CharField(required=False)
-    topic_id = serializers.ListField(child=serializers.IntegerField(required=True))
     
     class Meta:
         model = Chapters
-        fields = ['name',"topic_id","description"]
+        fields = ['name',"description"]
 
     def validate(self, data):
         return data
@@ -56,7 +55,6 @@ class CreateChapterSerializer(serializers.ModelSerializer) :
             status = True
         )
         chapter_info.save()
-        topics_data = validate_data.pop('topic_id', []) 
 
         return chapter_info
     
@@ -64,11 +62,10 @@ class CreateChapterSerializer(serializers.ModelSerializer) :
 class EditChapterSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length = 255, required=True)
     description = serializers.CharField(required=False)
-    topic_id = serializers.ListField(child=serializers.IntegerField(required=True))
 
     class Meta:
         model = Chapters
-        fields = ['name',"topic_id","description"]
+        fields = ['name',"description"]
     
     def validate(self, data):
         return data
@@ -79,9 +76,6 @@ class EditChapterSerializer(serializers.ModelSerializer):
         chapter_info.name = validate_data.get('name', chapter_info.name)
         chapter_info.description = validate_data.get('description', chapter_info.description)
         chapter_info.save()
-
-        topics_data = validate_data.pop('topic_id', None) 
-
         
         return chapter_info
     
@@ -127,7 +121,7 @@ class SubjectChapterInfoSerializer(serializers.ModelSerializer):
 class VideosSerializer(serializers.ModelSerializer):
     class Meta:
         model = Videos
-        fields = ["id","name","video_duration","status","created_at","include_in_reference"]
+        fields = ["id","name","video_duration","status","created_at","is_completed","is_uploaded"]
 
 
 
@@ -150,18 +144,17 @@ class VideoTopicInfoSerializer(serializers.ModelSerializer):
 class ViewVideoDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Videos
-        fields = ["id","uuid","name","video_file","video_caption","transcoded_video","video_duration","status","is_uploaded","is_completed","created_at","include_in_reference"]
+        fields = ["id","uuid","name","video_file","video_caption","transcoded_video","video_duration","status","is_uploaded","is_completed","created_at","signed_url"]
 
 
 class CreateVideoSerializer(serializers.ModelSerializer) :
     name = serializers.CharField(max_length = 255, required=True)
     description = serializers.CharField(required=False, allow_blank=True)
     duration = serializers.IntegerField(required=True)
-    include_in_reference = serializers.BooleanField(required=True)
 
     class Meta:
         model = Videos
-        fields = ['name',"duration","description","include_in_reference"]
+        fields = ['name',"duration","description"]
     
     def validate(self, data):
         return data
@@ -210,7 +203,6 @@ class CreateVideoSerializer(serializers.ModelSerializer) :
         video_info = Videos()
         video_info.name = file_name
         video_info.description = validate_data.get('description')
-        video_info.include_in_reference = validate_data.get('include_in_reference')
         video_info.signed_url = signed_url
         video_info.file_name = unique_file_name
         video_info.video_file = path+"/"+unique_file_name
@@ -233,7 +225,10 @@ class MarkVideoUploadCompleteSerializer(serializers.ModelSerializer) :
         video_info.is_uploaded = validate_data.get('status', video_info.is_uploaded)
         video_info.save()
 
-        client = TranscoderServiceClient(credentials=settings.GS_CREDENTIALS)
+        info = json.loads(os.environ.get("GOOGLE_CREDENTIALS_JSON"))
+        credentials = service_account.Credentials.from_service_account_info(info)
+
+        client = TranscoderServiceClient(credentials=credentials, project=credentials.project_id)
             
         bucketName, file_name = parse_gcs_url(video_info.video_file.url)
         
@@ -312,20 +307,13 @@ class MarkVideoUploadCompleteSerializer(serializers.ModelSerializer) :
 
 class EditVideoserializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length = 255, required=True)
-    topic_id = serializers.ListField(
-        child=serializers.IntegerField(), required=False, allow_empty=True
-    )
-    chapter_id = serializers.ListField(
-        child=serializers.IntegerField(), required=False, allow_empty=True
-    )
     update_video = serializers.BooleanField(required=True)
     duration = serializers.IntegerField(required=True)
     description = serializers.CharField(required=False)
-    include_in_reference = serializers.BooleanField(required=True)
     
     class Meta:
         model = Videos
-        fields = ['name',"topic_id","update_video","description","duration","chapter_id","include_in_reference"]
+        fields = ['name',"update_video","description","duration"]
     
 
     def validate(self, data):
@@ -336,16 +324,32 @@ class EditVideoserializer(serializers.ModelSerializer):
         
         if validate_data.pop('update_video') == True:
             
-            storage_client = client
+            info = json.loads(os.environ.get("GOOGLE_CREDENTIALS_JSON"))
+            credentials = service_account.Credentials.from_service_account_info(info)
+
+            storage_client = storage.Client(credentials=credentials, project=credentials.project_id)
+
             bucket_name = settings.GS_BUCKET_NAME
             bucket = storage_client.bucket(bucket_name)
+            bucket.cors = [
+                {
+                    "origin": ["*"],
+                    "responseHeader": [
+                        "Content-Type",
+                        "x-goog-resumable"],
+                    "method": ['PUT', 'POST'],
+                    "maxAgeSeconds": 36000
+                }
+            ]
+            bucket.patch()
+
 
             current_GMT = time.gmtime()
             ts = calendar.timegm(current_GMT)
             unique_file_name = str(ts)+".mp4"
             file_name = validate_data.get('nam+e')
             
-            path = "lms_2/videos"
+            path = "mini_lms/videos"
             blob_path = f"media/{path}/{unique_file_name}"
             blob = bucket.blob(blob_path)
 
@@ -364,7 +368,6 @@ class EditVideoserializer(serializers.ModelSerializer):
             
             video_info.name = file_name
             video_info.description = validate_data.get('description')
-            video_info.include_in_reference = validate_data.get('include_in_reference')
             video_info.signed_url = signed_url
             video_info.file_name = unique_file_name
             video_info.video_file = path+"/"+unique_file_name
@@ -377,7 +380,6 @@ class EditVideoserializer(serializers.ModelSerializer):
 
             video_info.name = validate_data.get('name', video_info.name)
             video_info.duration = validate_data.get('duration', video_info.duration)
-            video_info.include_in_reference = validate_data.get('include_in_reference', video_info.description)
             video_info.description = validate_data.get('description', video_info.description)
             video_info.save()
 
@@ -415,13 +417,8 @@ class ChapterBooksSerializer(serializers.ModelSerializer):
 
 
 class ViewChapterBooksSerializer(serializers.ModelSerializer):
-    chapter_detail = serializers.SerializerMethodField('get_chapter_detail')
     book_file = serializers.SerializerMethodField('get_book_file')
     
-    def get_chapter_detail(self, obj):
-        category = Chapters.objects.filter(id=obj.chapter.id).first()
-        return ChapterListSerializer(category).data
-
     def get_book_file(self, obj):
         if obj.book_file is not None:
             bucket_name, object_name = parse_gcs_url(obj.book_file.url)
@@ -433,32 +430,24 @@ class ViewChapterBooksSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = ChapterBooks
-        fields = ['id',"name","book_file","chapter_detail","status","created_at"]
+        fields = ['id',"name","book_file","status","created_at"]
 
 
 
 class CreateChapterBookSerializer(serializers.ModelSerializer) :
     name = serializers.CharField(max_length = 255, required=True)
-    chapter_id = serializers.IntegerField(required=True)
     book_file = serializers.FileField(required=True, validators=[FileExtensionValidator( ['pdf'])])
     
     class Meta:
         model = ChapterBooks
-        fields = ['name',"chapter_id","book_file"]
+        fields = ['name',"book_file"]
         
     def validate(self, data):
-        chapter_info = Chapters.objects.filter(id=data.get('chapter_id')).count()
-            
-        if chapter_info == 0:
-            raise serializers.ValidationError("Invalid Chapter ID")
-    
         return data
 
     def create(self , validate_data):
-        chapter = Chapters.objects.filter(id=validate_data.get('chapter_id')).first()
         topic = ChapterBooks(
             name = validate_data.get('name'),
-            chapter = chapter,
             book_file = validate_data.get('book_file'),
             status = True
         )
@@ -469,12 +458,11 @@ class CreateChapterBookSerializer(serializers.ModelSerializer) :
 
 class EditChapterBookSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length = 255, required=True)
-    chapter_id = serializers.IntegerField(required=False, allow_null=True)
     book_file = serializers.FileField(required=False, validators=[FileExtensionValidator( ['pdf'])])
     
     class Meta:
         model = ChapterBooks
-        fields = ['name',"chapter_id","book_file"]
+        fields = ['name',"book_file"]
         
     def validate(self, data):
         return data
@@ -483,8 +471,6 @@ class EditChapterBookSerializer(serializers.ModelSerializer):
     def update(self , category, validate_data):
         
         category.name = validate_data.get('name', category.name)
-        if validate_data.get('chapter_id') is not None:
-            category.chapter = Chapters.objects.filter(id=validate_data.get('chapter_id')).first()
         if validate_data.get('book_file') is not None:
             category.book_file = validate_data.get('book_file')
         category.save()

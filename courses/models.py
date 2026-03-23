@@ -270,6 +270,7 @@ class CourseChapters(SoftDeleteModel):
 
 
 class ChapterBooks(SoftDeleteModel):
+    chapter = models.ForeignKey('Chapters', null=True, blank=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     book_file = models.FileField(storage=GoogleCloudPrivateMediaFileStorage(),upload_to='mini_lms/pdfs/', null=True, blank=True)

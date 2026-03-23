@@ -13,6 +13,9 @@ import math
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from courses.models import *
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from django.conf import settings
 
 
 CHUNK_SIZE = 1024 * 1024 * 10
@@ -73,14 +76,14 @@ def error_response(message, data=None, status_code=status.HTTP_400_BAD_REQUEST):
 def parse_gcs_url(file_url):
     parsed_url = urlparse(file_url)
     if parsed_url.scheme != 'https':
-        raise ValueError("URL must start with 'https://'")
+        raise ValidationError("URL must start with 'https://'")
     
     if not parsed_url.netloc.endswith('storage.googleapis.com'):
-        raise ValueError("Invalid Google Cloud Storage URL")
+        raise ValidationError("Invalid Google Cloud Storage URL")
 
     path_parts = parsed_url.path.lstrip('/').split('/', 1)
     if len(path_parts) != 2:
-        raise ValueError("Invalid GCS URL format")
+        raise ValidationError("Invalid GCS URL format")
 
 
     bucket_name, object_name = path_parts
@@ -228,6 +231,40 @@ def validate_course_id_list(id_list):
 
     return id_list
 
+
+def google_login_token_check(token):
+    try:
+        idinfo = id_token.verify_oauth2_token(token, requests.Request(), settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY)
+        # Check for a valid issuer
+        if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+            raise ValidationError('Wrong issuer.')
+        return True
+    except ValidationError as e:
+        raise ValidationError('error :'+ str(e))
+    
+
+
+def facebook_login_token_check(token):
+    try:
+        app_id = settings.SOCIAL_AUTH_FACEBOOK_KEY
+        app_secret = settings.SOCIAL_AUTH_FACEBOOK_SECRET
+        # Get the App Access Token
+        app_token_url = f"https://graph.facebook.com/oauth/access_token?client_id={app_id}&client_secret={app_secret}&grant_type=client_credentials"
+        app_token_response = requests.get(app_token_url).json()
+        app_token = app_token_response['access_token']
+
+        # Debug the user's token
+        debug_url = f"https://graph.facebook.com/debug_token?input_token={token}&access_token={app_token}"
+        debug_response = requests.get(debug_url).json()
+
+        if debug_response['data']['is_valid'] and debug_response['data']['app_id'] == app_id:
+            return True
+        else:
+            raise ValidationError('Invalid Facebook token.')
+            
+    except Exception as e:
+        raise ValidationError('error :'+ str(e))
+    
 
 def new_alert_login(user, ip_address):
     pass
