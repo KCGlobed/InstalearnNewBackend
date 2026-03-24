@@ -57,6 +57,32 @@ class ChapterListingView(APIView):
         return paginator.get_paginated_response(serializer.data)
     
 
+class GetVideoListView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [SuperAdmin]
+                        )]
+    def get(self, request, format=None):
+        chapter = Videos.objects.filter(status=True, is_uploaded = True, is_completed = True).order_by("-id")
+        serializer = VideoListSerializer(chapter, many=True)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+
+class GetEbookListView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [SuperAdmin]
+                        )]
+    def get(self, request, format=None):
+        chapter = ChapterBooks.objects.filter(status=True).order_by("-id")
+        serializer = ChapterBooksSerializer(chapter, many=True)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+    
+
 class ChapterListView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
@@ -101,6 +127,21 @@ class CreateChapterView(APIView):
         if serializer.is_valid(raise_exception = True):
             user  = serializer.save()
             return success_response(message="Chapter Created Successfully", data=ViewChapterDetailSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class AssignChapterLectureView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_chapter",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  format=None):
+        serializer = AssignChapterLectureSerializer(data = request.data, partial=True)
+        if serializer.is_valid(raise_exception = True):
+            user = serializer.save()
+            return success_response(message="Chapter Lecture Updated Successfully", data=ViewChapterDetailSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 

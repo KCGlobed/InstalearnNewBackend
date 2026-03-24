@@ -219,16 +219,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://127.0.0.1:3000",
-    "https://kcglobed-lms-admin.web.app",
-    "https://devlmsbackend-254015706580.asia-south1.run.app",
-    "https://lms-v2-dev.web.app",
-    "https://lms-dev-v2.web.app",
-    "https://lms-prod-v2.web.app",
-    "https://pro.kcglobed.com"
 ]
 
-BASE_URL = "https://pro.kcglobed.com"
-STORAGE_URL = "https://storage.googleapis.com/static_files_backend/media/adminpanel/"
+BASE_URL = "http://localhost:5173"
 
 # Google credentials from Google Cloud Console
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '187256667857-h90u4bc75ep3c7vlgihsludue2vimuco.apps.googleusercourses.com'

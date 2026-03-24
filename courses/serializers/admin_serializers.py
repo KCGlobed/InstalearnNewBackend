@@ -9,7 +9,6 @@ from google.cloud import storage
 client = settings.GS_CREDENTIALS
 import json
 from google.oauth2 import service_account
-
 from google.cloud.video.transcoder_v1 import TranscoderServiceClient
 import calendar
 import time
@@ -21,6 +20,17 @@ class ChapterListSerializer(serializers.ModelSerializer):
         model = Chapters
         fields = ["id","name","description"]
 
+class VideoListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Videos
+        fields = ["id","name","description"]
+
+
+class ChapterBooksSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChapterBooks
+        fields = ["id","name","description"]
+
 
 class ChaptersSerializer(serializers.ModelSerializer):
     class Meta:
@@ -30,11 +40,9 @@ class ChaptersSerializer(serializers.ModelSerializer):
 
 
 class ViewChapterDetailSerializer(serializers.ModelSerializer):
-    topic_info = serializers.SerializerMethodField('get_topic_info')
-    
     class Meta:
         model = Chapters
-        fields = ["id","name","status","created_at","topic_info"]
+        fields = ["id","name","status","created_at"]
 
 
 class CreateChapterSerializer(serializers.ModelSerializer) :
@@ -57,6 +65,52 @@ class CreateChapterSerializer(serializers.ModelSerializer) :
         chapter_info.save()
 
         return chapter_info
+    
+
+
+class LectureItemSerializer(serializers.Serializer):
+    lecture_type = serializers.ChoiceField(choices=LectureType.choices)
+    video = serializers.IntegerField(required=False, allow_null=True)
+    book = serializers.IntegerField(required=False, allow_null=True) # Mapping 'book' from JSON to 'ebook' in Model
+
+    def validate(self, data):
+        l_type = data.get('lecture_type')
+        if l_type == LectureType.Video and not data.get('video'):
+            raise serializers.ValidationError("video is required for type Video")
+        if l_type == LectureType.Ebook and not data.get('book'):
+            raise serializers.ValidationError("book is required for type Ebook")
+        return data
+
+class AssignChapterLectureSerializer(serializers.Serializer):
+    chapter = serializers.IntegerField(required=True)
+    lecture_list = LectureItemSerializer(many=True)
+
+    def create(self, validate_data):
+        chapter = Chapters.objects.filter(id = validate_data.get('chapter'))
+        created_lectures = []
+
+        ChapterLectures.objects.filter(chapter=chapter).delete()
+
+        for index, item in enumerate(validate_data.get('lecture_list')):
+            if item.get('lecture_type') == 1:
+                lecture = ChapterLectures.objects.create(
+                    chapter=chapter,
+                    lecture_type=item.get('lecture_type'),
+                    video = Videos.objects.filter(id = item.get('video')).first(),
+                    order= index + 1                  
+                )
+            else:
+                lecture = ChapterLectures.objects.create(
+                    chapter=chapter,
+                    lecture_type=item.get('lecture_type'),
+                    ebook = ChapterBooks.objects.filter(id = item.get('book')).first(),
+                    order= index + 1                  
+                )
+
+            created_lectures.append(lecture)
+        
+        return created_lectures
+    
     
 
 class EditChapterSerializer(serializers.ModelSerializer):

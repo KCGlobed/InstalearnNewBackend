@@ -41,11 +41,11 @@ urlpatterns = [
     path('delete-video/<int:cid>', DeleteVideoView.as_view(), name="delete-video"),
     
 
-    
     # Manage Chapters APIS
     path('get-chapter-listing/', ChapterListingView.as_view(), name="chapters-listing"),
     path('view-chapter-detail/<int:cid>', ViewChapterView.as_view(), name="view-chapter-detail"),
     path('create-chapter/', CreateChapterView.as_view(), name="create-chapter"),
+    path('assign-chapter-lecture/', AssignChapterLectureView.as_view(), name="assign-chapter-lecture"),
     path('edit-chapter/<int:cid>', EditChapterView.as_view(), name="edit-chapter"),
     path('update-chapter-status/<int:cid>', UpdateChapterStatusView.as_view(), name="update-chapter-status"),
     path('delete-chapter/<int:cid>', DeleteChapterView.as_view(), name="delete-chapter"),
@@ -53,6 +53,8 @@ urlpatterns = [
 
     # Manage Subjects APIS
     path('get-chapters-list/', ChapterListView.as_view(), name="chapter-list"),
+    path('get-video-list/', GetVideoListView.as_view(), name="get-video-list"),
+    path('get-ebook-list/', GetEbookListView.as_view(), name="get-ebook-list"),
     
 
     
