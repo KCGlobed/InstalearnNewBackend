@@ -50,30 +50,23 @@ urlpatterns = [
     path('update-chapter-status/<int:cid>', UpdateChapterStatusView.as_view(), name="update-chapter-status"),
     path('delete-chapter/<int:cid>', DeleteChapterView.as_view(), name="delete-chapter"),
 
-
-    # Manage Subjects APIS
     path('get-chapters-list/', ChapterListView.as_view(), name="chapter-list"),
     path('get-video-list/', GetVideoListView.as_view(), name="get-video-list"),
     path('get-ebook-list/', GetEbookListView.as_view(), name="get-ebook-list"),
-    
 
-    
+
+    path('get-course-listing/', CourseListingView.as_view(), name="course-listing"),
+    path('view-course-detail/<int:cid>', ViewCourseDetailView.as_view(), name="view-course-detail"),
+
 
     path('get-courses-sample-video-listing/<int:cid>', GetCourseSampleVideoView.as_view(), name="get-course-sample-video"),
     path('delete-courses-sample-video/<int:cid>', DeleteCourseSampleVideoView.as_view(), name="delete-course-sample-video"),
     path('upload-course-sample-video/', UploadCourseSampleVideoView.as_view(), name="upload-course-sample-video"),
 
     
-    
-    
-    
-    
-
-
-    path('get-course-listing/', CourseListingView.as_view(), name="course-listing"),
     path('get-category-list/', CategoryListView.as_view(), name="category-list"),
     path('get-subcategory-list/<int:cid>', SubCategoryListView.as_view(), name="subcategory-list"),
-    path('view-course-detail/<int:cid>', ViewCourseDetailView.as_view(), name="view-course-detail"),
+    
     path('create-course/', CreateCourseView.as_view(), name="create-course"),
     path('edit-course/<int:cid>', EditCourseView.as_view(), name="edit-course"),
     path('assign-chapter-course/<int:cid>', AssignChapterCourseView.as_view(), name="assign-chapter-course"),

@@ -845,11 +845,6 @@ class CourseInfoSerializer(serializers.ModelSerializer):
 
 class CourseCategorySerializer(serializers.ModelSerializer):
     category_info = serializers.SerializerMethodField('get_category_info')
-    course_info = serializers.SerializerMethodField('get_course_info')
-    
-    def get_course_info(self, obj):
-        category = Course.objects.filter(id=obj.course.id).first()
-        return CourseInfoSerializer(category).data
     
     def get_category_info(self, obj):
         category = Categories.objects.filter(id=obj.category.id).first()
@@ -857,45 +852,67 @@ class CourseCategorySerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id","category_info","course_info","created_at"]
+        fields = ["id","category_info","created_at"]
+
+
+
+class CourseTagsInfoSerializer(serializers.ModelSerializer):
+    tags = serializers.SerializerMethodField('get_tags')
+    def get_tags(self, obj):
+        category = Tags.objects.filter(id = obj.tags.id).first()
+        return CourseTagsSerializer(category).data
+    
+    class Meta:
+        model = CourseTags
+        fields = ['id','tags']
 
 
 class CourseSerializer(serializers.ModelSerializer):
     categories = serializers.SerializerMethodField('get_categories')
+    tags = serializers.SerializerMethodField('get_tags')
+
+    def get_tags(self, obj):
+        category = CourseTags.objects.filter(course_id = obj.id)
+        return CourseTagsInfoSerializer(category, many=True).data
     
     def get_categories(self, obj):
-        category = CourseCategories.objects.filter(id=obj.id)
+        category = CourseCategories.objects.filter(course_id = obj.id)
         return CourseCategorySerializer(category, many=True).data
     
     class Meta:
         model = Course
-        fields = ["id","name","duration","categories","status","created_at"]
+        fields = ["id","name","level","short_description","description","requirements","duration","categories","tags","status","price","discount","objectives_summary","feature_json","image","banner_image","created_at"]
 
 
-class CourseSubjectSerializer(serializers.ModelSerializer):
+class CourseChapterSerializer(serializers.ModelSerializer):
+    chapter_info = serializers.SerializerMethodField('get_chapter_info')
+    def get_chapter_info(self, obj):
+        category = Chapters.objects.filter(id = obj.chapter.id).first()
+        return ChaptersSerializer(category).data
+    
     class Meta:
-        model = Course
-        fields = ["id"]
+        model = CourseChapters
+        fields = ["id","chapter_info"]
+
 
 
 class CourseTagsSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CourseTags
+        model = Tags
         fields = ["id","name"]
 
 class ViewCourseDetailSerializer(serializers.ModelSerializer):
     categories = serializers.SerializerMethodField('get_categories')
     tags = serializers.SerializerMethodField('get_tags')
-    subject_info = serializers.SerializerMethodField('get_subject_info')
+    chapters_info = serializers.SerializerMethodField('get_chapters_info')
     
-    def get_subject_info(self, obj):
+    def get_chapters_info(self, obj):
         category = CourseChapters.objects.filter(course_id=obj.id)
-        return CourseSubjectSerializer(category, many=True).data
+        return CourseChapterSerializer(category, many=True).data
     
-
     def get_tags(self, obj):
         category = CourseTags.objects.filter(course_id=obj.id)
-        return CourseTagsSerializer(category, many=True).data
+        return CourseTagsInfoSerializer(category, many=True).data
     
     def get_categories(self, obj):
         category = CourseCategories.objects.filter(course_id=obj.id)
@@ -903,7 +920,7 @@ class ViewCourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ['name','description',"short_description","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","duration", "subject_info","mock_test_pattern","assessment_test_testlets","assessment_test_each_testlet_questions"]
+        fields = ["id",'name','description',"short_description","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","duration", "chapters_info","mock_test_pattern","assessment_test_testlets","assessment_test_each_testlet_questions"]
 
 
 
@@ -980,13 +997,7 @@ class CreateCourseSerializer(serializers.ModelSerializer) :
 
 
         return course
-    
 
-
-class CourseTagsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CourseTags
-        fields = ["id","name","created_at"]
 
 
 class CourseDetailSerializer(serializers.ModelSerializer):

@@ -1,0 +1,321 @@
+from django.shortcuts import render
+from rest_framework import status
+from rest_framework.views import APIView
+from questions.serializers import *
+from questions.renderers import QuestionRenderer
+from rest_framework.permissions import IsAuthenticated
+from django.db.models import Q
+from mini_lms.utils import *
+from mini_lms.roles import *
+from mini_lms.permissions import RoleOrPermissionCheck
+from mini_lms.pagination import CustomPageNumberPagination
+from rest_framework import filters
+import pandas as pd
+from datetime import datetime,timezone
+from rest_framework import serializers
+from django.conf import settings
+import os
+from google.cloud import storage
+
+
+class MCQsListingView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "mcq_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['id_number',"topic__name"]
+    ordering_fields = ['id_number', 'id', 'status']
+    def get(self, request, sid = None,format=None):
+        if sid is not None:
+            question = TestQuestions.objects.filter(chapter_id = sid, question_type = QuestionType.MCQ)
+        else:
+            question = TestQuestions.objects.filter(question_type = QuestionType.MCQ)
+
+        chapter_id = request.query_params.get('chapter_id')
+        if chapter_id:
+            question = question.filter(chapter_id=chapter_id)
+        
+        status = request.query_params.get('status')
+        if status:
+            question = question.filter(status=status)
+
+
+        search_filter = filters.SearchFilter()
+        question = search_filter.filter_queryset(request, question, self)
+
+        ordering_filter = filters.OrderingFilter()
+        question = ordering_filter.filter_queryset(request, question, self)
+
+        if not question.ordered:
+            question = question.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(question, request, view=self)
+        serializer = ViewTestQuestionDetailSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class ViewMCQDetailView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "mcq_listing",
+                            [SuperAdmin]
+                        )]
+    def get(self, request,  cid , format=None):
+        question = TestQuestions.objects.filter(id=cid).first()
+        if question is None:
+            raise serializers.ValidationError("Invalid MCQ ID!")
+        
+        serializer = ViewTestQuestionDetailSerializer(question)
+        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class CreateMCQView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_mcq",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = CreateMCQSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="MCQ Created Successfully", data=ViewTestQuestionDetailSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class EditMCQView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_mcq",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        test_question = TestQuestions.objects.filter(id=cid).first()
+        if test_question is None:
+            raise serializers.ValidationError("Invalid MCQ ID!")
+        
+        serializer = EditMCQSerializer(test_question, data = request.data, partial=True)
+        if serializer.is_valid(raise_exception = True):
+            user = serializer.save()
+            return success_response(message="MCQ Updated Successfully", data=ViewTestQuestionDetailSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class UpdateMCQStatusView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_mcq",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        test_question = TestQuestions.objects.filter(id=cid).first()
+        if test_question is None:
+            raise serializers.ValidationError("Invalid MCQ ID!")
+        
+        serializer = ChangeQuestionStatusSerializer(test_question, data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="MCQ Status Updated Successfully", data=ViewTestQuestionDetailSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class DeleteMCQView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "delete_mcq",
+                            [SuperAdmin]
+                        )]
+    def delete(self, request, cid, format=None):
+        try:
+            question = TestQuestions.objects.get(id = cid)
+            QuestionContents.objects.filter(test_question_id = question.id).delete()
+            QuestionOptions.objects.filter(test_question_id = question.id).delete()
+            question.delete()
+            return success_response(message="MCQ Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
+        except TestQuestions.DoesNotExist:
+            return error_response(message="MCQ not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+        
+
+
+class ImportMCQsView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_mcq",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = ImportMCQSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+
+            excel_file = serializer.validated_data['excel_file']
+            try:
+                imported_question_ids = []
+
+                colnames=['topic', 'question_no', 'pass_percentage','level','e_question','option_1','option_2','option_3',"option_4","right_option",'e_solution']
+
+                df = pd.read_excel(excel_file, names=colnames, skiprows=4)
+                with transaction.atomic():
+                    for index, row in df.iterrows():
+                        print(str(row.get('question_no', '')).strip())
+                        row_number = index
+                        question_id_number = str(row.get('question_no', '')).strip()
+                        question_text = str(row.get('e_question', '')).strip()
+                        solution_description = str(row.get('e_solution', '')).strip()
+                        
+                        right_option_index_raw = row.get('right_option', '')
+                        if pd.isna(right_option_index_raw) or str(right_option_index_raw).strip() == '':
+                            right_option_index = None
+                        else:
+                            try:
+                                right_option_index = int(float(str(right_option_index_raw).strip())) 
+
+                                if not (1 <= right_option_index <= 4):
+                                    raise ValueError(f"Right option index must be between 1 and 4.")
+                            except (ValueError, TypeError):
+                                raise ValueError(f"Row {row_number}: 'right_option' must be a number (1, 2, 3, or 4). Found '{right_option_index_raw}'.")
+                        
+
+                        if not question_text:
+                            raise ValueError(f"Row {row_number}: 'e_question' (Question Text) cannot be empty.")
+                        
+                        topic_name = str(row.get('topic', '')).strip()
+
+                        if question_id_number:
+                            test_question_instance, created_question = TestQuestions.objects.get_or_create(
+                                id_number=question_id_number,
+                                chapter_id = topic_name,
+                                defaults={
+                                    'question_type': QuestionType.MCQ, 
+                                    'level': row.get('level', 1),
+                                    'pass_percentage': int(row.get('pass_percentage', 0.0)  * 100 ),
+                                    'status': True
+                                }
+                            )
+                            if not created_question: 
+                                test_question_instance.question_type = QuestionType.MCQ
+                                test_question_instance.level = row.get('level', 1)
+                                test_question_instance.pass_percentage = int(row.get('pass_percentage', 0.0)  * 100)
+                                test_question_instance.status = True
+                        else:
+                            # If no ID Number is provided, always create a new TestQuestions
+                            test_question_instance = TestQuestions.objects.create(
+                                question_type = QuestionType.MCQ,
+                                level = row.get('level', 1),
+                                pass_percentage = int(row.get('pass_percentage', 0.0)  * 100 ),
+                                status = True
+                            )
+
+                        chapter = None
+
+                        if topic_name:
+                            try:
+                                chapter = Chapters.objects.get(id=topic_name)
+                            except Chapters.DoesNotExist:
+                                raise ValueError(f"Row {row_number}: Topic '{topic_name}' not found in the database. Please ensure it exists.")
+                        else:
+                            raise ValueError(f"Row {row_number}: Topic '{topic_name}' is missing")
+                        
+                        test_question_instance.chapter = chapter
+                        test_question_instance.save()
+
+                        question_contents_instance, created_content = QuestionContents.objects.get_or_create(
+                            test_question=test_question_instance,
+                            defaults={
+                                'question': question_text,
+                                'solution_description': solution_description
+                            }
+                        )
+                        if not created_content: # If exists, update
+                            question_contents_instance.question = question_text
+                            question_contents_instance.solution_description = solution_description
+                            question_contents_instance.save()
+
+
+                        current_options = test_question_instance.questionoptions_set.filter(deleted_at=None).order_by('id')
+                        existing_options_count = current_options.count()
+
+                        options_instances = []
+                        right_option_instance = None 
+
+                        excel_options_list = [] 
+                        for j in range(1, 5):
+                            option_text = str(row.get(f'option_{j}', '')).strip()
+                            excel_options_list.append(option_text) 
+
+                        
+                        correct_option_text_from_excel = None
+                        if right_option_index is not None and 0 < right_option_index <= len(excel_options_list):
+                            correct_option_text_from_excel = excel_options_list[right_option_index - 1] # -1 for 0-indexing
+                            if not correct_option_text_from_excel: # Check if the referenced option text is actually present
+                                raise ValueError(f"Row {row_number}: 'right_option' index {right_option_index} points to an empty option.")
+                        elif right_option_index is not None and right_option_index > len(excel_options_list) and excel_options_list:
+                             raise ValueError(f"Row {row_number}: 'right_option' index {right_option_index} is out of bounds for the provided options ({len(excel_options_list)} options found).")
+
+
+                        actual_excel_options_processed_count = 0
+                        for i, option_text_from_excel in enumerate(excel_options_list):
+                            if not option_text_from_excel: 
+                                continue 
+
+                            option_obj = None
+                            if actual_excel_options_processed_count < existing_options_count:
+                                option_obj = current_options[actual_excel_options_processed_count]
+                                option_obj.option = option_text_from_excel
+                                if option_obj.deleted_at:
+                                    option_obj.deleted_at = None
+                                option_obj.save()
+                            else:
+                                option_obj = QuestionOptions.objects.create(
+                                    test_question=test_question_instance,
+                                    option=option_text_from_excel
+                                )
+                            options_instances.append(option_obj) # Add to list of options actually processed
+
+                            if option_obj.option == correct_option_text_from_excel: # Compare actual text
+                                right_option_instance = option_obj
+                            
+                            actual_excel_options_processed_count += 1
+
+
+                        if existing_options_count > actual_excel_options_processed_count:
+                            for j in range(actual_excel_options_processed_count, existing_options_count):
+                                option_to_delete = current_options[j]
+                                if not option_to_delete.deleted_at:
+                                    option_to_delete.deleted_at = datetime.now()
+                                    option_to_delete.save()
+
+                        if right_option_index is not None and right_option_instance is None:
+                            if correct_option_text_from_excel: 
+
+                                raise ValueError(f"Row {row_number}: Internal error: Correct option text '{correct_option_text_from_excel}' was identified but no corresponding option object was found/created. This might indicate a logic flaw.")
+                            else: 
+                                raise ValueError(f"Row {row_number}: 'right_option' index {right_option_index} is invalid or points to an empty option. No correct option identified.")
+                        elif right_option_index is None and actual_excel_options_processed_count > 0:
+                            raise ValueError(f"Row {row_number}: Options are provided but 'right_option' (index) is missing.")
+                        elif actual_excel_options_processed_count == 0 and right_option_index is not None:
+                            raise ValueError(f"Row {row_number}: 'right_option' index provided but no Options (option_X) found in row.")
+                        elif actual_excel_options_processed_count == 0 and right_option_index is None:
+                            pass 
+
+                        test_question_instance.right_option = right_option_instance
+                        test_question_instance.save()
+                        print(test_question_instance.id)
+                        imported_question_ids.append(test_question_instance.id)
+                        
+            except Exception as e:
+                return error_response(message="failed", data = {"error": f"Error processing Excel file: {str(e)}"}, status_code=status.HTTP_400_BAD_REQUEST)
+
+            return success_response(message="MCQ Created Successfully", data={"imported_question_ids": imported_question_ids}, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
