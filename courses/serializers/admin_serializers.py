@@ -931,6 +931,7 @@ class CreateCourseSerializer(serializers.ModelSerializer) :
     description = serializers.CharField(required=True)
     requirements = serializers.CharField(required=False)
     price = serializers.IntegerField(required=True)
+    level = serializers.IntegerField(required=True)
     discount = serializers.FloatField(required=False,allow_null=True)
     feature_json = serializers.JSONField(required=False)
     objectives_summary = serializers.JSONField(required=False)
@@ -941,10 +942,10 @@ class CreateCourseSerializer(serializers.ModelSerializer) :
     
     class Meta:
         model = Course
-        fields = ['name','description',"short_description","requirements","price","discount","feature_json","image","banner_image","category_id","objectives_summary","tags","duration"]
+        fields = ['name','description',"short_description","requirements","price","discount","feature_json","image","banner_image","category_id","objectives_summary","tags","duration","level"]
 
-    # def validate_category_id(self, value):
-    #     return validate_category_id_list(value)
+    def validate_category_id(self, value):
+        return validate_category_id_list(value)
         
     def validate(self, data):
         if data.get('discount') is not None:
@@ -970,7 +971,10 @@ class CreateCourseSerializer(serializers.ModelSerializer) :
             image = validate_data.get('image'),
             banner_image = validate_data.get('banner_image'),
             objectives_summary = validate_data.get('objectives_summary'),
-            duration = validate_data.get('duration')
+            level = validate_data.get('level'),
+            duration = validate_data.get('duration'),
+            created_by = self.context.get('user'),
+            approved_by = self.context.get('user'),
         )
         course.save()
 
@@ -991,10 +995,9 @@ class CreateCourseSerializer(serializers.ModelSerializer) :
             for index , tags in enumerate(tags_data):
                 tag = CourseTags(
                         course = course,
-                        name = tags
+                        tags = Tags.objects.filter(id = tags).first()
                     )
                 tag.save()
-
 
         return course
 
@@ -1010,7 +1013,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     
     def get_categories(self, obj):
         category = CourseCategories.objects.filter(course_id=obj.id)
-        return CourseCategorySerializer(category, many=True).data
+        return CourseTagsInfoSerializer(category, many=True).data
     
     
     class Meta:
@@ -1031,6 +1034,7 @@ class EditCourseSerializer(serializers.ModelSerializer):
     assessment_test_testlets = serializers.IntegerField(required=False)
     discount = serializers.FloatField(required=False,allow_null=True)
     feature_json = serializers.JSONField(required=False)
+    level = serializers.IntegerField(required=True)
     objectives_summary = serializers.JSONField(required=False)
     tags = serializers.ListField(required=False)
     image = serializers.ImageField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp"])])
@@ -1039,7 +1043,7 @@ class EditCourseSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ['name','description',"short_description","requirements","price","discount","feature_json","image","banner_image","category_id","objectives_summary","tags","duration","mock_test_pattern","assessment_test_testlets","assessment_test_each_testlet_questions"]
+        fields = ['name','description',"short_description","requirements","price","discount","feature_json","image","banner_image","category_id","objectives_summary","tags","duration","mock_test_pattern","assessment_test_testlets","assessment_test_each_testlet_questions","level"]
         
     def validate(self, data):
         return data
@@ -1063,6 +1067,7 @@ class EditCourseSerializer(serializers.ModelSerializer):
         if validate_data.get('banner_image') is not None:
             course.banner_image = validate_data.get('banner_image', course.banner_image)
         course.objectives_summary = validate_data.get('objectives_summary', course.objectives_summary)
+        course.level = validate_data.get('level', course.level)
         course.save()
 
 
@@ -1085,7 +1090,7 @@ class EditCourseSerializer(serializers.ModelSerializer):
             for index , tags in enumerate(tags_data):
                 tag = CourseTags(
                         course = course,
-                        name = tags
+                        tags = Tags.objects.filter(id = tags).first()
                     )
                 tag.save()
 
@@ -1145,7 +1150,7 @@ class AssignChapterCourseSerializer(serializers.ModelSerializer):
 
         if chapter_data is not None:
             current_topic_links = {
-                link.chapter_id: link for link in course_info.coursechapterss_set.all()
+                link.chapter_id: link for link in course_info.coursechapters_set.all()
             }
 
             # Lists for batch operations
@@ -1168,7 +1173,7 @@ class AssignChapterCourseSerializer(serializers.ModelSerializer):
                     links_to_create.append(
                         CourseChapters(
                             course=course_info,
-                            subject=subject_obj,
+                            chapter=subject_obj,
                             order=order_for_chapter
                         )
                     )

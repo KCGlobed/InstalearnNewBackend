@@ -717,12 +717,13 @@ class CreateCourseView(APIView):
                             [SuperAdmin]
                         )]
     def post(self, request, format=None):
-        serializer = CreateCourseSerializer(data = request.data)
+        serializer = CreateCourseSerializer(data = request.data,context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
             user  = serializer.save()
             return success_response(message="Course Created Successfully", data=CourseDetailSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
+
 class EditCourseView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
@@ -735,7 +736,7 @@ class EditCourseView(APIView):
         if course is None:
             raise ValidationError("Invalid Course ID!")
         
-        serializer = EditCourseSerializer(course, data = request.data, partial=True)
+        serializer = EditCourseSerializer(course, data = request.data, partial=True, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
             user= serializer.save()
             return success_response(message="Course Updated Successfully", data=CourseDetailSerializer(user).data, status_code=status.HTTP_200_OK)
@@ -801,6 +802,29 @@ class SubCategoryListView(APIView):
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
 
+class SubCategoryListDetailView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [SuperAdmin]
+                        )]
+    def get(self, request, cid=None):
+        subject = Categories.objects.filter(status=True, parent__isnull=False).order_by("-id")
+        serializer = CategoryListSerializer(subject, many=True)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class TagsListView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [SuperAdmin]
+                        )]
+    def get(self, request, cid=None):
+        subject = Tags.objects.filter(status=True).order_by("-id")
+        serializer = CourseTagsSerializer(subject, many=True)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
 
 class AssignChapterCourseView(APIView):
     renderer_classes = [CourseRenderer]
@@ -817,7 +841,7 @@ class AssignChapterCourseView(APIView):
         serializer = AssignChapterCourseSerializer(course, data = request.data, partial=True)
         if serializer.is_valid(raise_exception = True):
             user= serializer.save()
-            return success_response(message="Chapter Assigned Successfully", data=CourseDetailSerializer(user).data, status_code=status.HTTP_200_OK)
+            return success_response(message="Chapter Assigned Successfully", data=ViewCourseDetailSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
 
 

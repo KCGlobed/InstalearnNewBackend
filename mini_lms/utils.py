@@ -214,6 +214,23 @@ def generate_random_password(length=8):
     return ''.join(password)
 
 
+def validate_category_id_list(id_list):
+    if not isinstance(id_list, list):
+        raise serializers.ValidationError("Expected a list of IDs.")
+
+    if len(id_list) == 0:
+        raise serializers.ValidationError("Category IDs is required field!")
+    
+    existing_tag_ids = set(Categories.objects.filter(id__in=id_list).values_list('id', flat=True))
+    non_existent_ids = [str(tag_id) for tag_id in id_list if tag_id not in existing_tag_ids]
+
+    if non_existent_ids:
+        raise serializers.ValidationError(
+            f"The following Category IDs do not exist: {', '.join(non_existent_ids)}."
+        )
+
+    return id_list
+
 def validate_course_id_list(id_list):
     if not isinstance(id_list, list):
         raise serializers.ValidationError("Expected a list of IDs.")

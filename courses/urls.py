@@ -56,35 +56,30 @@ urlpatterns = [
 
 
     path('get-course-listing/', CourseListingView.as_view(), name="course-listing"),
+    path('get-sub-category-listing/', SubCategoryListDetailView.as_view(), name="category-list"),
+    path('get-tags-list/', TagsListView.as_view(), name="tags-list"),
     path('view-course-detail/<int:cid>', ViewCourseDetailView.as_view(), name="view-course-detail"),
-
+    path('create-course/', CreateCourseView.as_view(), name="create-course"),
+    path('assign-chapter-course/<int:cid>', AssignChapterCourseView.as_view(), name="assign-chapter-course"),
+    path('edit-course/<int:cid>', EditCourseView.as_view(), name="edit-course"),
+    path('update-course-status/<int:cid>', UpdateCourseStatusView.as_view(), name="update-course-status"),
+    path('delete-course/<int:cid>', DeleteCourseView.as_view(), name="delete-course"),
 
     path('get-courses-sample-video-listing/<int:cid>', GetCourseSampleVideoView.as_view(), name="get-course-sample-video"),
     path('delete-courses-sample-video/<int:cid>', DeleteCourseSampleVideoView.as_view(), name="delete-course-sample-video"),
     path('upload-course-sample-video/', UploadCourseSampleVideoView.as_view(), name="upload-course-sample-video"),
-
-    
-    path('get-category-list/', CategoryListView.as_view(), name="category-list"),
-    path('get-subcategory-list/<int:cid>', SubCategoryListView.as_view(), name="subcategory-list"),
-    
-    path('create-course/', CreateCourseView.as_view(), name="create-course"),
-    path('edit-course/<int:cid>', EditCourseView.as_view(), name="edit-course"),
-    path('assign-chapter-course/<int:cid>', AssignChapterCourseView.as_view(), name="assign-chapter-course"),
-    path('update-course-status/<int:cid>', UpdateCourseStatusView.as_view(), name="update-course-status"),
-    path('delete-course/<int:cid>', DeleteCourseView.as_view(), name="delete-course"),
 
     path('get-instructor-list/', GetInstructorListView.as_view(), name="get-instructor-list"),
     path('get-course-instructor/<int:cid>', GetCourseInstructorsView.as_view(), name="get-course-instructor"),
     path('add-course-instructor/', AddCourseInstructorsView.as_view(), name="add-course-instructor"),
     path('delete-course-instructor/<cid>', DeleteCourseInstructorView.as_view(), name="delete-course-instructor"),
 
+    path('get-subcategory-list/<int:cid>', SubCategoryListView.as_view(), name="subcategory-list"),
     
     path('generate-upload-signed-url/', GenerateUploadSignedUrlView.as_view(), name="generate-upload-signed-url"),
     path('get-trail-course-list/', TrailCourseListView.as_view(), name="get-trail-course-list"),
     path('create-trail-course/', CreateTrailCourseView.as_view(), name="create-trail-course"),
     path('delete-trail-course/<cid>', DeleteTrailCourseView.as_view(), name="delete-trail-course"),
-
-
 
     path('get-course-list/', CourseListView.as_view(), name="get-course-list"),
     path('get-subject-list/<cid>', CourseSubjectListView.as_view(), name="get-subject-list"),
