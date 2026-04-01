@@ -557,7 +557,7 @@ class HomepageCategorySerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Categories
-        fields = ["id","name","total_courses","status","created_at"]
+        fields = ["id","name","total_courses","status","created_at","bg_code","text_code","icon"]
 
 
 class HomepageTagsSerializer(serializers.ModelSerializer):
@@ -575,7 +575,7 @@ class TagsListingSerializer(serializers.ModelSerializer):
 class ParentCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Categories
-        fields = ["id","name","description"]
+        fields = ["id","name","description","bg_code","text_code","icon"]
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -589,7 +589,7 @@ class CategorySerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Categories
-        fields = ["id","name","parent","description","status","created_at"]
+        fields = ["id","name","parent","description","status","created_at","bg_code","text_code","icon"]
 
 
 
@@ -699,11 +699,14 @@ class ChangeTagStatusSerializer(serializers.ModelSerializer) :
 
 class CreateCategorySerializer(serializers.ModelSerializer) :
     name = serializers.CharField(max_length = 255, required=True)
+    bg_code = serializers.CharField(max_length = 255, required=True)
+    text_code = serializers.CharField(max_length = 255, required=True)
+    icon = serializers.ImageField(required=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp"])])
     description = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     
     class Meta:
         model = Categories
-        fields = ['name',"description"]
+        fields = ['name',"description","bg_code","text_code","icon"]
         
     def validate(self, data):
         name_count = Categories.objects.filter(name = data.get('name')).count()
@@ -716,6 +719,9 @@ class CreateCategorySerializer(serializers.ModelSerializer) :
         topic = Categories(
             name = validate_data.get('name'),
             description = validate_data.get('description'),
+            bg_code = validate_data.get('bg_code'),
+            text_code = validate_data.get('text_code'),
+            icon = validate_data.get('icon'),
             status = True
         )
         topic.save()
@@ -726,11 +732,14 @@ class CreateCategorySerializer(serializers.ModelSerializer) :
 
 class EditCategorySerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length = 255, required=True)
+    bg_code = serializers.CharField(max_length = 255, required=False, allow_blank=True)
+    text_code = serializers.CharField(max_length = 255, required=False, allow_blank=True)
+    icon = serializers.ImageField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp"])])
     description = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     
     class Meta:
         model = Categories
-        fields = ['name',"description"]
+        fields = ['name',"description","bg_code","text_code","icon"]
         
     def validate(self, data):
         return data
@@ -739,6 +748,9 @@ class EditCategorySerializer(serializers.ModelSerializer):
     def update(self , category, validate_data):
         category.name = validate_data.get('name', category.name)
         category.description = validate_data.get('description', category.description)
+        category.bg_code = validate_data.get('bg_code', category.bg_code)
+        category.text_code = validate_data.get('text_code', category.text_code)
+        category.icon = validate_data.get('icon', category.icon)
         category.save()
 
         return category
@@ -747,12 +759,15 @@ class EditCategorySerializer(serializers.ModelSerializer):
 
 class CreateSubCategorySerializer(serializers.ModelSerializer) :
     name = serializers.CharField(max_length = 255, required=True)
+    bg_code = serializers.CharField(max_length = 255, required=True)
+    text_code = serializers.CharField(max_length = 255, required=True)
+    icon = serializers.ImageField(required=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp"])])
     description = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     parent = serializers.IntegerField(required=True)
     
     class Meta:
         model = Categories
-        fields = ['name',"parent","description"]
+        fields = ['name',"parent","description","bg_code","text_code","icon"]
         
     def validate(self, data):
         parent = data.get('parent', None) 
@@ -779,6 +794,9 @@ class CreateSubCategorySerializer(serializers.ModelSerializer) :
             name = validate_data.get('name'),
             parent = parent_category,
             description = validate_data.get('description'),
+            bg_code = validate_data.get('bg_code'),
+            text_code = validate_data.get('text_code'),
+            icon = validate_data.get('icon'),
             status = True
         )
         topic.save()
@@ -789,12 +807,15 @@ class CreateSubCategorySerializer(serializers.ModelSerializer) :
 
 class EditSubCategorySerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length = 255, required=True)
+    bg_code = serializers.CharField(max_length = 255, required=False, allow_blank=True)
+    text_code = serializers.CharField(max_length = 255, required=False, allow_blank=True)
+    icon = serializers.ImageField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp"])])
     description = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     parent = serializers.IntegerField(required=True)
     
     class Meta:
         model = Categories
-        fields = ['name',"parent","description"]
+        fields = ['name',"parent","description","bg_code","text_code","icon"]
         
     def validate(self, data):
         parent = data.get('parent', None) 
@@ -815,6 +836,9 @@ class EditSubCategorySerializer(serializers.ModelSerializer):
         category.name = validate_data.get('name', category.name)
         category.parent = parent_category
         category.description = validate_data.get('description', category.description)
+        category.bg_code = validate_data.get('bg_code', category.bg_code)
+        category.text_code = validate_data.get('text_code', category.text_code)
+        category.icon = validate_data.get('icon', category.icon)
         category.save()
 
         return category

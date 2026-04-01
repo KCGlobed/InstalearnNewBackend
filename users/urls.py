@@ -25,7 +25,7 @@ urlpatterns = [
     path('get-user-permission/<int:id>', GetUserPermissionListingView.as_view(), name="get-user-permission-listing"),
     path('update-user-permission/<int:id>', UpdatetUserPermissionView.as_view(), name="update-user-permission"),
     path('check-lms-reset-permission/', CheckLMSResetPermissionView.as_view(), name="check-lms-reset-permission"),
-    path('update-instructor-public-profile/<int:id>', UpdateInstructorPublicProfileView.as_view(), name="update-instructor-public-profile"),
+    
     
 
     # Admin APIS
@@ -34,6 +34,8 @@ urlpatterns = [
     path('update-user/<str:user_type>/<int:id>', UpdateUserView.as_view(), name="update-user"),
     path('change-user-status/<str:user_type>/<int:id>', UpdateUserStatustView.as_view(), name="change-user-status"),
     path('admin-update-password/', AdminUpdateStudentPasswordView.as_view(), name="admin-update-password"),
+    path('update-instructor-public-profile/<int:id>', UpdateInstructorPublicProfileView.as_view(), name="update-instructor-public-profile"),
+    
 
     path('admin-reset-user-devices/<cid>', AdminResetUserDevicesView.as_view(), name="admin-reset-user-devices"),
     
