@@ -16,6 +16,7 @@ urlpatterns = [
     path('verify-otp/', UserVerifyOTPView.as_view(), name="user-verify-OTP"),
     path('resend-verification-otp/', UserSendVerificationOTPView.as_view(), name="user-verification-otp"),
     path('forgot-password/', UserForgotPasswordView.as_view(), name="forgot-password"),
+    path('admin-forgot-password/', AdminForgotPasswordView.as_view(), name="forgot-password"),
     path('reset-password/', UserResetPasswordView.as_view(), name="reset-password"),
 
     path('get-my-permission/', GetMyPermissionListingView.as_view(), name="get-my-permission-listing"),

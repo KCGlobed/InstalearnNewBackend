@@ -302,6 +302,43 @@ class UserForgotPasswordSerializer(serializers.ModelSerializer):
             return data
         else:
             raise serializers.ValidationError('Email Not found!')
+        
+
+class AdminForgotPasswordSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(max_length = 255,required=True)
+    class Meta:
+        model = User
+        fields = ['email']
+
+    
+    def validate(self, data):
+        email = data.get('email')
+        if User.objects.filter(email = email).exists():
+            user = User.objects.get(email = email)
+            uid = urlsafe_base64_encode(force_bytes(user.id))
+            token = PasswordResetTokenGenerator().make_token(user)
+            
+            url = settings.ADMIN_BASE_URL+"/user/reset/?uid="+uid+'&token='+token
+
+            subject = 'Reset Password Link'
+            message = f'Hi {user.first_name} {user.last_name}, Here is the your reset password link: '+url
+            
+            message = f'Hi you have got a quick contact us'
+            email_from = settings.EMAIL_HOST_USER
+            recipient_list = [user.email, ]
+            html_message = loader.render_to_string(
+                'reset_email.html',
+                {
+                    'name': user.first_name +' '+ user.last_name,
+                    'verification_link': url,
+                }
+            )
+
+            send_mail( subject, message, email_from, recipient_list,html_message=html_message )
+
+            return data
+        else:
+            raise serializers.ValidationError('Email Not found!')
 
 
 class UserResetPasswordSerializer(serializers.ModelSerializer):

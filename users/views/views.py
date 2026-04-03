@@ -238,6 +238,15 @@ class UserForgotPasswordView(APIView):
         if serializer.is_valid(raise_exception = True):
             return success_response(message="Reset password link sent on email successfully!", data=[], status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class AdminForgotPasswordView(APIView):
+    renderer_classes = [UserRenderer]
+    def post(self, request, format=None):
+        serializer = AdminForgotPasswordSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            return success_response(message="Reset password link sent on email successfully!", data=[], status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
 
 
 # User Reset Password

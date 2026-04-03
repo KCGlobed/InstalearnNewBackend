@@ -223,6 +223,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 BASE_URL = "http://localhost:5173"
+ADMIN_BASE_URL = "http://localhost:3000"
 
 # Google credentials from Google Cloud Console
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '187256667857-h90u4bc75ep3c7vlgihsludue2vimuco.apps.googleusercourses.com'

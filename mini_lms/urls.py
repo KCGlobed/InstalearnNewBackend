@@ -8,6 +8,7 @@ urlpatterns = [
     path('api/subscription/',include('subscription.urls')),
     path('api/user_study/',include('user_study.urls')),
     path('api/questions/',include('questions.urls')),
+    path('api/cms/',include('cms.urls')),
 
     #admin panel urls
     path('', include('adminpanel.authentication.urls')),
