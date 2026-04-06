@@ -263,6 +263,12 @@ class GetRolesActiveView(APIView):
     renderer_classes = [UserRenderer]
     def get(self, request,format=None):
         all_role_classes = roles.RolesManager.get_roles()
+        roles_data = [
+            role_class.get_name()
+            for role_class in all_role_classes
+            if role_class.get_name() not in ['Student',"Mentor","Instructor","ATPStaff","ATPAdmin","CorporateStaff","CorporateAdmin","UniversityStaff","UniversityAdmin","FinanceUser","SubAdmin","Manager"]
+        ]
+
         serializer = RoleSerializer(all_role_classes, many=True)
         return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
     

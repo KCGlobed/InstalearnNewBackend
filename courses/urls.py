@@ -9,12 +9,16 @@ urlpatterns = [
     path('edit-tags/<int:cid>', EditTagsView.as_view(), name="edit-tags"),
     path('update-tags-status/<int:cid>', UpdateTagsStatusView.as_view(), name="update-tags-status"),
     path('delete-tags/<int:cid>', DeleteTagsView.as_view(), name="delete-tags"),
+    path('export-tags-listing-pdf/', ExportTagsListingPDFView.as_view(), name="export-tags-listing-pdf"),
+    path('export-tags-listing-excel/', ExportTagsListingExcelView.as_view(), name="export-tags-listing-excel"),
 
     path('get-category-listing/', CategoryListingView.as_view(), name="category-listing"),
     path('create-category/', CreateCategoryView.as_view(), name="create-category"),
     path('edit-category/<int:cid>', EditCategoryView.as_view(), name="edit-category"),
     path('update-category-status/<int:cid>', UpdateCategoryStatusView.as_view(), name="update-category-status"),
     path('delete-category/<int:cid>', DeleteCategoryView.as_view(), name="delete-category"),
+    path('export-category-listing-pdf/', ExportCategoryListingPDFView.as_view(), name="export-category-listing-pdf"),
+    path('export-category-listing-excel/', ExportCategoryListingExcelView.as_view(), name="export-category-listing-excel"),
 
     path('get-subcategory-listing/', SubCategoryListingView.as_view(), name="category-listing"),
     path('get-parent-category/', ParentCategoryListingView.as_view(), name="parent-category-listing"),
@@ -22,6 +26,8 @@ urlpatterns = [
     path('edit-subcategory/<int:cid>', EditSubCategoryView.as_view(), name="edit-subcategory"),
     path('update-subcategory-status/<int:cid>', UpdateCategoryStatusView.as_view(), name="update-subcategory-status"),
     path('delete-subcategory/<int:cid>', DeleteCategoryView.as_view(), name="delete-subcategory"),
+    path('export-subcategory-listing-pdf/', ExportSubCategoryListingPDFView.as_view(), name="export-subcategory-listing-pdf"),
+    path('export-subcategory-listing-excel/', ExportSubCategoryListingExcelView.as_view(), name="export-subcategory-listing-excel"),
 
     # Manage Chapters Books APIS
     path('get-book-listing/', ChapterBookListingView.as_view(), name="chapters-listing"),

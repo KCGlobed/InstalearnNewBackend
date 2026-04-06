@@ -567,6 +567,7 @@ class HomepageTagsSerializer(serializers.ModelSerializer):
 
 
 class TagsListingSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     class Meta:
         model = Tags
         fields = ["id","name","status","created_at"]
@@ -579,6 +580,7 @@ class ParentCategorySerializer(serializers.ModelSerializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     parent = serializers.SerializerMethodField('get_parent')
     
     def get_parent(self, obj):
@@ -862,12 +864,14 @@ class ChangeCategoryStatusSerializer(serializers.ModelSerializer) :
 
 
 class CourseInfoSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     class Meta:
         model = Course
         fields = ["id",'name','description',"short_description","duration","requirements","price","discount","feature_json","image","banner_image","objectives_summary","status","created_at"]
 
 
 class CourseCategorySerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     category_info = serializers.SerializerMethodField('get_category_info')
     
     def get_category_info(self, obj):
