@@ -4,6 +4,7 @@ from rest_framework import status
 from rolepermissions.checkers import has_role
 from mini_lms.roles import *
 from users.models import *
+from questions.models import *
 import logging
 logger = logging.getLogger()
 from urllib.parse import urlparse
@@ -304,3 +305,7 @@ def new_alert_login(user, ip_address):
     #                 description='You have successfully logged into the system.', 
     #                 notification_type = NotificationType.New_Login_Alert
     #             )
+
+
+def difficulty_level(value):
+    return Level(value).label

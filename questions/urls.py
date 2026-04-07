@@ -11,6 +11,6 @@ urlpatterns = [
     path('update-mcq-status/<int:cid>', UpdateMCQStatusView.as_view(), name="update-mcq-status"),
     path('delete-mcq/<int:cid>', DeleteMCQView.as_view(), name="delete-mcq"),
     path('import-mcqs/', ImportMCQsView.as_view(), name="import-mcqs"),
-
+    path('export-mcqs-listing-excel/', ExportMCQsListingExcelView.as_view(), name="export-mcqs-listing-excel"),
 
 ]   

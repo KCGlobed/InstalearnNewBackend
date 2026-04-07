@@ -37,8 +37,8 @@ class ViewTestQuestionDetailSerializer(serializers.ModelSerializer):
     def get_right_option(self, obj):
         if obj.right_option is None:
             return []
-        option = QuestionOptions.objects.filter(id=obj.right_option.id)
-        return QuestionOptionsSerializer(option, many=True).data
+        option = QuestionOptions.objects.filter(id=obj.right_option.id).first()
+        return QuestionOptionsSerializer(option).data
     
     def get_options(self, obj):
         option = QuestionOptions.objects.filter(test_question_id=obj.id)

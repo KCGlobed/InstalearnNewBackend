@@ -33,13 +33,15 @@ class ChapterBooksSerializer(serializers.ModelSerializer):
 
 
 class ChaptersSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     class Meta:
         model = Chapters
-        fields = ["id","name","status","created_at"]
+        fields = ["id","name","description","status","created_at"]
 
 
 
 class ViewChapterDetailSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     class Meta:
         model = Chapters
         fields = ["id","name","status","created_at"]
@@ -153,6 +155,7 @@ class ChangeChapterstatusSerializer(serializers.ModelSerializer) :
 
 
 class SubjectsSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     class Meta:
         model = Chapters
         fields = ["id","name","status","created_at"]
@@ -173,9 +176,10 @@ class SubjectChapterInfoSerializer(serializers.ModelSerializer):
 
 
 class VideosSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     class Meta:
         model = Videos
-        fields = ["id","name","video_duration","status","created_at","is_completed","is_uploaded"]
+        fields = ["id","name","video_duration","status","created_at","is_completed","is_uploaded","description"]
 
 
 
@@ -703,7 +707,7 @@ class CreateCategorySerializer(serializers.ModelSerializer) :
     name = serializers.CharField(max_length = 255, required=True)
     bg_code = serializers.CharField(max_length = 255, required=True)
     text_code = serializers.CharField(max_length = 255, required=True)
-    icon = serializers.ImageField(required=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp"])])
+    icon = serializers.ImageField(required=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
     description = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     
     class Meta:
@@ -736,7 +740,7 @@ class EditCategorySerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length = 255, required=True)
     bg_code = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     text_code = serializers.CharField(max_length = 255, required=False, allow_blank=True)
-    icon = serializers.ImageField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp"])])
+    icon = serializers.ImageField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
     description = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     
     class Meta:
@@ -763,7 +767,7 @@ class CreateSubCategorySerializer(serializers.ModelSerializer) :
     name = serializers.CharField(max_length = 255, required=True)
     bg_code = serializers.CharField(max_length = 255, required=True)
     text_code = serializers.CharField(max_length = 255, required=True)
-    icon = serializers.ImageField(required=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp"])])
+    icon = serializers.ImageField(required=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
     description = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     parent = serializers.IntegerField(required=True)
     
@@ -811,7 +815,7 @@ class EditSubCategorySerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length = 255, required=True)
     bg_code = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     text_code = serializers.CharField(max_length = 255, required=False, allow_blank=True)
-    icon = serializers.ImageField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp"])])
+    icon = serializers.ImageField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
     description = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     parent = serializers.IntegerField(required=True)
     
@@ -964,8 +968,8 @@ class CreateCourseSerializer(serializers.ModelSerializer) :
     feature_json = serializers.JSONField(required=False)
     objectives_summary = serializers.JSONField(required=False)
     tags = serializers.ListField(required=True)
-    image = serializers.ImageField(required=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp"])])
-    banner_image = serializers.ImageField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp"])])
+    image = serializers.ImageField(required=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
+    banner_image = serializers.ImageField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
     category_id = serializers.ListField(child=serializers.IntegerField(required=True), required=True)
     
     class Meta:
@@ -1065,8 +1069,8 @@ class EditCourseSerializer(serializers.ModelSerializer):
     level = serializers.IntegerField(required=True)
     objectives_summary = serializers.JSONField(required=False)
     tags = serializers.ListField(required=False)
-    image = serializers.ImageField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp"])])
-    banner_image = serializers.ImageField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp"])])
+    image = serializers.ImageField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
+    banner_image = serializers.ImageField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
     category_id = serializers.CharField(required=False)
     
     class Meta:
@@ -1426,10 +1430,9 @@ class VideoHistorySerializer(serializers.ModelSerializer):
 
 
 
-
 class UpdateCoursesSampleVideoSerializer(serializers.ModelSerializer) :
     course_id = serializers.IntegerField(required=True)
-    thumbnail = serializers.ImageField(required=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp"])])
+    thumbnail = serializers.ImageField(required=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
     videos = serializers.FileField(required=False,allow_null=True, validators=[FileExtensionValidator( ['mp4', 'avi', 'mov', 'mkv'])])
     duration = serializers.IntegerField(required=True)
     name = serializers.CharField(required=True)

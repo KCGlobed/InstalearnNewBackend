@@ -15,7 +15,18 @@ from datetime import datetime,timezone
 from rest_framework import serializers
 from django.conf import settings
 import os
+from xhtml2pdf import pisa
+from io import BytesIO
+from django.template.loader import get_template
+import pandas as pd
+import tempfile
+import re
+import json
 from google.cloud import storage
+from google.oauth2 import service_account
+info = json.loads(os.environ.get("GOOGLE_CREDENTIALS_JSON"))
+credentials = service_account.Credentials.from_service_account_info(info)
+client = storage.Client(credentials=credentials, project=credentials.project_id)
 
 
 class MCQsListingView(APIView):
@@ -27,7 +38,7 @@ class MCQsListingView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['id_number',"topic__name"]
+    search_fields = ['id_number',"chapter__name"]
     ordering_fields = ['id_number', 'id', 'status']
     def get(self, request, sid = None,format=None):
         if sid is not None:
@@ -38,10 +49,15 @@ class MCQsListingView(APIView):
         chapter_id = request.query_params.get('chapter_id')
         if chapter_id:
             question = question.filter(chapter_id=chapter_id)
+
         
-        status = request.query_params.get('status')
-        if status:
-            question = question.filter(status=status)
+        id_number = request.query_params.get('id_number')
+        if id_number:
+            question = question.filter(id_number__icontains=id_number)
+        
+        active = request.query_params.get('status')
+        if active:
+            question = question.filter(status=active)
 
 
         search_filter = filters.SearchFilter()
@@ -58,6 +74,141 @@ class MCQsListingView(APIView):
         serializer = ViewTestQuestionDetailSerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
+
+class ExportMCQsListingExcelView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "mcq_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['id_number',"chapter__name"]
+    ordering_fields = ['id_number', 'id', 'status']
+    def get(self, request, sid = None,format=None):
+        if sid is not None:
+            question = TestQuestions.objects.filter(chapter_id = sid, question_type = QuestionType.MCQ)
+        else:
+            question = TestQuestions.objects.filter(question_type = QuestionType.MCQ)
+
+        chapter_id = request.query_params.get('chapter_id')
+        if chapter_id:
+            question = question.filter(chapter_id=chapter_id)
+
+        
+        id_number = request.query_params.get('id_number')
+        if id_number:
+            question = question.filter(id_number__icontains=id_number)
+        
+        active = request.query_params.get('status')
+        if active:
+            question = question.filter(status=active)
+
+
+        search_filter = filters.SearchFilter()
+        question = search_filter.filter_queryset(request, question, self)
+
+        ordering_filter = filters.OrderingFilter()
+        question = ordering_filter.filter_queryset(request, question, self)
+
+        if not question.ordered:
+            question = question.order_by('-id')
+
+        serializer = ViewTestQuestionDetailSerializer(question, many=True)
+
+        lis = []
+        
+        lis.append({
+                "name":"MCQs Report",
+                "Topic":'',
+                "total_videos":'',
+                "total_watched_videos":'',
+                "total_time_spend":'',
+                "solution":"",
+                "option_1":"",
+                "option_2":"",
+                "option_3":"",
+                "option_4":"",
+                "right_option":"",
+                "status":"",
+            })
+
+        
+        lis.append({
+                "name":"",
+                "Topic":'',
+                "total_videos":'',
+                "total_watched_videos":'',
+                "total_time_spend":'',
+                "solution":"",
+                "option_1":"",
+                "option_2":"",
+                "option_3":"",
+                "option_4":"",
+                "right_option":"",
+                "status":"",
+            })
+        
+        
+        lis.append({
+                "name":"ID Number",
+                "Topic":'Level',
+                "total_videos":'Pass Percentage',
+                "total_watched_videos":'Chapter Name',
+                "total_time_spend":'Question',
+                "solution":"Solution",
+                "option_1":"Option 1",
+                "option_2":"Option 2",
+                "option_3":"Option 3",
+                "option_4":"Option 4",
+                "right_option":"Right Answer",
+                "status":"Is Active?",
+            })
+  
+
+        for order_info in serializer.data:
+            
+            lis.append({
+                "name":order_info['id_number'],
+                "Topic":difficulty_level(order_info['level']),
+                "total_videos":order_info['pass_percentage'],
+                "total_watched_videos":order_info['chapter']['name'],
+                "total_time_spend":order_info['question_detail']['question'],
+                "solution":order_info['question_detail']['solution_description'],
+                "option_1":order_info['options'][0]['option'],
+                "option_2":order_info['options'][1]['option'],
+                "option_3":order_info['options'][2]['option'],
+                "option_4":order_info['options'][3]['option'],
+                "right_option":order_info['right_option']['option'],
+                "status":order_info['status'],
+            })
+            
+        
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            df = pd.DataFrame.from_dict(lis)
+            df.to_excel(pdf_path, header=False, index=False)
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            report_name = "mcq_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+    
 
 class ViewMCQDetailView(APIView):
     renderer_classes = [QuestionRenderer]

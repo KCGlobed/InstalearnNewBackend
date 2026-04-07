@@ -36,6 +36,8 @@ urlpatterns = [
     path('edit-book/<int:cid>', EditChapterBookView.as_view(), name="edit-book"),
     path('update-book-status/<int:cid>', UpdateChapterBookStatusView.as_view(), name="update-book-status"),
     path('delete-book/<int:cid>', DeleteChapterBookView.as_view(), name="delete-book"),
+    path('export-ebook-listing-pdf/', ExportEbookListingPDFView.as_view(), name="export-ebook-listing-pdf"),
+    path('export-ebook-listing-excel/', ExportEbookListingExcelView.as_view(), name="export-ebook-listing-excel"),
 
     # Manage Videos APIS
     path('get-videos-listing/', VideosListingView.as_view(), name="Videos-listing"),
@@ -45,6 +47,8 @@ urlpatterns = [
     path('update-video/<int:cid>', UpdateVideoView.as_view(), name="edit-video"),
     path('update-video-status/<int:cid>', UpdateVideoStatusView.as_view(), name="update-video-status"),
     path('delete-video/<int:cid>', DeleteVideoView.as_view(), name="delete-video"),
+    path('export-video-listing-pdf/', ExportVideoListingPDFView.as_view(), name="export-video-listing-pdf"),
+    path('export-video-listing-excel/', ExportVideoListingExcelView.as_view(), name="export-video-listing-excel"),
     
 
     # Manage Chapters APIS
@@ -55,6 +59,8 @@ urlpatterns = [
     path('edit-chapter/<int:cid>', EditChapterView.as_view(), name="edit-chapter"),
     path('update-chapter-status/<int:cid>', UpdateChapterStatusView.as_view(), name="update-chapter-status"),
     path('delete-chapter/<int:cid>', DeleteChapterView.as_view(), name="delete-chapter"),
+    path('export-chapter-listing-pdf/', ExportChapterListingPDFView.as_view(), name="export-chapter-listing-pdf"),
+    path('export-chapter-listing-excel/', ExportChapterListingExcelView.as_view(), name="export-chapter-listing-excel"),
 
     path('get-chapters-list/', ChapterListView.as_view(), name="chapter-list"),
     path('get-video-list/', GetVideoListView.as_view(), name="get-video-list"),

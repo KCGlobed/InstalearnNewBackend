@@ -31,25 +31,184 @@ class ChapterListingView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "chapter_listing",
+                              "chapter_listing_pdf_report",
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name']
+    search_fields = ['name',"description"]
     ordering_fields = ['name', 'created_at', 'id', 'status'] 
     def get(self, request, format=None):
         
         chapters = Chapters.objects.all()
 
-        course_id = request.query_params.get('course_id')
-        if course_id:
-            chapter_list = CourseChapters.objects.filter(course_id = course_id).values_list("chapter",flat=True)
-            chapters = chapters.filter(id__in=chapter_list)
+        name = request.query_params.get('name')
+        if name:
+            videos = videos.filter(name__icontains = name)
 
-        status = request.query_params.get('status')
-        if status:
-            videos = videos.filter(status=status)
+        active = request.query_params.get('status')
+        if active:
+            videos = videos.filter(status=active)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                videos = videos.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                videos = videos.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+
+        
+        search_filter = filters.SearchFilter()
+        chapters = search_filter.filter_queryset(request, chapters, self)
+
+        ordering_filter = filters.OrderingFilter()
+        chapters = ordering_filter.filter_queryset(request, chapters, self)
+
+        if not chapters.ordered:
+            chapters = chapters.order_by('-id')
+        
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(chapters, request, view=self)
+        serializer = ChaptersSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+class ExportChapterListingPDFView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "chapter_listing_excel_report",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name',"description"]
+    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    def get(self, request, format=None):
+        
+        chapters = Chapters.objects.all()
+
+        name = request.query_params.get('name')
+        if name:
+            videos = videos.filter(name__icontains = name)
+
+        active = request.query_params.get('status')
+        if active:
+            videos = videos.filter(status=active)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                videos = videos.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                videos = videos.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+
+        
+        search_filter = filters.SearchFilter()
+        chapters = search_filter.filter_queryset(request, chapters, self)
+
+        ordering_filter = filters.OrderingFilter()
+        chapters = ordering_filter.filter_queryset(request, chapters, self)
+
+        if not chapters.ordered:
+            chapters = chapters.order_by('-id')
+        
+        serializer = ChaptersSerializer(chapters, many=True)
+
+        data = {
+                    "user_data":serializer.data
+                }
+        
+        template = get_template('pdf/chapter_report.html')
+        html  = template.render(data)
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            html = html.encode('latin-1', 'replace').decode('latin-1')
+            pdf = pisa.CreatePDF(BytesIO(html.encode("ISO-8859-1")), dest=temp_file)
+
+            if pdf.err:
+                raise Exception("PDF generation error!")
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            report_name = "chapter_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+
+    
+
+class ExportChapterListingExcelView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "chapter_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name',"description"]
+    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    def get(self, request, format=None):
+        
+        chapters = Chapters.objects.all()
+
+        name = request.query_params.get('name')
+        if name:
+            videos = videos.filter(name__icontains = name)
+
+        active = request.query_params.get('status')
+        if active:
+            videos = videos.filter(status=active)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                videos = videos.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                videos = videos.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
 
         
         search_filter = filters.SearchFilter()
@@ -61,11 +220,73 @@ class ChapterListingView(APIView):
         if not chapters.ordered:
             chapters = chapters.order_by('-id')
 
-        paginator = self.pagination_class()
-        page = paginator.paginate_queryset(chapters, request, view=self)
-        serializer = ChaptersSerializer(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        serializer = ChaptersSerializer(chapters, many=True)
+
+        lis = []
+        
+        lis.append({
+                "name":"Chapters Report",
+                "Topic":'',
+                "total_videos":'',
+                "total_watched_videos":'',
+                "total_time_spend":''
+            })
+
+        
+        lis.append({
+                "name":"",
+                "Topic":'',
+                "total_videos":'',
+                "total_watched_videos":'',
+                "total_time_spend":''
+            })
+        
+        
+        lis.append({
+                "name":"Name",
+                "Topic":'Description',
+                "total_videos":'Is Active?',
+                "total_watched_videos":'Created At',
+                "total_time_spend":''
+            })
+  
+
+        for order_info in serializer.data:
+            
+            lis.append({
+                "name":order_info['name'],
+                "Topic":order_info['description'],
+                "total_videos":order_info['status'],
+                "total_watched_videos":order_info['created_at'],
+                "total_time_spend":""
+            })
+            
+        
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            df = pd.DataFrame.from_dict(lis)
+            df.to_excel(pdf_path, header=False, index=False)
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            report_name = "chapters_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
     
+
 
 class GetVideoListView(APIView):
     renderer_classes = [CourseRenderer]
@@ -222,15 +443,40 @@ class VideosListingView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name']
+    search_fields = ['name',"description"]
     ordering_fields = ['name', 'created_at', 'id', 'status'] 
     def get(self, request, format=None):
         
         videos = Videos.objects.all()
+        
+        name = request.query_params.get('name')
+        if name:
+            videos = videos.filter(name__icontains = name)
 
-        status = request.query_params.get('status')
-        if status:
-            videos = videos.filter(status=status)
+        active = request.query_params.get('status')
+        if active:
+            videos = videos.filter(status=active)
+
+        description = request.query_params.get('description')
+        if description:
+            videos = videos.filter(description__icontains = description)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                videos = videos.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                videos = videos.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
 
         search_filter = filters.SearchFilter()
         videos = search_filter.filter_queryset(request, videos, self)
@@ -245,6 +491,218 @@ class VideosListingView(APIView):
         page = paginator.paginate_queryset(videos, request, view=self)
         serializer = VideosSerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
+    
+
+
+class ExportVideoListingPDFView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "chapter_video_listing_pdf_report",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name',"description"]
+    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    def get(self, request, format=None):
+        
+        videos = Videos.objects.all()
+        
+        name = request.query_params.get('name')
+        if name:
+            videos = videos.filter(name__icontains = name)
+
+        active = request.query_params.get('status')
+        if active:
+            videos = videos.filter(status=active)
+
+        description = request.query_params.get('description')
+        if description:
+            videos = videos.filter(description__icontains = description)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                videos = videos.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                videos = videos.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+
+        search_filter = filters.SearchFilter()
+        videos = search_filter.filter_queryset(request, videos, self)
+
+        ordering_filter = filters.OrderingFilter()
+        videos = ordering_filter.filter_queryset(request, videos, self)
+
+        if not videos.ordered:
+            videos = videos.order_by('-id')
+
+        serializer = VideosSerializer(videos, many=True)
+
+        data = {
+                    "user_data":serializer.data
+                }
+        
+        template = get_template('pdf/video_report.html')
+        html  = template.render(data)
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            html = html.encode('latin-1', 'replace').decode('latin-1')
+            pdf = pisa.CreatePDF(BytesIO(html.encode("ISO-8859-1")), dest=temp_file)
+
+            if pdf.err:
+                raise Exception("PDF generation error!")
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            report_name = "video_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+
+    
+
+class ExportVideoListingExcelView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "chapter_video_listing_excel_report",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name',"description"]
+    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    def get(self, request, format=None):
+        
+        videos = Videos.objects.all()
+        
+        name = request.query_params.get('name')
+        if name:
+            videos = videos.filter(name__icontains = name)
+
+        active = request.query_params.get('status')
+        if active:
+            videos = videos.filter(status=active)
+
+        description = request.query_params.get('description')
+        if description:
+            videos = videos.filter(description__icontains = description)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                videos = videos.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                videos = videos.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+
+        search_filter = filters.SearchFilter()
+        videos = search_filter.filter_queryset(request, videos, self)
+
+        ordering_filter = filters.OrderingFilter()
+        videos = ordering_filter.filter_queryset(request, videos, self)
+
+        if not videos.ordered:
+            videos = videos.order_by('-id')
+
+        serializer = VideosSerializer(videos, many=True)
+
+        lis = []
+        
+        lis.append({
+                "name":"Video Report",
+                "Topic":'',
+                "total_videos":'',
+                "total_watched_videos":'',
+                "total_time_spend":''
+            })
+
+        
+        lis.append({
+                "name":"",
+                "Topic":'',
+                "total_videos":'',
+                "total_watched_videos":'',
+                "total_time_spend":''
+            })
+        
+        
+        lis.append({
+                "name":"Name",
+                "Topic":'Description',
+                "total_videos":'Is Active?',
+                "total_watched_videos":'Created At',
+                "total_time_spend":''
+            })
+  
+
+        for order_info in serializer.data:
+            
+            lis.append({
+                "name":order_info['name'],
+                "Topic":order_info['description'],
+                "total_videos":order_info['status'],
+                "total_watched_videos":order_info['created_at'],
+                "total_time_spend":""
+            })
+            
+        
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            df = pd.DataFrame.from_dict(lis)
+            df.to_excel(pdf_path, header=False, index=False)
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            report_name = "video_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+
     
 
 class ViewVideoDetailView(APIView):
@@ -430,6 +888,10 @@ class TagsListingView(APIView):
         if name:
             category = category.filter(name__icontains = name)
 
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
+
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         
@@ -478,6 +940,10 @@ class ExportTagsListingPDFView(APIView):
         name = request.query_params.get('name')
         if name:
             category = category.filter(name__icontains = name)
+
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
 
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
@@ -558,6 +1024,10 @@ class ExportTagsListingExcelView(APIView):
         name = request.query_params.get('name')
         if name:
             category = category.filter(name__icontains = name)
+
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
 
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
@@ -652,7 +1122,7 @@ class CategoryListingView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name']
+    search_fields = ['name',"description"]
     ordering_fields = ['name', 'created_at', 'id', 'status'] 
     def get(self, request, format=None):
         category = Categories.objects.filter(parent__isnull = True)
@@ -660,6 +1130,10 @@ class CategoryListingView(APIView):
         name = request.query_params.get('name')
         if name:
             category = category.filter(name__icontains = name)
+
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
 
         description = request.query_params.get('description')
         if description:
@@ -706,7 +1180,7 @@ class ExportCategoryListingPDFView(APIView):
                             [SuperAdmin]
                         )]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name']
+    search_fields = ['name',"description"]
     ordering_fields = ['name', 'created_at', 'id', 'status'] 
     def get(self, request, format=None):
         category = Categories.objects.filter(parent__isnull = True)
@@ -714,6 +1188,10 @@ class ExportCategoryListingPDFView(APIView):
         name = request.query_params.get('name')
         if name:
             category = category.filter(name__icontains = name)
+
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
 
         description = request.query_params.get('description')
         if description:
@@ -790,7 +1268,7 @@ class ExportCategoryListingExcelView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name']
+    search_fields = ['name',"description"]
     ordering_fields = ['name', 'created_at', 'id', 'status'] 
     def get(self, request, format=None):
         category = Categories.objects.filter(parent__isnull = True)
@@ -798,6 +1276,10 @@ class ExportCategoryListingExcelView(APIView):
         name = request.query_params.get('name')
         if name:
             category = category.filter(name__icontains = name)
+
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
 
         description = request.query_params.get('description')
         if description:
@@ -906,7 +1388,7 @@ class SubCategoryListingView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name']
+    search_fields = ['name',"description","parent__name"]
     ordering_fields = ['name', 'created_at', 'id', 'status'] 
     def get(self, request, format=None):
         category = Categories.objects.filter(parent__isnull = False)
@@ -914,6 +1396,10 @@ class SubCategoryListingView(APIView):
         name = request.query_params.get('name')
         if name:
             category = category.filter(name__icontains = name)
+
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
 
         parent = request.query_params.get('parent')
         if parent:
@@ -963,7 +1449,7 @@ class ExportSubCategoryListingPDFView(APIView):
                             [SuperAdmin]
                         )]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name']
+    search_fields = ['name',"description","parent__name"]
     ordering_fields = ['name', 'created_at', 'id', 'status'] 
     def get(self, request, format=None):
         category = Categories.objects.filter(parent__isnull = False)
@@ -971,6 +1457,10 @@ class ExportSubCategoryListingPDFView(APIView):
         name = request.query_params.get('name')
         if name:
             category = category.filter(name__icontains = name)
+
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
 
         parent = request.query_params.get('parent')
         if parent:
@@ -1051,7 +1541,7 @@ class ExportSubCategoryListingExcelView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name']
+    search_fields = ['name',"description","parent__name"]
     ordering_fields = ['name', 'created_at', 'id', 'status'] 
     def get(self, request, format=None):
         category = Categories.objects.filter(parent__isnull = False)
@@ -1059,6 +1549,10 @@ class ExportSubCategoryListingExcelView(APIView):
         name = request.query_params.get('name')
         if name:
             category = category.filter(name__icontains = name)
+
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
 
         parent = request.query_params.get('parent')
         if parent:
@@ -1539,6 +2033,31 @@ class ChapterBookListingView(APIView):
         
         chapters = ChapterBooks.objects.all()
         
+        name = request.query_params.get('name')
+        if name:
+            chapters = chapters.filter(name__icontains = name)
+
+        active = request.query_params.get('status')
+        if active:
+            chapters = chapters.filter(status=active)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                chapters = chapters.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                chapters = chapters.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
         search_filter = filters.SearchFilter()
         chapters = search_filter.filter_queryset(request, chapters, self)
 
@@ -1553,6 +2072,212 @@ class ChapterBookListingView(APIView):
         serializer = ChapterBooksSerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
     
+
+class ExportEbookListingPDFView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "chapter_book_listing_pdf_report",
+                            [SuperAdmin]
+                        )]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
+    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    def get(self, request, format=None):
+        category = ChapterBooks.objects.all()
+        
+        name = request.query_params.get('name')
+        if name:
+            category = category.filter(name__icontains = name)
+
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
+
+        description = request.query_params.get('description')
+        if description:
+            category = category.filter(description__icontains = description)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                category = category.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                category = category.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        category = search_filter.filter_queryset(request, category, self)
+
+        ordering_filter = filters.OrderingFilter()
+        category = ordering_filter.filter_queryset(request, category, self)
+
+        if not category.ordered:
+            category = category.order_by('-id')
+
+        serializer = ChapterBooksSerializer(category, many=True)
+        
+        data = {
+                    "user_data":serializer.data
+                }
+        
+        template = get_template('pdf/ebook_report.html')
+        html  = template.render(data)
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            html = html.encode('latin-1', 'replace').decode('latin-1')
+            pdf = pisa.CreatePDF(BytesIO(html.encode("ISO-8859-1")), dest=temp_file)
+
+            if pdf.err:
+                raise Exception("PDF generation error!")
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            report_name = "ebook_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+
+
+class ExportEbookListingExcelView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "chapter_book_listing_excel_report",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
+    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    def get(self, request, format=None):
+        category = ChapterBooks.objects.all()
+        
+        name = request.query_params.get('name')
+        if name:
+            category = category.filter(name__icontains = name)
+
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
+
+        description = request.query_params.get('description')
+        if description:
+            category = category.filter(description__icontains = description)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                category = category.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                category = category.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        category = search_filter.filter_queryset(request, category, self)
+
+        ordering_filter = filters.OrderingFilter()
+        category = ordering_filter.filter_queryset(request, category, self)
+
+        if not category.ordered:
+            category = category.order_by('-id')
+
+        
+        serializer = ChapterBooksSerializer(category, many=True)
+
+        lis = []
+        
+        lis.append({
+                "name":"Ebook Report",
+                "Topic":'',
+                "total_videos":'',
+                "total_watched_videos":'',
+                "total_time_spend":''
+            })
+
+        
+        lis.append({
+                "name":"",
+                "Topic":'',
+                "total_videos":'',
+                "total_watched_videos":'',
+                "total_time_spend":''
+            })
+        
+        
+        lis.append({
+                "name":"Name",
+                "Topic":'Description',
+                "total_videos":'Is Active?',
+                "total_watched_videos":'Created At',
+                "total_time_spend":''
+            })
+  
+
+        for order_info in serializer.data:
+            
+            lis.append({
+                "name":order_info['name'],
+                "Topic":order_info['description'],
+                "total_videos":order_info['status'],
+                "total_watched_videos":order_info['created_at'],
+                "total_time_spend":""
+            })
+            
+        
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            df = pd.DataFrame.from_dict(lis)
+            df.to_excel(pdf_path, header=False, index=False)
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            report_name = "ebook_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
 
 
 class ViewChapterBookView(APIView):
