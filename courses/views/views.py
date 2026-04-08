@@ -16,6 +16,7 @@ from rest_framework.exceptions import NotFound
 from mini_lms.permissions import RoleOrPermissionCheck
 from mini_lms.pagination import CustomPageNumberPagination
 from rest_framework import filters
+from django.db.models import Count, Case, When, IntegerField
 
 
 
@@ -178,12 +179,29 @@ class SearchCourseView(APIView):
         return success_response(message="success", data={}, status_code=status.HTTP_200_OK)
     
 
-class SearchCategoryListView(APIView):
+class SearchFiltersListView(APIView):
     renderer_classes = [CourseRenderer]
     def get(self, request, format=None):
-        category = Categories.objects.filter(status = 1, parent__isnull = False).order_by("name")
-        serializer = CategorySerializer(category, many=True)
-        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+        category = Categories.objects.filter(status = True, parent__isnull = True).order_by("name")
+        serializer = SearchCategorySerializer(category, many=True)
+
+        category = Tags.objects.filter(
+                            status=True,
+                        ).order_by('name')
+        tags_serializer = HomepageTagsSerializer(category, many=True)
+
+
+        counts = Course.objects.filter(status=1).aggregate(
+            r1=Count(Case(When(avg_rating__gte=5.0, then=1), output_field=IntegerField())),
+            r2=Count(Case(When(avg_rating__gte=4.0, then=1), output_field=IntegerField())),
+            r3=Count(Case(When(avg_rating__gte=3.0, then=1), output_field=IntegerField())),
+            r4=Count(Case(When(avg_rating__gte=2.0, then=1), output_field=IntegerField())),
+            r5=Count(Case(When(avg_rating__gte=1.0, then=1), output_field=IntegerField())),
+        )
+
+        rating = [{"5":counts['r1']}, {"4":counts['r2']}, {"3":counts['r3']}, {"2":counts['r4']}, {"1":counts['r5']}]
+
+        return success_response(message="success", data={"category_filter":serializer.data,"tags_filter":tags_serializer.data,"rating":rating}, status_code=status.HTTP_200_OK)
     
 
 class SearchFilterCountView(APIView):

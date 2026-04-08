@@ -55,9 +55,15 @@ class InstructorSerializer(serializers.ModelSerializer) :
 
 
 class SearchCategorySerializer(serializers.ModelSerializer):
+    subcategory = serializers.SerializerMethodField('get_subcategory')
+    
+    def get_subcategory(self, obj):
+        category = Categories.objects.filter(parent_id=obj.id)
+        return SearchCategorySerializer(category,many=True).data
+    
     class Meta:
         model = Categories
-        fields = ['id',"name"]
+        fields = ['id',"name","subcategory"]
 
 
 class SearchCourseSerializer(serializers.ModelSerializer):

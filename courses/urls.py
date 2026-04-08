@@ -130,9 +130,11 @@ urlpatterns = [
 
     path('search/dropdown/', SearchDropdownView.as_view(), name="search-dropdown"),
     path('search/course/', SearchCourseView.as_view(), name="search-course"),
-    path('search/category-list/', SearchCategoryListView.as_view(), name="search-category-listing"),
+    
     path('search/filter-count/', SearchFilterCountView.as_view(), name="search-filter-count"),
 
     path('partner/listing/', GetPartnerListingView.as_view(), name="partner-listing"),
     path('get-testimonial-list/', GetLMSTestimonialView.as_view(), name="get-testimonial-list"),
+
+    path('search/filters-list/', SearchFiltersListView.as_view(), name="search-filters-listing"),
 ]

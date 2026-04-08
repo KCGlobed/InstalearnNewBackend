@@ -444,7 +444,7 @@ class VideosListingView(APIView):
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name',"description"]
-    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    ordering_fields = ['name', 'created_at', 'id', 'status',"description"] 
     def get(self, request, format=None):
         
         videos = Videos.objects.all()
@@ -504,7 +504,7 @@ class ExportVideoListingPDFView(APIView):
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name',"description"]
-    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    ordering_fields = ['name', 'created_at', 'id', 'status',"description"] 
     def get(self, request, format=None):
         
         videos = Videos.objects.all()
@@ -594,7 +594,7 @@ class ExportVideoListingExcelView(APIView):
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name',"description"]
-    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    ordering_fields = ['name', 'created_at', 'id', 'status',"description"] 
     def get(self, request, format=None):
         
         videos = Videos.objects.all()
@@ -1123,7 +1123,7 @@ class CategoryListingView(APIView):
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name',"description"]
-    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    ordering_fields = ['name', 'created_at', 'id', 'status',"description"] 
     def get(self, request, format=None):
         category = Categories.objects.filter(parent__isnull = True)
         
@@ -1133,6 +1133,7 @@ class CategoryListingView(APIView):
 
         active = request.query_params.get('status')
         if active:
+            print("active",active)
             category = category.filter(status=active)
 
         description = request.query_params.get('description')
@@ -1181,7 +1182,7 @@ class ExportCategoryListingPDFView(APIView):
                         )]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name',"description"]
-    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    ordering_fields = ['name', 'created_at', 'id', 'status',"description"] 
     def get(self, request, format=None):
         category = Categories.objects.filter(parent__isnull = True)
         
@@ -1269,7 +1270,7 @@ class ExportCategoryListingExcelView(APIView):
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name',"description"]
-    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    ordering_fields = ['name', 'created_at', 'id', 'status',"description"] 
     def get(self, request, format=None):
         category = Categories.objects.filter(parent__isnull = True)
         
@@ -1389,7 +1390,7 @@ class SubCategoryListingView(APIView):
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name',"description","parent__name"]
-    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    ordering_fields = ['name', 'created_at', 'id', 'status',"description","parent__name"] 
     def get(self, request, format=None):
         category = Categories.objects.filter(parent__isnull = False)
         
@@ -1450,7 +1451,7 @@ class ExportSubCategoryListingPDFView(APIView):
                         )]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name',"description","parent__name"]
-    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    ordering_fields = ['name', 'created_at', 'id', 'status',"description","parent__name"] 
     def get(self, request, format=None):
         category = Categories.objects.filter(parent__isnull = False)
         
@@ -1542,7 +1543,7 @@ class ExportSubCategoryListingExcelView(APIView):
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name',"description","parent__name"]
-    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    ordering_fields = ['name', 'created_at', 'id', 'status',"description","parent__name"] 
     def get(self, request, format=None):
         category = Categories.objects.filter(parent__isnull = False)
         
