@@ -4,10 +4,12 @@ from instructor.models import *
 from mini_lms.validator import *
 from django.core.validators import FileExtensionValidator
 import os
-from django.conf import settings
-from google.cloud import storage
-client = settings.GS_CREDENTIALS
 import json
+from google.cloud import storage
+from google.oauth2 import service_account
+info = json.loads(os.environ.get("GOOGLE_CREDENTIALS_JSON"))
+credentials = service_account.Credentials.from_service_account_info(info)
+client = storage.Client(credentials=credentials, project=credentials.project_id)
 from google.oauth2 import service_account
 from google.cloud.video.transcoder_v1 import TranscoderServiceClient
 import calendar
@@ -286,7 +288,7 @@ class MarkVideoUploadCompleteSerializer(serializers.ModelSerializer) :
         info = json.loads(os.environ.get("GOOGLE_CREDENTIALS_JSON"))
         credentials = service_account.Credentials.from_service_account_info(info)
 
-        client = TranscoderServiceClient(credentials=credentials, project=credentials.project_id)
+        client = TranscoderServiceClient(credentials=credentials)
             
         bucketName, file_name = parse_gcs_url(video_info.video_file.url)
         

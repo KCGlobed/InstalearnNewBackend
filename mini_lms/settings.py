@@ -249,6 +249,8 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 from celery.schedules import crontab
 
+GS_PROJECT_ID="kcg-newinstalearn"
+
 CELERY_BEAT_SCHEDULE = {
     'check-and-generate-video-caption': {
         'task': 'subscription.tasks.generate_video_caption',  # Path to your task function
