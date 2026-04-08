@@ -129,7 +129,7 @@ urlpatterns = [
 
 
     path('search/dropdown/', SearchDropdownView.as_view(), name="search-dropdown"),
-    path('search/course/', SearchCourseView.as_view(), name="search-course"),
+    
     
     path('search/filter-count/', SearchFilterCountView.as_view(), name="search-filter-count"),
 
@@ -137,4 +137,6 @@ urlpatterns = [
     path('get-testimonial-list/', GetLMSTestimonialView.as_view(), name="get-testimonial-list"),
 
     path('search/filters-list/', SearchFiltersListView.as_view(), name="search-filters-listing"),
+    path('search/course/', SearchCourseView.as_view(), name="search-course"),
+
 ]

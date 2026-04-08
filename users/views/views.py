@@ -263,13 +263,22 @@ class GetRolesActiveView(APIView):
     renderer_classes = [UserRenderer]
     def get(self, request,format=None):
         all_role_classes = roles.RolesManager.get_roles()
-        roles_data = [
-            role_class.get_name()
-            for role_class in all_role_classes
-            if role_class.get_name() not in ['Student',"Mentor","Instructor","ATPStaff","ATPAdmin","CorporateStaff","CorporateAdmin","UniversityStaff","UniversityAdmin","FinanceUser","SubAdmin","Manager"]
+
+        # Define the roles you want to exclude
+        excluded_roles = {
+            "Student", "Mentor", "Instructor", "ATPStaff", "ATPAdmin", 
+            "CorporateStaff", "CorporateAdmin", "UniversityStaff", 
+            "UniversityAdmin", "FinanceUser", "SubAdmin", "Manager"
+        }
+
+        # Keep the objects, just filter them
+        roles_to_serialize = [
+            role for role in all_role_classes 
+            if role.get_name() not in excluded_roles
         ]
 
-        serializer = RoleSerializer(all_role_classes, many=True)
+        # Pass the objects to the serializer
+        serializer = RoleSerializer(roles_to_serialize, many=True)
         return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
     
 

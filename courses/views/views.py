@@ -138,46 +138,61 @@ class SearchDropdownView(APIView):
     
 class SearchCourseView(APIView):
     renderer_classes = [CourseRenderer]
-    def post(self, request, format=None):
-        if request.data:
-            category = Course.objects.all()
-            if 'name' in request.data:
-                if request.data['name'] != "":
-                    course_cat = CourseInstructors.objects.filter(instructor__text_1__icontains = request.data['name']).values_list('course', flat=True)
+    pagination_class = CustomPageNumberPagination
+    def get(self, request, format=None):
+        queryset = Course.objects.filter(status=1)
 
-                    course_cateor = CourseCategories.objects.filter(category_id__name__icontains = request.data['name']).values_list('course', flat=True)
+        name = request.query_params.get('name')
+        rating = request.query_params.get('rating')
+        duration = request.query_params.get('duration')
+        level = request.query_params.get('level')
+        subcategories = request.query_params.get('subcategories')
+        tags = request.query_params.get('tags')
 
-                    category = category.filter(Q(name__icontains=request.data['name']) | Q(short_description__icontains=request.data['name']) | Q(id__in=course_cat) | Q(id__in=course_cateor))
+        if name:
+            # Optimize by combining filters into one complex Q object
+            instructor_matches = CourseInstructors.objects.filter(
+                instructor__text_1__icontains=name
+            ).values_list('course', flat=True)
 
-                else:
-                    return error_response(message="Name is required field!", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
-                
-            else:
-                return error_response(message="Name is required field!", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
-                
-            if 'rating' in request.data:
-                if request.data['rating'] != "":
-                    category = category.filter(avg_rating__gte=request.data['rating'])
+            queryset = queryset.filter(
+                Q(name__icontains=name) |  
+                Q(id__in=instructor_matches)
+            )
 
-            if 'duration' in request.data:
-                if request.data['duration'] != "":
-                    duration_type = request.data['duration'].split(",")
-                    category = category.filter(video_duration_type__in=duration_type)
-                    
-            if 'topics' in request.data:
-                if request.data['topics'] != "":
-                    cat = request.data['topics'].split(",")
-                    course_cat = CourseCategories.objects.filter(category_id__in = cat).values_list('course', flat=True)
-                    category = category.filter(id__in=course_cat)
-            
-            category = category.filter(status = 1)
-            category.order_by("name")
-            serializer1 = CourseSerializer(category, many=True)
+        if rating:
+            queryset = queryset.filter(avg_rating__gte=rating)
 
-            return success_response(message="success", data=serializer1.data, status_code=status.HTTP_200_OK)
-        
-        return success_response(message="success", data={}, status_code=status.HTTP_200_OK)
+        if duration:
+            duration_list = duration.split(",")
+            queryset = queryset.filter(video_duration_type__in=duration_list)
+
+        if level:
+            level_list = level.split(",")
+            queryset = queryset.filter(level__in=level_list)
+
+        if subcategories:
+            cat_list = subcategories.split(",")
+            cat_matches = CourseCategories.objects.filter(
+                category_id__in=cat_list
+            ).values_list('course', flat=True)
+            queryset = queryset.filter(id__in=cat_matches)
+
+        if tags:
+            tag_list = tags.split(",")
+            tag_matches = CourseTags.objects.filter(
+                tags_id__in=tag_list
+            ).values_list('course', flat=True)
+            queryset = queryset.filter(id__in=tag_matches)
+
+        # 4. Pagination and Serialization
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset, request, view=self)
+
+        serializer = CourseSearchSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
     
+
 
 class SearchFiltersListView(APIView):
     renderer_classes = [CourseRenderer]
@@ -201,7 +216,14 @@ class SearchFiltersListView(APIView):
 
         rating = [{"5":counts['r1']}, {"4":counts['r2']}, {"3":counts['r3']}, {"2":counts['r4']}, {"1":counts['r5']}]
 
-        return success_response(message="success", data={"category_filter":serializer.data,"tags_filter":tags_serializer.data,"rating":rating}, status_code=status.HTTP_200_OK)
+        data = [
+            {'value': choice.value, 'label': choice.label} 
+            for choice in CourseLevel
+        ]
+        level_serializer = CourseLevelSerializer(data, many=True)
+
+
+        return success_response(message="success", data={"category_filter":serializer.data,"tags_filter":tags_serializer.data,"level_filter":level_serializer.data,"rating":rating}, status_code=status.HTTP_200_OK)
     
 
 class SearchFilterCountView(APIView):

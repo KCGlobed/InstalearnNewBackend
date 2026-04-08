@@ -47,6 +47,15 @@ class CourseLevel(models.IntegerChoices):
     Intermediate = 3, 'Intermediate'
     Expert = 4, 'Expert'
 
+
+class VideoDurationType(models.IntegerChoices):
+    ExtraShort = 1, 'ExtraShort'
+    Short = 2, 'Short'
+    Medium = 3, 'Medium'
+    Long = 4, 'Long'
+    ExtraLong = 5, 'ExtraLong'
+    
+
 class Course(SoftDeleteModel):
     name = models.CharField(max_length=255, null=True, blank=True)
     level = models.IntegerField(choices=CourseLevel.choices,default=CourseLevel.All)
@@ -66,6 +75,7 @@ class Course(SoftDeleteModel):
     assessment_test_each_testlet_questions = models.IntegerField(default=30)
     assessment_test_testlets = models.IntegerField(default=10)
     mock_test_pattern = models.JSONField(null=True, blank=True)
+    video_duration_type = models.IntegerField(choices=VideoDurationType.choices,default=VideoDurationType.ExtraShort)
     status = models.BooleanField(default=True)
     image = models.FileField(upload_to='mini_lms/images/', null=True, blank=True)
     banner_image = models.FileField(upload_to='mini_lms/images/', null=True, blank=True)
