@@ -139,6 +139,9 @@ class SearchDropdownView(APIView):
 class SearchCourseView(APIView):
     renderer_classes = [CourseRenderer]
     pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
+    ordering_fields = ['name', 'created_at', 'id',"total_reviews","avg_rating"]
     def get(self, request, format=None):
         queryset = Course.objects.filter(status=1)
 
@@ -185,6 +188,12 @@ class SearchCourseView(APIView):
             ).values_list('course', flat=True)
             queryset = queryset.filter(id__in=tag_matches)
 
+        search_filter = filters.SearchFilter()
+        queryset = search_filter.filter_queryset(request, queryset, self)
+
+        ordering_filter = filters.OrderingFilter()
+        queryset = ordering_filter.filter_queryset(request, queryset, self)
+
         # 4. Pagination and Serialization
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request, view=self)
@@ -224,34 +233,6 @@ class SearchFiltersListView(APIView):
 
 
         return success_response(message="success", data={"category_filter":serializer.data,"tags_filter":tags_serializer.data,"level_filter":level_serializer.data,"rating":rating}, status_code=status.HTTP_200_OK)
-    
-
-class SearchFilterCountView(APIView):
-    renderer_classes = [CourseRenderer]
-    def get(self, request, format=None):
-        rating_count_1 = Course.objects.filter(avg_rating__gte=4.5, status = 1).count()
-        rating_count_2 = Course.objects.filter(avg_rating__gte=4.0, status = 1).count()
-        rating_count_3 = Course.objects.filter(avg_rating__gte=3.5, status = 1).count()
-        rating_count_4 = Course.objects.filter(avg_rating__gte=3.0, status = 1).count()
-
-        duration_1 = Course.objects.filter(video_duration_type="extraShort", status = 1).count()
-        duration_2 = Course.objects.filter(video_duration_type="short", status = 1).count()
-        duration_3 = Course.objects.filter(video_duration_type="medium", status = 1).count()
-        duration_4 = Course.objects.filter(video_duration_type="long", status = 1).count()
-        duration_5 = Course.objects.filter(video_duration_type="extraLong", status = 1).count()
-        rating = []
-        rating.append(rating_count_1)
-        rating.append(rating_count_2)
-        rating.append(rating_count_3)
-        rating.append(rating_count_4)
-        duration = []
-        duration.append(duration_1)
-        duration.append(duration_2)
-        duration.append(duration_3)
-        duration.append(duration_4)
-        duration.append(duration_5)
-
-        return success_response(message="success", data={"rating":rating,"duration":duration}, status_code=status.HTTP_200_OK)
     
 
 

@@ -1711,7 +1711,7 @@ class UpdateTagsStatusView(APIView):
         serializer = ChangeTagStatusSerializer(category, data = request.data)
         if serializer.is_valid(raise_exception = True):
             user  = serializer.save()
-            return success_response(message="Tag Status Updated Successfully", data=CategorySerializer(user).data, status_code=status.HTTP_200_OK)
+            return success_response(message="Tag Status Updated Successfully", data=TagsListingSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 

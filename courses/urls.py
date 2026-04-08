@@ -124,19 +124,17 @@ urlpatterns = [
     path('sub-category/listing/<int:id>', GetSubCourseCategory.as_view(), name="subcategory-listing"),
     path('course-listing/<int:id>', GetCourseListingCategoryWise.as_view(), name="course-listing"),
     path('learner-course-view/', GetLearnerCourseView.as_view(), name="learner-course-view"),
-    path('course-detail/<int:id>', GetCourseDetailView.as_view(), name="course-detail"),
+    
     path('plans-listing/', GetPlansListingView.as_view(), name="plans-listing"),
 
 
     path('search/dropdown/', SearchDropdownView.as_view(), name="search-dropdown"),
-    
-    
-    path('search/filter-count/', SearchFilterCountView.as_view(), name="search-filter-count"),
 
     path('partner/listing/', GetPartnerListingView.as_view(), name="partner-listing"),
     path('get-testimonial-list/', GetLMSTestimonialView.as_view(), name="get-testimonial-list"),
 
     path('search/filters-list/', SearchFiltersListView.as_view(), name="search-filters-listing"),
     path('search/course/', SearchCourseView.as_view(), name="search-course"),
+    path('course-detail/<int:id>', GetCourseDetailView.as_view(), name="course-detail"),
 
 ]

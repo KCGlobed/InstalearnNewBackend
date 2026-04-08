@@ -358,7 +358,6 @@ class MarkVideoUploadCompleteSerializer(serializers.ModelSerializer) :
         video_info.save()
         
 
-
         return video_info
 
 
@@ -1056,22 +1055,42 @@ class CreateCourseSerializer(serializers.ModelSerializer) :
 
 
 
+class UserSerializer(serializers.ModelSerializer) :
+    class Meta:
+        model = User
+        fields = ['id','first_name',"last_name","image"]
+
+
 class CourseDetailSerializer(serializers.ModelSerializer):
     categories = serializers.SerializerMethodField('get_categories')
     tags = serializers.SerializerMethodField('get_tags')
+    instrcutor_info = serializers.SerializerMethodField('get_instrcutor_info')
+    sample_videos = serializers.SerializerMethodField('get_sample_videos')
+    created_by = serializers.SerializerMethodField('get_created_by')
+    
+    def get_created_by(self, obj):
+        return UserSerializer(obj.created_by).data
+    
+    def get_sample_videos(self, obj):
+        category = CourseSampleVideos.objects.filter(course_id=obj.id)
+        return CourseSampleVideoListSerializer(category, many=True).data
+    
+    def get_instrcutor_info(self, obj):
+        category = CourseInstructors.objects.filter(course_id=obj.id)
+        return CourseInstructorsListSerializer(category, many=True).data
     
     def get_tags(self, obj):
         category = CourseTags.objects.filter(course_id=obj.id)
-        return CourseTagsSerializer(category, many=True).data
+        return CourseTagsInfoSerializer(category, many=True).data
     
     def get_categories(self, obj):
         category = CourseCategories.objects.filter(course_id=obj.id)
-        return CourseTagsInfoSerializer(category, many=True).data
+        return CourseCategorySerializer(category, many=True).data
     
     
     class Meta:
         model = Course
-        fields = ["id",'name','description',"short_description","duration","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","status","created_at","mock_test_pattern","assessment_test_testlets","assessment_test_each_testlet_questions"]
+        fields = ["id",'name','description',"short_description","duration","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","status","created_at","instrcutor_info","sample_videos","avg_rating","total_reviews","created_by"]
 
 
 
