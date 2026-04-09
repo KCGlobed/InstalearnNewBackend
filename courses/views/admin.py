@@ -2095,9 +2095,9 @@ class ExportEbookListingPDFView(APIView):
         if active:
             category = category.filter(status=active)
 
-        description = request.query_params.get('description')
-        if description:
-            category = category.filter(description__icontains = description)
+        # description = request.query_params.get('description')
+        # if description:
+        #     category = category.filter(description__icontains = description)
 
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
@@ -2183,9 +2183,9 @@ class ExportEbookListingExcelView(APIView):
         if active:
             category = category.filter(status=active)
 
-        description = request.query_params.get('description')
-        if description:
-            category = category.filter(description__icontains = description)
+        # description = request.query_params.get('description')
+        # if description:
+        #     category = category.filter(description__icontains = description)
 
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
@@ -2220,7 +2220,6 @@ class ExportEbookListingExcelView(APIView):
         
         lis.append({
                 "name":"Ebook Report",
-                "Topic":'',
                 "total_videos":'',
                 "total_watched_videos":'',
                 "total_time_spend":''
@@ -2229,7 +2228,6 @@ class ExportEbookListingExcelView(APIView):
         
         lis.append({
                 "name":"",
-                "Topic":'',
                 "total_videos":'',
                 "total_watched_videos":'',
                 "total_time_spend":''
@@ -2238,7 +2236,6 @@ class ExportEbookListingExcelView(APIView):
         
         lis.append({
                 "name":"Name",
-                "Topic":'Description',
                 "total_videos":'Is Active?',
                 "total_watched_videos":'Created At',
                 "total_time_spend":''
@@ -2249,7 +2246,6 @@ class ExportEbookListingExcelView(APIView):
             
             lis.append({
                 "name":order_info['name'],
-                "Topic":order_info['description'],
                 "total_videos":order_info['status'],
                 "total_watched_videos":order_info['created_at'],
                 "total_time_spend":""

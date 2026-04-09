@@ -96,9 +96,9 @@
                         <td width="35%">
                             <b>Name</b>
                         </td>
-                        <td>
+                        {% comment %} <td>
                             <b>Description</b>
-                        </td>
+                        </td> {% endcomment %}
                         <td>
                             <b>Is Active?</b>
                         </td>
@@ -109,7 +109,7 @@
                     {% for order_info in  user_data %}
                         <tr>
                             <td>{{order_info.name}}</td>
-                            <td>{{order_info.description}}</td>
+                            {% comment %} <td>{{order_info.description}}</td> {% endcomment %}
                             <td>{{order_info.status}}</td>
                             <td>{{order_info.created_at}}</td>
                         </tr>
