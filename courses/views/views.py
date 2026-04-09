@@ -117,23 +117,38 @@ class GetCourseDetailView(APIView):
 
 class SearchDropdownView(APIView):
     renderer_classes = [CourseRenderer]
-    def post(self, request, format=None):
-        
-        if request.data:
-            if request.data['name'] != "":
-                category = Categories.objects.filter(name__icontains = request.data['name'], status = 1)
-                category.order_by("name")
-                
-                serializer = SearchCategorySerializer(category, many=True)
+    def get(self, request, format=None):
+        name = request.query_params.get('name', None)
+        data = {
+            "category": [],
+            "course": []
+        }
 
-                course = Course.objects.filter(name__icontains = request.data['name'], status = 1)
-                course.order_by("name")
-
-                serializer1 = SearchCourseSerializer(course, many=True)
-
-                return success_response(message="success", data={"category":serializer.data, "course":serializer1.data}, status_code=status.HTTP_200_OK)
+        if name:
+            # Note: order_by() returns a new QuerySet, so you must re-assign it
+            categories = Categories.objects.filter(
+                name__icontains=name, 
+                status=1,
+                parent__isnull = True
+            ).order_by("name")
             
-        return success_response(message="success", data={ }, status_code=status.HTTP_200_OK)
+            courses = Course.objects.filter(
+                name__icontains=name, 
+                status=1
+            ).order_by("name")
+
+            # Serialize the data
+            category_serializer = SearchCategorySerializer(categories, many=True)
+            course_serializer = SearchCourseSerializer(courses, many=True)
+            
+            data["category"] = category_serializer.data
+            data["course"] = course_serializer.data
+
+        return success_response(
+            message="success", 
+            data=data, 
+            status_code=status.HTTP_200_OK
+        )
 
     
 class SearchCourseView(APIView):

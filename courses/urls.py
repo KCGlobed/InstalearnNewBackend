@@ -86,6 +86,11 @@ urlpatterns = [
     path('add-course-instructor/', AddCourseInstructorsView.as_view(), name="add-course-instructor"),
     path('delete-course-instructor/<cid>', DeleteCourseInstructorView.as_view(), name="delete-course-instructor"),
 
+    path('get-related-courses/<int:cid>', GetRelatedCoursesView.as_view(), name="get-related-courses"),
+    path('add-related-courses/', AddRelatedCoursesView.as_view(), name="add-related-courses"),
+    path('delete-related-course/<int:cid>', DeleteRelatedCourseView.as_view(), name="delete-related-course"),
+
+
     path('get-subcategory-list/<int:cid>', SubCategoryListView.as_view(), name="subcategory-list"),
     
     path('generate-upload-signed-url/', GenerateUploadSignedUrlView.as_view(), name="generate-upload-signed-url"),
@@ -103,9 +108,7 @@ urlpatterns = [
     path('get-video-history/<int:tid>', GetVideoHistoryView.as_view(), name="get-history-video"),
     
 
-    path('get-related-courses/<int:cid>', GetRelatedCoursesView.as_view(), name="get-related-courses"),
-    path('add-related-courses/', AddRelatedCoursesView.as_view(), name="add-related-courses"),
-    path('delete-related-course/<cid>', DeleteRelatedCourseView.as_view(), name="delete-related-course"),
+    
 
     path('get-courses-faqs/<int:cid>', GetCoursesFAQsListingView.as_view(), name="get-courses-faqs"),
     path('add-course-faq/', AddCourseFAQView.as_view(), name="add-courses-faq"),
@@ -128,7 +131,7 @@ urlpatterns = [
     path('plans-listing/', GetPlansListingView.as_view(), name="plans-listing"),
 
 
-    path('search/dropdown/', SearchDropdownView.as_view(), name="search-dropdown"),
+    
 
     path('partner/listing/', GetPartnerListingView.as_view(), name="partner-listing"),
     path('get-testimonial-list/', GetLMSTestimonialView.as_view(), name="get-testimonial-list"),
@@ -136,5 +139,6 @@ urlpatterns = [
     path('search/filters-list/', SearchFiltersListView.as_view(), name="search-filters-listing"),
     path('search/course/', SearchCourseView.as_view(), name="search-course"),
     path('course-detail/<int:id>', GetCourseDetailView.as_view(), name="course-detail"),
+    path('search/dropdown/', SearchDropdownView.as_view(), name="search-dropdown"),
 
 ]

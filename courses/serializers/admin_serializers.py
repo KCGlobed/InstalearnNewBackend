@@ -463,15 +463,9 @@ class ChangeVideostatusSerializer(serializers.ModelSerializer) :
     
 
 class ChapterBooksSerializer(serializers.ModelSerializer):
-    chapter_detail = serializers.SerializerMethodField('get_chapter_detail')
-    
-    def get_chapter_detail(self, obj):
-        category = Chapters.objects.filter(id=obj.chapter.id).first()
-        return ChapterListSerializer(category).data
-    
     class Meta:
         model = ChapterBooks
-        fields = ['id',"name","chapter_detail","status","created_at"]
+        fields = ['id',"name","status","created_at"]
 
 
 
@@ -1654,7 +1648,7 @@ class AddRelatedCoursesSerializer(serializers.ModelSerializer) :
         for cat in category:
             course_list = Course.objects.filter(id = cat).count()
             if course_list == 0:
-                raise serializers.ValidationError("Invalid Topic ID: "+str(cat))
+                raise serializers.ValidationError("Invalid Course ID: "+str(cat))
             
         return data
 
