@@ -127,6 +127,27 @@ class UpdateUserStatustView(APIView):
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
+class DeleteUserstView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "user_role_specific_permission_update",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, user_type, id=None, format=None):
+
+        user_role = get_url_role(user_type)
+        if user_role is None:
+            raise NotFound("Invalid User Type!")
+        
+        user_info = User.objects.filter(id = id , role = user_role).first()
+        if user_info is None:
+            raise NotFound("Invalid User ID!")
+        
+        user_info.delete()
+        return success_response(message="User Deleted Successfully", data={}, status_code=status.HTTP_200_OK)
+        
+
 
 class GetRolesListingView(APIView):
     renderer_classes = [UserRenderer]

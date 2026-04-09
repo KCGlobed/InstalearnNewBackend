@@ -36,7 +36,8 @@ urlpatterns = [
     path('change-user-status/<str:user_type>/<int:id>', UpdateUserStatustView.as_view(), name="change-user-status"),
     path('admin-update-password/', AdminUpdateStudentPasswordView.as_view(), name="admin-update-password"),
     path('update-instructor-public-profile/<int:id>', UpdateInstructorPublicProfileView.as_view(), name="update-instructor-public-profile"),
-    
+    path('delete-user/<str:user_type>/<int:id>', DeleteUserstView.as_view(), name="change-user-status"),
+
 
     path('admin-reset-user-devices/<cid>', AdminResetUserDevicesView.as_view(), name="admin-reset-user-devices"),
     
