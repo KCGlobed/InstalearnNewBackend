@@ -134,7 +134,7 @@ class DeleteUserstView(APIView):
                               "user_role_specific_permission_update",
                             [SuperAdmin]
                         )]
-    def post(self, request, user_type, id=None, format=None):
+    def delete(self, request, user_type, id=None, format=None):
 
         user_role = get_url_role(user_type)
         if user_role is None:
