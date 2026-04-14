@@ -16,9 +16,9 @@ else:
 
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env.bool('DEBUG', default=True)
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', "instalearnnewbackend-114109844441.asia-south1.run.app"])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', "instalearnnewbackend-114109844441.asia-south1.run.app","instalearn-610747130982.asia-south1.run.app"])
 
-CSRF_TRUSTED_ORIGINS = ["https://instalearnnewbackend-114109844441.asia-south1.run.app"]
+CSRF_TRUSTED_ORIGINS = ["https://instalearnnewbackend-114109844441.asia-south1.run.app","https://instalearn-610747130982.asia-south1.run.app"]
 
 ADMIN_URL = "https://instalearnnewbackend-114109844441.asia-south1.run.app"
 # Application definition
@@ -183,9 +183,9 @@ STORAGES = {
     },
 }
 
-GS_BUCKET_NAME = 'public-media-files'
-GS_BUCKET_NAME_2 = 'private-media-files'
-GS_STATIC_BUCKET_NAME = 'public-media-files'
+GS_BUCKET_NAME = 'instalearn-public-bucket'
+GS_BUCKET_NAME_2 = 'instalearn-private-bucket'
+GS_STATIC_BUCKET_NAME = 'instalearn-public-bucket'
 GS_FILE_OVERWRITE = False
 MEDIA_ROOT = "media/"
 STATIC_ROOT = "static/"
