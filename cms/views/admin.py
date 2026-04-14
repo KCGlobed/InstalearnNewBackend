@@ -32,6 +32,36 @@ class FaqTopicListingView(APIView):
     def get(self, request, format=None):
         category = FAQTopic.objects.all()
         
+        title = request.query_params.get('title')
+        if title:
+            category = category.filter(title__icontains=title)
+
+        description = request.query_params.get('description')
+        if description:
+            category = category.filter(description__icontains=description)
+        
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
+
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                category = category.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                category = category.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
         search_filter = filters.SearchFilter()
         category = search_filter.filter_queryset(request, category, self)
 
