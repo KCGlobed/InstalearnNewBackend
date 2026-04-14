@@ -47,6 +47,15 @@ class FaqTopicListingView(APIView):
         return paginator.get_paginated_response(serializer.data)
     
 
+class FaqTopicListView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, format=None):
+        category = FAQTopic.objects.filter(status = True)
+        serializer = FaqTopicListingSerializer(category, many=True)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
 class CreateFaqTopicView(APIView):
     renderer_classes = [CMSRenderer]
     permission_classes = [IsAuthenticated, 

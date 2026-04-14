@@ -10,6 +10,7 @@ urlpatterns = [
     path('delete-faq-topic/<int:cid>', DeleteFaqTopicView.as_view(), name="delete-faq-topic"),
 
     path('get-faq-listing/', FaqListingView.as_view(), name="get-faq-listing"), 
+    path('get-faq-topic-list/', FaqTopicListView.as_view(), name="get-faq-topic-list"), 
     path('create-faq/', CreateFaqView.as_view(), name="create-faq"),
     path('edit-faq/<int:cid>', EditFaqView.as_view(), name="edit-faq"),
     path('update-faq-status/<int:cid>', UpdateFaqStatusView.as_view(), name="update-faq-status"),

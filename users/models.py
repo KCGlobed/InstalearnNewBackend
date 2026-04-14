@@ -298,7 +298,7 @@ class PasswordChangeLog(models.Model):
     def __str__(self):
         return f'{self.user.first_name} {self.user.last_name} changed password on {self.change_date.strftime("%Y-%m-%d %H:%M:%S")}'
     
-class InstructorProfile(SoftDeleteModel):
+class InstructorProfile(models.Model):
     user = models.ForeignKey('User', null=True, blank=True, on_delete=models.CASCADE, related_name="instructor_user")
     text_1 = models.CharField(max_length=255, null=True, blank=True)
     text_2 = models.CharField(max_length=255, null=True, blank=True)
