@@ -94,7 +94,7 @@ class Course(SoftDeleteModel):
     
     
 
-class CourseInstructors(SoftDeleteModel):
+class CourseInstructors(models.Model):
     course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
     instructor = models.ForeignKey('instructor.InstructorProfile', null=True, blank=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -107,7 +107,7 @@ class CourseInstructors(SoftDeleteModel):
         return '%s' % self.id
     
 
-class CourseCategories(SoftDeleteModel):
+class CourseCategories(models.Model):
     course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
     category = models.ForeignKey('Categories', null=True, blank=True, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -120,7 +120,7 @@ class CourseCategories(SoftDeleteModel):
         return '%s' % self.id
     
 
-class CourseTags(SoftDeleteModel):
+class CourseTags(models.Model):
     course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
     tags = models.ForeignKey('Tags', null=True, blank=True, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -134,7 +134,7 @@ class CourseTags(SoftDeleteModel):
         return '%s' % self.id
     
 
-class FrequentlyBoughtCourse(SoftDeleteModel):
+class FrequentlyBoughtCourse(models.Model):
     course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE, related_name="course")
     bought_course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE, related_name="related_course")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -147,7 +147,7 @@ class FrequentlyBoughtCourse(SoftDeleteModel):
         return '%s' % self.id
     
 
-class CourseSampleVideos(SoftDeleteModel):
+class CourseSampleVideos(models.Model):
     course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, null=True, blank=True)
     thumbnail = models.ImageField(upload_to='mini_lms/images/', null=True, blank=True)
@@ -156,7 +156,6 @@ class CourseSampleVideos(SoftDeleteModel):
     status = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    history = HistoricalRecords()
 
     
     class Meta:
@@ -167,7 +166,7 @@ class CourseSampleVideos(SoftDeleteModel):
         return '%s' % self.id
     
 
-class CourseImages(SoftDeleteModel):
+class CourseImages(models.Model):
     course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
     image = models.FileField(upload_to='mini_lms/images/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -181,14 +180,13 @@ class CourseImages(SoftDeleteModel):
         return '%s' % self.id
     
 
-class CourseFaqs(SoftDeleteModel):
+class CourseFaqs(models.Model):
     course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
     title = models.TextField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     status = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    history = HistoricalRecords()
 
     
     class Meta:
@@ -199,7 +197,7 @@ class CourseFaqs(SoftDeleteModel):
         return '%s' % self.id
     
 
-class CourseReviewRating(SoftDeleteModel):
+class CourseReviewRating(models.Model):
     course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
     user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, null=True, blank=True)
@@ -209,7 +207,6 @@ class CourseReviewRating(SoftDeleteModel):
     status = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    history = HistoricalRecords()
 
     
     class Meta:
@@ -248,14 +245,13 @@ class LectureType(models.IntegerChoices):
     Ebook = 2, 'Ebook'
 
 
-class ChapterLectures(SoftDeleteModel):
+class ChapterLectures(models.Model):
     chapter = models.ForeignKey('Chapters', null=True, blank=True, on_delete=models.CASCADE)
     video = models.ForeignKey('Videos', null=True, blank=True, on_delete=models.CASCADE)
     ebook = models.ForeignKey('ChapterBooks', null=True, blank=True, on_delete=models.CASCADE)
     lecture_type = models.IntegerField(choices=LectureType.choices,default=LectureType.Video)
     order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
-    history = HistoricalRecords()
     
     class Meta:
         verbose_name = 'Chapters Lectures'
@@ -266,12 +262,11 @@ class ChapterLectures(SoftDeleteModel):
 
 
 
-class CourseChapters(SoftDeleteModel):
+class CourseChapters(models.Model):
     chapter = models.ForeignKey('Chapters', null=True, blank=True, on_delete=models.CASCADE)
     course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
     order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
-    history = HistoricalRecords()
     
     class Meta:
         verbose_name = 'Course Chapters'
@@ -333,7 +328,6 @@ class Videos(SoftDeleteModel):
 class TrailCourses(models.Model):
     course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    history = HistoricalRecords()
 
     
     class Meta:
@@ -348,7 +342,6 @@ class TrailCourseChapters(models.Model):
     trail_course = models.ForeignKey('TrailCourses', null=True, blank=True, on_delete=models.CASCADE)
     chapter = models.ForeignKey('CourseChapters', null=True, blank=True, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    history = HistoricalRecords()
 
     class Meta:
         verbose_name = 'Trail Course Chapters'
