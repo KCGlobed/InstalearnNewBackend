@@ -292,8 +292,8 @@ class MarkVideoUploadCompleteSerializer(serializers.ModelSerializer) :
             
         bucketName, file_name = parse_gcs_url(video_info.video_file.url)
         
-        input_uri = f'gs://public-media-files/'+str(file_name)
-        output_uri = f'gs://public-media-files/media/mini_lms/transcoder/'
+        input_uri = f'gs://instalearn-public-bucket/'+str(file_name)
+        output_uri = f'gs://instalearn-public-bucket/media/mini_lms/transcoder/'
 
         current_GMT = time.gmtime()
         unique_id = str(calendar.timegm(current_GMT))
@@ -353,7 +353,7 @@ class MarkVideoUploadCompleteSerializer(serializers.ModelSerializer) :
             parent=f'projects/{settings.GS_PROJECT_ID}/locations/asia-south1',
             job=job,
         )
-        
+        print(job)
         
         video_info.transcoded_video = 'media/mini_lms/transcoder/'+f'{video_file_name}.m3u8'
         video_info.is_completed = True
