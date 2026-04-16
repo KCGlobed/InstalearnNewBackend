@@ -418,7 +418,7 @@ class EditVideoserializer(serializers.ModelSerializer):
             current_GMT = time.gmtime()
             ts = calendar.timegm(current_GMT)
             unique_file_name = str(ts)+".mp4"
-            file_name = validate_data.get('nam+e')
+            file_name = validate_data.get('name')
             
             path = "mini_lms/videos"
             blob_path = f"media/{path}/{unique_file_name}"
