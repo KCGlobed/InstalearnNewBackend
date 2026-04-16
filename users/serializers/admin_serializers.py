@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from users.models import *
+from user_study.models import *
 from courses.models import *
 from rolepermissions.checkers import has_role
 from django.conf import settings
@@ -216,9 +217,9 @@ class UpdateInstructorPublicProfileSerializer(serializers.ModelSerializer) :
         return data
 
     def update(self, info, validate_data):
-        instructor = InstructorProfile.objects.filter(user_id = info.id).first()
+        instructor = InstructorPublicProfile.objects.filter(user_id = info.id).first()
         if instructor is None:
-            instructor = InstructorProfile()
+            instructor = InstructorPublicProfile()
             instructor.user = info
 
         instructor.text_1 = validate_data.get('title_1', instructor.text_1)

@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from courses.serializers import *
+from user_study.models import *
 from courses.renderers import CourseRenderer
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
@@ -2591,7 +2592,7 @@ class GetInstructorListView(APIView):
                             [SuperAdmin]
                         )]
     def get(self, request, cid =None, format=None):
-        category = InstructorProfile.objects.all().order_by("-id")
+        category = InstructorPublicProfile.objects.all().order_by("-id")
         serializer = InstructorInfoserializer(category, many=True)
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
