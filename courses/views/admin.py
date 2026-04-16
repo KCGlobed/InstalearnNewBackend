@@ -44,11 +44,11 @@ class ChapterListingView(APIView):
 
         name = request.query_params.get('name')
         if name:
-            videos = videos.filter(name__icontains = name)
+            chapters = chapters.filter(name__icontains = name)
 
         active = request.query_params.get('status')
         if active:
-            videos = videos.filter(status=active)
+            chapters = chapters.filter(status=active)
 
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
@@ -56,14 +56,14 @@ class ChapterListingView(APIView):
         if start_date:
             try:
                 start_datetime = datetime.fromisoformat(start_date)
-                videos = videos.filter(created_at__gte=start_datetime)
+                chapters = chapters.filter(created_at__gte=start_datetime)
             except ValueError:
                 raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
                 
         if end_date:
             try:
                 end_datetime = datetime.fromisoformat(end_date)
-                videos = videos.filter(created_at__lte=end_datetime)
+                chapters = chapters.filter(created_at__lte=end_datetime)
             except ValueError:
                 raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
 
@@ -100,11 +100,11 @@ class ExportChapterListingPDFView(APIView):
 
         name = request.query_params.get('name')
         if name:
-            videos = videos.filter(name__icontains = name)
+            chapters = chapters.filter(name__icontains = name)
 
         active = request.query_params.get('status')
         if active:
-            videos = videos.filter(status=active)
+            chapters = chapters.filter(status=active)
 
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
@@ -112,14 +112,14 @@ class ExportChapterListingPDFView(APIView):
         if start_date:
             try:
                 start_datetime = datetime.fromisoformat(start_date)
-                videos = videos.filter(created_at__gte=start_datetime)
+                chapters = chapters.filter(created_at__gte=start_datetime)
             except ValueError:
                 raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
                 
         if end_date:
             try:
                 end_datetime = datetime.fromisoformat(end_date)
-                videos = videos.filter(created_at__lte=end_datetime)
+                chapters = chapters.filter(created_at__lte=end_datetime)
             except ValueError:
                 raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
 
@@ -187,11 +187,11 @@ class ExportChapterListingExcelView(APIView):
 
         name = request.query_params.get('name')
         if name:
-            videos = videos.filter(name__icontains = name)
+            chapters = chapters.filter(name__icontains = name)
 
         active = request.query_params.get('status')
         if active:
-            videos = videos.filter(status=active)
+            chapters = chapters.filter(status=active)
 
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
@@ -199,14 +199,14 @@ class ExportChapterListingExcelView(APIView):
         if start_date:
             try:
                 start_datetime = datetime.fromisoformat(start_date)
-                videos = videos.filter(created_at__gte=start_datetime)
+                chapters = chapters.filter(created_at__gte=start_datetime)
             except ValueError:
                 raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
                 
         if end_date:
             try:
                 end_datetime = datetime.fromisoformat(end_date)
-                videos = videos.filter(created_at__lte=end_datetime)
+                chapters = chapters.filter(created_at__lte=end_datetime)
             except ValueError:
                 raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
 
