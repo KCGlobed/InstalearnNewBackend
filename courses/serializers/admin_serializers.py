@@ -41,12 +41,25 @@ class ChaptersSerializer(serializers.ModelSerializer):
         fields = ["id","name","description","status","created_at"]
 
 
+class ChapterLeactureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChapterLectures
+        fields = ["id","video","ebook","lecture_type","order"]
+        depth = 1
+
+
 
 class ViewChapterDetailSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    chapter_lectures = serializers.SerializerMethodField()
+
+    def get_chapter_lectures(self, parent):
+        info = ChapterLectures.objects.filter(id = parent.id).order_by("order")
+        return ChapterLeactureSerializer(info, many=True).data
+    
     class Meta:
         model = Chapters
-        fields = ["id","name","status","created_at"]
+        fields = ["id","name","status","created_at","chapter_lectures"]
 
 
 class CreateChapterSerializer(serializers.ModelSerializer) :
@@ -204,7 +217,7 @@ class VideoTopicInfoSerializer(serializers.ModelSerializer):
 class ViewVideoDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Videos
-        fields = ["id","uuid","name","video_file","video_caption","transcoded_video","video_duration","status","is_uploaded","is_completed","created_at","signed_url"]
+        fields = ["id","uuid","name","video_file","video_caption","transcoded_video","video_duration","status","is_uploaded","is_completed","created_at","signed_url","description"]
 
 
 class CreateVideoSerializer(serializers.ModelSerializer) :
