@@ -46,6 +46,10 @@ class ChapterListingView(APIView):
         if name:
             chapters = chapters.filter(name__icontains = name)
 
+        description = request.query_params.get('description')
+        if description:
+            chapters = chapters.filter(description__icontains = description)
+
         active = request.query_params.get('status')
         if active:
             chapters = chapters.filter(status=active)
@@ -101,6 +105,11 @@ class ExportChapterListingPDFView(APIView):
         name = request.query_params.get('name')
         if name:
             chapters = chapters.filter(name__icontains = name)
+
+        description = request.query_params.get('description')
+        if description:
+            chapters = chapters.filter(description__icontains = description)
+
 
         active = request.query_params.get('status')
         if active:
@@ -188,6 +197,10 @@ class ExportChapterListingExcelView(APIView):
         name = request.query_params.get('name')
         if name:
             chapters = chapters.filter(name__icontains = name)
+
+        description = request.query_params.get('description')
+        if description:
+            chapters = chapters.filter(description__icontains = description)
 
         active = request.query_params.get('status')
         if active:
