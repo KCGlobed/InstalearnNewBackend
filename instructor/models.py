@@ -6,7 +6,7 @@ from django.utils import timezone
 from simple_history.models import HistoricalRecords
 
 
-class InstructorProfile(SoftDeleteModel):
+class InstructorProfile(models.Model):
     user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
     text_1 = models.CharField(max_length=255, null=True, blank=True)
     text_2 = models.CharField(max_length=255, null=True, blank=True)
