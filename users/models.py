@@ -54,7 +54,7 @@ class UserManager(BaseUserManager):
         return user
 
 
-class User(AbstractBaseUser, PermissionsMixin,SoftDeleteModel):
+class User(AbstractBaseUser, PermissionsMixin):
 
     SuperAdmin = 1
     SubAdmin = 2
