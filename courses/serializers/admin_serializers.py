@@ -450,7 +450,7 @@ class EditVideoserializer(serializers.ModelSerializer):
         else:
 
             video_info.name = validate_data.get('name', video_info.name)
-            video_info.duration = validate_data.get('duration', video_info.duration)
+            video_info.video_duration = validate_data.get('duration', video_info.video_duration)
             video_info.description = validate_data.get('description', video_info.description)
             video_info.save()
 
