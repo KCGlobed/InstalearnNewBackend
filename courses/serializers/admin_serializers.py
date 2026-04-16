@@ -59,7 +59,7 @@ class ViewChapterDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Chapters
-        fields = ["id","name","status","created_at","chapter_lectures"]
+        fields = ["id","name","status","description","created_at","chapter_lectures"]
 
 
 class CreateChapterSerializer(serializers.ModelSerializer) :
