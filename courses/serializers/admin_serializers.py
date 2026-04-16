@@ -437,7 +437,7 @@ class EditVideoserializer(serializers.ModelSerializer):
 
             
             
-            video_info.name = file_name
+            video_info.name = validate_data.get('name', video_info.name)
             video_info.description = validate_data.get('description')
             video_info.signed_url = signed_url
             video_info.file_name = unique_file_name
