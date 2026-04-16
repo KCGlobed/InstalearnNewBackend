@@ -2592,7 +2592,7 @@ class GetInstructorListView(APIView):
                             [SuperAdmin]
                         )]
     def get(self, request, cid =None, format=None):
-        category = InstructorPublicProfile.objects.all().order_by("-id")
+        category = InstructorProfile.objects.all().order_by("-id")
         serializer = InstructorInfoserializer(category, many=True)
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
