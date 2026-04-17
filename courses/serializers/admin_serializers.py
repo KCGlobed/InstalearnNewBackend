@@ -1003,9 +1003,6 @@ class CreateCourseSerializer(serializers.ModelSerializer) :
     class Meta:
         model = Course
         fields = ['name','description',"short_description","requirements","price","discount","feature_json","image","banner_image","category_id","objectives_summary","tags","duration","level"]
-
-    def validate_category_id(self, value):
-        return validate_category_id_list(value)
         
     def validate(self, data):
         if data.get('discount') is not None:
