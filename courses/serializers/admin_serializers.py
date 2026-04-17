@@ -998,7 +998,7 @@ class CreateCourseSerializer(serializers.ModelSerializer) :
     tags = serializers.ListField(required=True)
     image = serializers.FileField(required=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
     banner_image = serializers.FileField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
-    category_id = serializers.ListField(child=serializers.IntegerField(required=True), required=True)
+    category_id = serializers.CharField(required=False)
     
     class Meta:
         model = Course
@@ -1038,7 +1038,7 @@ class CreateCourseSerializer(serializers.ModelSerializer) :
         )
         course.save()
 
-        category_data = validate_data.get('category_id')
+        category_data = validate_data.get('category_id').split(",")
 
         if len(category_data) > 0:
             for index , category_id in enumerate(category_data):
