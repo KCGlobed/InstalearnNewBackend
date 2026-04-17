@@ -54,7 +54,7 @@ class ViewChapterDetailSerializer(serializers.ModelSerializer):
     chapter_lectures = serializers.SerializerMethodField()
 
     def get_chapter_lectures(self, parent):
-        info = ChapterLectures.objects.filter(id = parent.id).order_by("order")
+        info = ChapterLectures.objects.filter(chapter_id = parent.id).order_by("order")
         return ChapterLeactureSerializer(info, many=True).data
     
     class Meta:
@@ -103,10 +103,10 @@ class AssignChapterLectureSerializer(serializers.Serializer):
     lecture_list = LectureItemSerializer(many=True)
 
     def create(self, validate_data):
-        chapter = Chapters.objects.filter(id = validate_data.get('chapter'))
+        chapter = Chapters.objects.filter(id = validate_data.get('chapter')).first()
         created_lectures = []
 
-        ChapterLectures.objects.filter(chapter=chapter).delete()
+        ChapterLectures.objects.filter(chapter_id = validate_data.get('chapter')).delete()
 
         for index, item in enumerate(validate_data.get('lecture_list')):
             if item.get('lecture_type') == 1:

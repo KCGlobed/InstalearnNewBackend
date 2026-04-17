@@ -386,7 +386,7 @@ class AssignChapterLectureView(APIView):
         serializer = AssignChapterLectureSerializer(data = request.data, partial=True)
         if serializer.is_valid(raise_exception = True):
             user = serializer.save()
-            return success_response(message="Chapter Lecture Updated Successfully", data=ViewChapterDetailSerializer(user).data, status_code=status.HTTP_200_OK)
+            return success_response(message="Chapter Lecture Updated Successfully", data=[], status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
