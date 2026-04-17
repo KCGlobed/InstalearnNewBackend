@@ -32,6 +32,7 @@ urlpatterns = [
     # Manage Chapters Books APIS
     path('get-book-listing/', ChapterBookListingView.as_view(), name="chapters-listing"),
     path('view-book-detail/<int:cid>', ViewChapterBookView.as_view(), name="view-book-detail"),
+    path('get-book-signed-url/<int:cid>', ViewBookSignedUrlView.as_view(), name="get-book-signed-url"),
     path('create-book/', CreateChapterBookView.as_view(), name="create-book"),
     path('edit-book/<int:cid>', EditChapterBookView.as_view(), name="edit-book"),
     path('update-book-status/<int:cid>', UpdateChapterBookStatusView.as_view(), name="update-book-status"),

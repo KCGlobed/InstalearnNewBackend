@@ -33,7 +33,7 @@ class ViewCartView(APIView):
     def post(self, request,format=None):
         course = Cart.objects.filter(device_id = request.data.get('device_id'))
         serializer = CartSerializer(course, many=True)
-        return success_response(message="Course added in Cart Successfully", data=serializer.data, status_code=status.HTTP_200_OK)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
         
 
 # Remove Book From Cart
@@ -43,7 +43,7 @@ class RemoveCartView(APIView):
         try:
             cart = Cart.objects.get(id = cid)
             cart.delete()
-            return success_response(message="Course added in Cart Successfully", data=[], status_code=status.HTTP_200_OK)
+            return success_response(message="Course removed from Cart Successfully", data=[], status_code=status.HTTP_200_OK)
         except Cart.DoesNotExist:
             return error_response(message="Invalid Cart ID", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
         

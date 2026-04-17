@@ -25,6 +25,7 @@ from google.oauth2 import service_account
 info = json.loads(os.environ.get("GOOGLE_CREDENTIALS_JSON"))
 credentials = service_account.Credentials.from_service_account_info(info)
 client = storage.Client(credentials=credentials, project=credentials.project_id)
+from datetime import datetime,timezone, timedelta
 
 
 
@@ -2305,6 +2306,26 @@ class ViewChapterBookView(APIView):
         
         serializer = ViewChapterBooksSerializer(chapter)
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class ViewBookSignedUrlView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "chapter_book_listing",
+                            [SuperAdmin]
+                        )]
+    def get(self, request,  cid , format=None):
+        chapter = ChapterBooks.objects.filter(id=cid).first()
+        if chapter is None:
+            raise ValidationError("Invalid Book ID!")
+        
+        bucket_name, object_name = parse_gcs_url(chapter.book_file.url)
+        expiration_time = datetime.now(timezone.utc) + timedelta(minutes=30)
+        bucket = client.get_bucket(settings.GS_BUCKET_NAME_2)
+        blob = bucket.blob(object_name)
+        
+        return success_response(message="Success", data=blob.generate_signed_url(expiration=expiration_time), status_code=status.HTTP_200_OK)
     
 
 class CreateChapterBookView(APIView):
