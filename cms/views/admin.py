@@ -303,7 +303,7 @@ class GetSettingView(APIView):
                             [SuperAdmin]
                         )]
     def get(self, request, cid=None):
-        setting = Settings.objects.all().first()
+        setting = GeneralSettings.objects.all().first()
         if setting is None:
             return success_response(message="Success", data={}, status_code=status.HTTP_200_OK)
         serializer = SettingSerializer(setting)

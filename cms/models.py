@@ -64,7 +64,7 @@ class PaymentMode(models.IntegerChoices):
     Test_Mode = 1, 'Test Mode'
     Live_Mode = 2, 'Live Mode'
 
-class Settings(models.Model):
+class GeneralSettings(models.Model):
     payment_type = models.IntegerField(choices=PaymentMode.choices,default=PaymentMode.Test_Mode)
     test_public_key = models.CharField(max_length=255, null=True, blank=True)
     test_secret_key = models.CharField(max_length=255, null=True, blank=True)
@@ -80,8 +80,8 @@ class Settings(models.Model):
     updated_at = models.DateTimeField(auto_now = True)
     
     class Meta:
-        verbose_name = 'Settings'
-        verbose_name_plural = 'Settings'
+        verbose_name = 'General Settings'
+        verbose_name_plural = 'General Settings'
         
     def __str__(self):
         return '%s' % self.id

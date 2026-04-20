@@ -1537,7 +1537,7 @@ class AddCourseInstructorsSerializer(serializers.ModelSerializer) :
     def validate(self, data):
         category = data.get('instructor_id').split(",")
         for cat in category:
-            course_list = Instructor.objects.filter(id = cat).count()
+            course_list = InstructorProfile.objects.filter(id = cat).count()
             if course_list == 0:
                 raise serializers.ValidationError("Invalid Instructor ID: "+str(cat))
             
@@ -1547,7 +1547,7 @@ class AddCourseInstructorsSerializer(serializers.ModelSerializer) :
         category = validate_data.get('instructor_id').split(",")
         for cat in category:
             categ = CourseInstructors(
-                instructor = Instructor.objects.get(id = cat),
+                instructor = InstructorProfile.objects.get(id = cat),
                 course = Course.objects.get(id = validate_data.get('course_id'))
             )
             categ.save()

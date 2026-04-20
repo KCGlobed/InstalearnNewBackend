@@ -165,7 +165,7 @@ class ChangeFAQStatusSerializer(serializers.ModelSerializer) :
 
 class SettingSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Settings
+        model = GeneralSettings
         fields = "__all__"
 
 
@@ -185,7 +185,7 @@ class UpdateSettingSerializer(serializers.ModelSerializer):
     
     
     class Meta:
-        model = Settings
+        model = GeneralSettings
         fields =  ["payment_type","test_public_key","test_secret_key","live_public_key","live_secret_key","no_days_trail","try_for_free","allow_device_restriction","allowed_desktop","allowed_tablet","allowed_phone"]
         
     def validate(self, data):
@@ -193,9 +193,9 @@ class UpdateSettingSerializer(serializers.ModelSerializer):
 
 
     def create(self , validate_data):
-        setting = Settings.objects.all().first()
+        setting = GeneralSettings.objects.all().first()
         if setting is None:
-            setting = Settings()
+            setting = GeneralSettings()
         setting.payment_type = validate_data.get('payment_type', setting.payment_type)
         setting.test_public_key = validate_data.get('test_public_key', setting.test_public_key)
         setting.test_secret_key = validate_data.get('test_secret_key', setting.test_secret_key)

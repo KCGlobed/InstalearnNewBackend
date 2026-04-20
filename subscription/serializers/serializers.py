@@ -2,6 +2,7 @@ from rest_framework import serializers
 from subscription.models import *
 from courses.models import *
 from users.models import *
+from cms.models import *
 from django.conf import settings
 from django.core.mail import send_mail
 from mini_lms.roles import Student
@@ -66,64 +67,34 @@ class CartSerializer(serializers.ModelSerializer):
         fields = ['id',"course_info","created_at"]
 
 
-class GatewayListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Settings
-        fields = ['gateway_type',"gateway_logo"]
-
 
 class StartPaymentSerializer(serializers.ModelSerializer) :
     first_name = serializers.CharField(max_length = 100, required=True)
     last_name = serializers.CharField(max_length = 100, required=True)
     email = serializers.EmailField(max_length = 100, required=True)
-    mobile = serializers.CharField(max_length = 12, required=True)
-    address = serializers.CharField(max_length = 255, required=False, allow_blank=True)
+    phone = serializers.CharField(max_length = 12, required=True)
+    billing_address = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     city = serializers.CharField(max_length = 100, required=False, allow_blank=True)
     state = serializers.CharField(max_length = 100, required=False, allow_blank=True)
-    postal_code = serializers.CharField(max_length = 12, required=False, allow_blank=True)
+    pincode = serializers.CharField(max_length = 12, required=False, allow_blank=True)
     country = serializers.CharField(max_length = 100, required=False, allow_blank=True)
-    gateway_type = serializers.CharField(max_length = 100, write_only=True,required=True)
     user_id = serializers.CharField(max_length = 100, allow_blank=True)
     device_id = serializers.CharField(max_length = 255, write_only=True,required=True)
-    code = serializers.CharField(max_length = 255, required=False, allow_blank=True)
-
+    
     class Meta:
         model = Order
         fields = "__all__"
         
     def validate(self, data):
-
-        gateway_type = data.get('gateway_type')
-        gateway_count = Settings.objects.filter(gateway_type=gateway_type).count()
-        if gateway_count == 0:
-            raise serializers.ValidationError("Invalid Payment Gateway")
         
-        course = data.get('code')
-        if course is not None and len(course) > 0:
-            course_count = Coupon.objects.filter(code=course).count()
-            if course_count == 0:
-                raise serializers.ValidationError("Invalid Coupon Code!")
-            
-            cart_count = Coupon.objects.filter(code=course,is_active=1).count()
-            if cart_count == 0:
-                raise serializers.ValidationError("Coupon is Inactive!")
-            
-            coupon = Coupon.objects.filter(code=course,is_active=1).first()
-            if coupon.expiration_date < timezone.now():
-                raise serializers.ValidationError("Coupon has expired!")
+        cart_count = Cart.objects.filter(device_id = data.get('device_id')).count()
+        if cart_count == 0:
+            raise serializers.ValidationError("Empty Cart, No Course In Cart Found!")
         
         return data
 
 
     def create(self , validate_data):
-
-        gateway_type = validate_data.get('gateway_type')
-        razorpay_key = Settings.objects.filter(gateway_type=gateway_type).first()
-
-
-        cart_count = Cart.objects.filter(device_id=validate_data.get('device_id'))
-        if len(cart_count) == 0:
-            raise serializers.ValidationError('No course found in cart')
 
         cart_items = Cart.objects.filter(device_id=validate_data.get('device_id'))
         total_amount = 0
@@ -174,23 +145,8 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
         tax = math.ceil(total_amount * 0.18)
         total_cost = total_amount
 
-        code = validate_data.get('code')
         discounted_amount = 0
         final_amount = math.ceil(total_cost)
-        
-        if code is not None and len(code) > 0:
-            coupon = Coupon.objects.filter(code=code, is_active=1).first()
-            if coupon is not None:
-                if coupon.discount_type == 'percentage':
-                    discount = (math.ceil(coupon.discount_value) / 100) * total_cost
-                elif coupon.discount_type == 'fixed':
-                    discount = coupon.discount_value
-                else:
-                    raise serializers.ValidationError("Invalid discount type!")
-                discounted_amount = math.ceil(discount)
-                final_amount = math.ceil(total_cost) - math.ceil(discount)
-            else:
-                raise serializers.ValidationError("Invalid Coupon!")
 
         order_total_amount = final_amount + tax
 
@@ -198,52 +154,49 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
             orderID = order_id,
             user = user,
             discount_amount = discounted_amount,
-            coupon_code = validate_data.get('code'),
             first_name = validate_data.get('first_name'),
             last_name = validate_data.get('last_name'),
             email = validate_data.get('email'),
-            mobile = validate_data.get('mobile'),
-            address = validate_data.get('address'),
+            phone = validate_data.get('phone'),
+            billing_address = validate_data.get('billing_address'),
             city = validate_data.get('city'),
             state = validate_data.get('state'),
             country = validate_data.get('country'),
-            postal_code = validate_data.get('postal_code'),
-            payment_gateway = validate_data.get('gateway_type'),
+            pincode = validate_data.get('pincode'),
             amount = total_amount,
-            tax_amount = tax,
+            gst_amount = tax,
             total_amount = order_total_amount,
         )
         book_order.save()
-        if code is not None and len(code) > 0:
-            book_order.coupon = Coupon.objects.filter(code=code, is_active=1).first()
+
+        cart_count = Cart.objects.filter(device_id=validate_data.get('device_id'))
+        for cart in cart_count:
+            cart_order = UserCourses(
+                order = book_order,
+                course = Course.objects.get(id = cart.course.id),
+                user = user
+            )
+            cart_order.save()
+
+        setting = GeneralSettings.objects.all().first()
+        if total_amount > 0 :
+            if setting.payment_type == 1:
+                client = razorpay.Client(auth=(setting.test_public_key, setting.test_secret_key))
+            else:
+                client = razorpay.Client(auth=(setting.live_public_key, setting.live_secret_key))
+                
+            payment = client.order.create({"amount": book_order.total_amount * 100, 
+                                    "currency": "INR", 
+                                    "payment_capture": "1",
+                                    "notes":{
+                                        "name": book_order.first_name+" "+book_order.last_name,
+                                        "email": book_order.email,
+                                        "phone_number": book_order.phone,
+                                        "payment_type":"mini_course_payment",
+                                    }})
+            book_order.razorpay_order_id = payment['id']
             book_order.save()
-            
-        if cart_count:
-            for cart in cart_count:
-                cart_order = UserCourses(
-                    order = book_order,
-                    course = Course.objects.get(id = cart.course.id),
-                    user = user
-                )
-                cart_order.save()
         
-        if razorpay_key.gateway_type == "razorpay":
-            if total_amount > 0 :
-                client = razorpay.Client(auth=(razorpay_key.public_key, razorpay_key.secret_key))
-                payment = client.order.create({"amount": book_order.total_amount * 100, 
-                                        "currency": "INR", 
-                                        "payment_capture": "1",
-                                        "notes":{
-                                            "name": book_order.first_name+" "+book_order.last_name,
-                                            "email": book_order.email,
-                                            "phone_number": book_order.mobile,
-                                            "payment_type":"mini_course_payment",
-                                            "coupon":code
-                                        }})
-                book_order.razorpay_order_id = payment['id']
-                book_order.save()
-        else:
-            raise serializers.ValidationError('Invalid Payment Gateway')
 
         return book_order
     
@@ -252,17 +205,11 @@ class CompletePaymentSerializer(serializers.ModelSerializer) :
     razorpay_payment_id = serializers.CharField(required=True,write_only = True)
     razorpay_order_id = serializers.CharField(required=True,write_only = True)
     razorpay_signature = serializers.CharField(required=True,write_only = True)
-    gateway_type = serializers.CharField(max_length = 100, required=True)
     class Meta:
         model = Order
-        fields = ['razorpay_payment_id','razorpay_order_id','razorpay_signature',"gateway_type"]
+        fields = ['razorpay_payment_id','razorpay_order_id','razorpay_signature']
         
     def validate(self, data):
-        gateway_type = data.get('gateway_type')
-        gateway_count = Settings.objects.filter(gateway_type=gateway_type).count()
-        if gateway_count == 0:
-            raise serializers.ValidationError("Invalid Payment Gateway")
-        
         return data
 
 
@@ -287,18 +234,14 @@ class CompletePaymentSerializer(serializers.ModelSerializer) :
         order.razorpay_signature = raz_signature
         order.save()
         
-        gateway_type = validate_data.get('gateway_type')
-        razorpay_key = Settings.objects.filter(gateway_type=gateway_type).first()
-        if razorpay_key.gateway_type == "razorpay":
-            try:
-                client = razorpay.Client(auth=(razorpay_key.public_key, razorpay_key.secret_key))
-                check = client.utility.verify_payment_signature(data)
-                if check == False:
-                    raise serializers.ValidationError('Invalid Signature')
-            except Exception as error:
-                raise serializers.ValidationError("Unale to verify your Payment")
-        else:
-            raise serializers.ValidationError("Invalid Payment Gateway")
+        razorpay_key = GeneralSettings.objects.all().first()
+        try:
+            client = razorpay.Client(auth=(razorpay_key.public_key, razorpay_key.secret_key))
+            check = client.utility.verify_payment_signature(data)
+            if check == False:
+                raise serializers.ValidationError('Invalid Signature')
+        except Exception as error:
+            raise serializers.ValidationError("Unale to verify your Payment")
         
         order.isPaid = True
         order.payment_status = "completed"

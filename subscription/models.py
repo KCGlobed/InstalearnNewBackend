@@ -3,29 +3,6 @@ from django_softdelete.models import SoftDeleteModel
 from simple_history.models import HistoricalRecords
 
 
-class Settings(models.Model):
-    public_key = models.CharField(max_length=255, null=True, blank=True)
-    secret_key = models.CharField(max_length=255, null=True, blank=True)
-    no_days_trail = models.IntegerField(null=True, blank=True, default=7)
-    try_for_free = models.IntegerField(null=True, blank=True, default=30)
-    allow_device_restriction = models.BooleanField(default=False)
-    auto_logout_restriction = models.BooleanField(default=False)
-    allowed_desktop = models.IntegerField(null=True, blank=True, default=1)
-    allowed_tablet = models.IntegerField(null=True, blank=True, default=1)
-    allowed_phone = models.IntegerField(null=True, blank=True, default=1)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now = True)
-    history = HistoricalRecords()
-    
-    class Meta:
-        verbose_name = 'Settings'
-        verbose_name_plural = 'Settings'
-        
-    def __str__(self):
-        return '%s' % self.id
-    
-
-
 class PlanType(models.IntegerChoices):
     Monthly = 1, 'Monthly'
     Half_Yearly = 2, 'Half Yearly'
@@ -86,6 +63,7 @@ class PaymentMethod(models.IntegerChoices):
 
 
 class Order(models.Model):
+    orderID = models.CharField(max_length=255, null=True, blank=True)
     user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=255, null=True, blank=True)
     last_name = models.CharField(max_length=255, null=True, blank=True)
@@ -102,7 +80,7 @@ class Order(models.Model):
     discount_percentage = models.FloatField(null=True, blank=True, default=0.0)
     discount_amount = models.FloatField(null=True, blank=True, default=0.0)
     total_amount = models.FloatField(null=True, blank=True, default=0.0)
-    order_payment_id = models.CharField(max_length=255,null=True, blank=True)
+    razorpay_order_id = models.CharField(max_length=255,null=True, blank=True)
     razorpay_payment_id = models.CharField(max_length=255,null=True, blank=True)
     razorpay_signature = models.TextField(null=True, blank=True)
     coupon = models.ForeignKey('Coupon', null=True, blank=True, on_delete=models.SET_NULL)
@@ -162,6 +140,7 @@ class UserCourses(models.Model):
     trail = models.BooleanField(default=False)
     progress_percentage = models.FloatField(null=True, blank=True, default=0.0)
     completed = models.BooleanField(default=False)
+    paid = models.BooleanField(default=False)
     expired_at = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)

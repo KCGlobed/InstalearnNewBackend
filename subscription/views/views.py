@@ -61,13 +61,6 @@ class CheckCourseInCartView(APIView):
             return success_response(message="", data=[], status_code=status.HTTP_200_OK)
         
 
-class GetPaymentGatewayView(APIView):
-    renderer_classes = [SubscriptionRenderer]
-    def get(self, request, format=None):
-        category = Settings.objects.filter(active = 1)
-        serializer = GatewayListSerializer(category, many=True)
-        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
-    
 
 class StartPaymentView(APIView):
     renderer_classes = [SubscriptionRenderer]
@@ -76,7 +69,6 @@ class StartPaymentView(APIView):
         if serializer.is_valid(raise_exception = True):
             user  = serializer.save()
             return success_response(message="Order Created Successfully", data=serializer.data, status_code=status.HTTP_200_OK)
-
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 

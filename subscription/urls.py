@@ -21,7 +21,6 @@ urlpatterns = [
     path('view-cart/', ViewCartView.as_view(), name="view-cart"),
     
     path('check-course-cart/', CheckCourseInCartView.as_view(), name="check-course-cart"),
-    path('get-payment-gateway/', GetPaymentGatewayView.as_view(), name="get-payment-gateway"),
     path('start-course-payment/', StartPaymentView.as_view(), name="start-course-payment"),
     path('complete-course-payment/', CompletePaymentView.as_view(), name="complete-course-payment"),
     path('webhook-response/', WebhookResponseView.as_view(), name="webhook-response"),
@@ -29,9 +28,6 @@ urlpatterns = [
 
     path('start-subscription/', StartSubscriptionView.as_view(), name="start-subscription"),
     path('complete-subscription/', CompleteSubscriptionView.as_view(), name="complete-subscription"),
-
-    path('get-setting/', GetSettingView.as_view(), name="get-setting"),
-    path('update-setting/', UpdateSettingView.as_view(), name="update-setting"),
 
     path('trail-registration/', TrailRegistrationView.as_view(), name="trail-registration"),
 
