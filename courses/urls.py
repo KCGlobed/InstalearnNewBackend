@@ -87,6 +87,7 @@ urlpatterns = [
     path('add-course-instructor/', AddCourseInstructorsView.as_view(), name="add-course-instructor"),
     path('delete-course-instructor/<cid>', DeleteCourseInstructorView.as_view(), name="delete-course-instructor"),
 
+    path('get-course-list/', GetCourseListView.as_view(), name="get-course-list"),
     path('get-related-courses/<int:cid>', GetRelatedCoursesView.as_view(), name="get-related-courses"),
     path('add-related-courses/', AddRelatedCoursesView.as_view(), name="add-related-courses"),
     path('delete-related-course/<int:cid>', DeleteRelatedCourseView.as_view(), name="delete-related-course"),

@@ -2605,7 +2605,6 @@ class UploadCourseSampleVideoView(APIView):
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
-
 class GetInstructorListView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
@@ -2615,6 +2614,18 @@ class GetInstructorListView(APIView):
     def get(self, request, cid =None, format=None):
         category = InstructorProfile.objects.all().order_by("-id")
         serializer = InstructorInfoserializer(category, many=True)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class GetCourseListView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [SuperAdmin]
+                        )]
+    def get(self, request, cid =None, format=None):
+        category = Course.objects.filter(status = True).order_by("-id")
+        serializer = CourseInfoserializer(category, many=True)
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
 
