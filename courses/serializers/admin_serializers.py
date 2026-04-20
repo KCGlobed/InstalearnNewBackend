@@ -1538,7 +1538,7 @@ class UpdateCoursesSampleVideoSerializer(serializers.ModelSerializer) :
 class CourseInstructorsListSerializer(serializers.ModelSerializer) :
     instructor_info = serializers.SerializerMethodField()
     def get_instructor_info(self, parent):
-        info = Instructor.objects.get(id = parent.instructor.id)
+        info = InstructorProfile.objects.get(id = parent.instructor.id)
         return InstructorInfoserializer(info).data
     
     class Meta:
