@@ -980,7 +980,7 @@ class ViewCourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id",'name','description',"short_description","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","duration", "chapters_info","mock_test_pattern","assessment_test_testlets","assessment_test_each_testlet_questions"]
+        fields = ["id",'name',"level",'description',"short_description","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","duration", "chapters_info","mock_test_pattern","assessment_test_testlets","assessment_test_each_testlet_questions"]
 
 
 
