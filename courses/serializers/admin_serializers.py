@@ -995,7 +995,7 @@ class CreateCourseSerializer(serializers.ModelSerializer) :
     discount = serializers.FloatField(required=False,allow_null=True)
     feature_json = serializers.JSONField(required=False)
     objectives_summary = serializers.JSONField(required=False)
-    tags = serializers.ListField(required=True)
+    tags = serializers.CharField(required=False)
     image = serializers.FileField(required=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
     banner_image = serializers.FileField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
     category_id = serializers.CharField(required=False)
@@ -1046,7 +1046,7 @@ class CreateCourseSerializer(serializers.ModelSerializer) :
                 cat.save()
 
         
-        tags_data = validate_data.get('tags') 
+        tags_data = validate_data.get('tags').split(",") 
 
         if len(tags_data) > 0:
             for index , tags in enumerate(tags_data):
@@ -1113,7 +1113,7 @@ class EditCourseSerializer(serializers.ModelSerializer):
     feature_json = serializers.JSONField(required=False)
     level = serializers.IntegerField(required=True)
     objectives_summary = serializers.JSONField(required=False)
-    tags = serializers.ListField(required=False)
+    tags = serializers.CharField(required=False)
     image = serializers.FileField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
     banner_image = serializers.FileField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
     category_id = serializers.CharField(required=False)
@@ -1160,7 +1160,7 @@ class EditCourseSerializer(serializers.ModelSerializer):
                 cat.save()
 
         
-        tags_data = validate_data.get('tags') 
+        tags_data = validate_data.get('tags').split(",") 
 
         if len(tags_data) > 0:
             CourseTags.objects.filter(course_id = course.id).delete()

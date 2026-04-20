@@ -292,3 +292,36 @@ class DeleteFaqView(APIView):
             return success_response(message="FAQ Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
         except FAQs.DoesNotExist:
             return error_response(message="FAQ not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+        
+
+
+class GetSettingView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "manage_setting",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, cid=None):
+        setting = Settings.objects.all().first()
+        if setting is None:
+            return success_response(message="Success", data={}, status_code=status.HTTP_200_OK)
+        serializer = SettingSerializer(setting)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+
+class UpdateSettingView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "manage_setting",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = UpdateSettingSerializer(data = request.data, partial=True)
+        if serializer.is_valid(raise_exception = True):
+            user= serializer.save()
+            return success_response(message="Setting Updated Successfully", data=SettingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    

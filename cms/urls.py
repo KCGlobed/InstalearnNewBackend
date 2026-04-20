@@ -16,6 +16,9 @@ urlpatterns = [
     path('update-faq-status/<int:cid>', UpdateFaqStatusView.as_view(), name="update-faq-status"),
     path('delete-faq/<int:cid>', DeleteFaqView.as_view(), name="delete-faq"),
 
+    path('get-setting/', GetSettingView.as_view(), name="get-setting"),
+    path('update-setting/', UpdateSettingView.as_view(), name="update-setting"),
+    
 
     path('get-homepage-faq-topic-list/', FaqTopicListView.as_view(), name="get-homepage-faq-topic-list"),
     path('get-homepage-faq-list/<int:cid>', FaqsListView.as_view(), name="get-homepage-faq-list"), 
