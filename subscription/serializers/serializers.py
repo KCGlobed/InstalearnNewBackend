@@ -268,32 +268,6 @@ class CourseListsSerializer(serializers.ModelSerializer):
 
 
 
-class ApplyCouponSerializer(serializers.ModelSerializer) :
-    code = serializers.CharField(max_length = 255, required=True)
-    total_amount = serializers.IntegerField(required=True)
-    class Meta:
-        model = Cart
-        fields = ['code','total_amount']
-        
-    def validate(self, data):
-        
-        course = data.get('code')
-        course_count = Coupon.objects.filter(code=course).count()
-        if course_count == 0:
-            raise serializers.ValidationError("Invalid Coupon Code!")
-        
-        cart_count = Coupon.objects.filter(code=course,is_active=1).count()
-        if cart_count == 0:
-            raise serializers.ValidationError("Coupon is Inactive!")
-        
-        coupon = Coupon.objects.filter(code=course,is_active=1).first()
-        if coupon.expiration_date < timezone.now():
-            raise serializers.ValidationError("Coupon has expired!")
-        
-        return data
-
-
-
 class StartSubscriptionSerializer(serializers.ModelSerializer) :
     first_name = serializers.CharField(max_length = 100, required=True)
     last_name = serializers.CharField(max_length = 100, required=True)

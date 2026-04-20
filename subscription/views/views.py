@@ -108,7 +108,6 @@ class WebhookResponseView(APIView):
                 payment.razorpay_order_id = request.data['payload']['payment']['entity']['order_id']
                 payment.invoice_id = request.data['payload']['payment']['entity']['invoice_id']
                 payment.amount = (request.data['payload']['payment']['entity']['amount'] / 100)
-                payment.response = request.data
                 payment.status = request.data['event']
                 payment.isPaid = True
                 payment.save()
@@ -119,202 +118,89 @@ class WebhookResponseView(APIView):
                 order_info.next_due = date.today() + timedelta(days=365)
                 order_info.save()
 
-                if order_info.payment_type == "subscription":
-                    cart_count = UserCourses.objects.filter(order_id = order_info.id).count()
-                    if cart_count == 0:
-                        cart_count = SubscriptionCourses.objects.filter(subscription_plan_id = order_info.subscription_plan.id)
-                        for cart in cart_count:
-                            order_c = UserCourses.objects.filter(course = cart.course,user = order_info.user).first()
-                            if order_c is not None:
-                                order_c.order = order_info
-                                order_c.save()
-                            else:
-                                cart_order = UserCourses(
-                                    order = order_info,
-                                    course = cart.course,
-                                    user = order_info.user,
-                                    paid = 1
-                                )
-                                cart_order.save()
+                order_list = []
 
-                if order_info.payment_type == "subscription":
-                    
-                    order_list = []
+                invoice_info = None
+                cart_count = UserCourses.objects.filter(order_id = order_info.id)
+                for cart in cart_count:
+                    cart.paid = 1
+                    cart.save()
 
-                    invoice_info = None
-                    order_list = SubscriptionPlans.objects.filter(id = order_info.subscription_plan.id).first()
-                    result = {
-                            'invoice_info': invoice_info,
-                            'order_info':order_info,
-                            "order_list":order_list,
-                            'isssue_date' : order_info.order_date
-                        }
-                    
+                    order_list.append({
+                        'book_name': cart.course.name,
+                        'total_price': cart.course.price,
+                        'book_price': cart.course.price,
+                        "qunatity": 1
+                    })
 
-                    import time
-                    import calendar
-                    current_GMT = time.gmtime()
-                    ts = calendar.timegm(current_GMT)
-                    
-                    template = get_template('pdf/subscription_invoice.html')
-                    html  = template.render(result)
-                    result = BytesIO()
-                    destination = settings.MEDIA_ROOT+ 'pdf_reports/'
-                    if not os.path.exists(destination):
-                        os.makedirs(destination)
-                    file = open(destination + str(ts) +'_invoice.pdf', "w+b")
-                    html = html.encode('latin-1', 'replace').decode('latin-1')
-                    pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), dest=file)
-                    
-                    subject = 'Subscription Detail'
-                    email_from = settings.EMAIL_HOST_USER
-                    recipient_list = [order_info.email, ]
-                    html_message = loader.render_to_string(
-                        'subscription_order_email.html',
-                        {
-                            'user_name': order_info.first_name + order_info.last_name,
-                            'order_list':order_list,
-                            "order_info":order_info,
-                            'total_price': order_info.total_amount,
-                            'price': order_info.total_amount,
-                            'raz_pay_id':order_info.orderID
-                        }
-                    )
-                    email = EmailMessage(
-                        subject, html_message, email_from, recipient_list)
-                    
-                    email.attach_file(destination + str(ts) +'_invoice.pdf')
-                    email.content_subtype = "html"
-                    email.send()
-
-
-                    subject = 'Subscription Order Detail'
-                    email_from = settings.EMAIL_HOST_USER
-                    recipient_list = [settings.ADMIN_EMAIL, ]
-                    html_message = loader.render_to_string(
-                        'admin_subscription_email.html',
-                        {
-                            'user_name': order_info.first_name + order_info.last_name,
-                            'order_list':order_list,
-                            "order_info":order_info,
-                            'total_price': order_info.total_amount,
-                            'price': order_info.total_amount,
-                            'raz_pay_id':order_info.orderID
-                        }
-                    )
-                    email = EmailMessage(
-                        subject, html_message, email_from, recipient_list)
-                    
-                    email.attach_file(destination + str(ts) +'_invoice.pdf')
-                    email.content_subtype = "html"
-                    email.send()
+                result = {
+                        'invoice_info': invoice_info,
+                        'order_info':order_info,
+                        "order_list":order_list,
+                        'isssue_date' : order_info.order_date
+                    }
                 
-                else:
-                    order_list = []
 
-                    invoice_info = None
-                    cart_count = UserCourses.objects.filter(order_id = order_info.id)
-                    for cart in cart_count:
-                        cart.paid = 1
-                        cart.save()
-
-                        order_list.append({
-                            'book_name': cart.course.name,
-                            'total_price': cart.course.price,
-                            'book_price': cart.course.price,
-                            "qunatity": 1
-                        })
-
-                    result = {
-                            'invoice_info': invoice_info,
-                            'order_info':order_info,
-                            "order_list":order_list,
-                            'isssue_date' : order_info.order_date
-                        }
-                    
-
-                    import time
-                    import calendar
-                    current_GMT = time.gmtime()
-                    ts = calendar.timegm(current_GMT)
-                    
-                    template = get_template('pdf/invoice.html')
-                    html  = template.render(result)
-                    result = BytesIO()
-                    destination = settings.MEDIA_ROOT+ 'pdf_reports/'
-                    if not os.path.exists(destination):
-                        os.makedirs(destination)
-                    file = open(destination + str(ts) +'_invoice.pdf', "w+b")
-                    html = html.encode('latin-1', 'replace').decode('latin-1')
-                    pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), dest=file)
-                    
-                    subject = 'Order Detail'
-                    email_from = settings.EMAIL_HOST_USER
-                    recipient_list = [order_info.email, ]
-                    html_message = loader.render_to_string(
-                        'course_order_email.html',
-                        {
-                            'user_name': order_info.first_name + order_info.last_name,
-                            'order_list':order_list,
-                            "order_info":order_info,
-                            'total_price': order_info.total_amount,
-                            'price': order_info.total_amount,
-                            'raz_pay_id':order_info.orderID
-                        }
-                    )
-                    email = EmailMessage(
-                        subject, html_message, email_from, recipient_list)
-                    
-                    email.attach_file(destination + str(ts) +'_invoice.pdf')
-                    email.content_subtype = "html"
-                    email.send()
+                import time
+                import calendar
+                current_GMT = time.gmtime()
+                ts = calendar.timegm(current_GMT)
+                
+                template = get_template('pdf/invoice.html')
+                html  = template.render(result)
+                result = BytesIO()
+                destination = settings.MEDIA_ROOT+ 'pdf_reports/'
+                if not os.path.exists(destination):
+                    os.makedirs(destination)
+                file = open(destination + str(ts) +'_invoice.pdf', "w+b")
+                html = html.encode('latin-1', 'replace').decode('latin-1')
+                pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), dest=file)
+                
+                subject = 'Order Detail'
+                email_from = settings.EMAIL_HOST_USER
+                recipient_list = [order_info.email, ]
+                html_message = loader.render_to_string(
+                    'course_order_email.html',
+                    {
+                        'user_name': order_info.first_name + order_info.last_name,
+                        'order_list':order_list,
+                        "order_info":order_info,
+                        'total_price': order_info.total_amount,
+                        'price': order_info.total_amount,
+                        'raz_pay_id':order_info.orderID
+                    }
+                )
+                email = EmailMessage(
+                    subject, html_message, email_from, recipient_list)
+                
+                email.attach_file(destination + str(ts) +'_invoice.pdf')
+                email.content_subtype = "html"
+                email.send()
 
 
-                    subject = 'Course Order Detail'
-                    email_from = settings.EMAIL_HOST_USER
-                    recipient_list = [settings.ADMIN_EMAIL, ]
-                    html_message = loader.render_to_string(
-                        'admin_order_email.html',
-                        {
-                            'user_name': order_info.first_name + order_info.last_name,
-                            'order_list':order_list,
-                            "order_info":order_info,
-                            'total_price': order_info.total_amount,
-                            'price': order_info.total_amount,
-                            'raz_pay_id':order_info.orderID
-                        }
-                    )
-                    email = EmailMessage(
-                        subject, html_message, email_from, recipient_list)
-                    
-                    email.attach_file(destination + str(ts) +'_invoice.pdf')
-                    email.content_subtype = "html"
-                    email.send()
+                subject = 'Course Order Detail'
+                email_from = settings.EMAIL_HOST_USER
+                recipient_list = [settings.ADMIN_EMAIL, ]
+                html_message = loader.render_to_string(
+                    'admin_order_email.html',
+                    {
+                        'user_name': order_info.first_name + order_info.last_name,
+                        'order_list':order_list,
+                        "order_info":order_info,
+                        'total_price': order_info.total_amount,
+                        'price': order_info.total_amount,
+                        'raz_pay_id':order_info.orderID
+                    }
+                )
+                email = EmailMessage(
+                    subject, html_message, email_from, recipient_list)
+                
+                email.attach_file(destination + str(ts) +'_invoice.pdf')
+                email.content_subtype = "html"
+                email.send()
                 
         return success_response(message="Payment successfully received!", data={}, status_code=status.HTTP_200_OK)
 
-
-class ApplyCouponView(APIView):
-    renderer_classes = [SubscriptionRenderer]
-    def post(self, request, format=None):
-        serializer = ApplyCouponSerializer(data = request.data)
-        if serializer.is_valid(raise_exception = True):
-            code = request.data.get('code')
-            total_amount = request.data.get('total_amount')
-            coupon = Coupon.objects.filter(code=code, is_active=1).first()
-            if coupon.discount_type == 'percentage':
-                discount = (math.ceil(coupon.discount_value) / 100) * total_amount
-            elif coupon.discount_type == 'fixed':
-                discount = coupon.discount_value
-            else:
-                return error_response(message="Invalid discount type", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
-            
-            discounted_amount = math.ceil(total_amount) - math.ceil(discount)
-
-            return success_response(message="Coupon Applied Successfully!", data={'discounted_amount': discounted_amount, 'discount': discount}, status_code=status.HTTP_200_OK)
-
-        return error_response(message="", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
-    
 
 
 class StartSubscriptionView(APIView):
