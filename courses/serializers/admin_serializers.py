@@ -1548,8 +1548,8 @@ class CourseInstructorsListSerializer(serializers.ModelSerializer) :
 
 class InstructorInfoserializer(serializers.ModelSerializer) :
     class Meta:
-        model = Instructor
-        fields = ['id',"text_1","text_2","text_3","image","experience"]
+        model = InstructorProfile
+        fields = ['id',"text_1","text_2","text_3","image","experience","company_image_1","company_image_2"]
 
 
 
