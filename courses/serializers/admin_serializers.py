@@ -979,14 +979,19 @@ class ViewCourseDetailSerializer(serializers.ModelSerializer):
     chapters_info = serializers.SerializerMethodField('get_chapters_info')
     instructors = serializers.SerializerMethodField('get_instructors')
     sample_videos = serializers.SerializerMethodField('get_sample_videos')
+    related_courses = serializers.SerializerMethodField('get_related_courses')
+
+    def get_related_courses(self, obj):
+        category = FrequentlyBoughtCourse.objects.filter(course_id=obj.id)
+        return FrequentlyBoughtCourseListSerializer(category, many=True).data
 
     def get_sample_videos(self, obj):
         category = CourseSampleVideos.objects.filter(course_id=obj.id)
-        return CourseSampleVideosSerializer(category, many=True).data
+        return CourseSampleVideoListSerializer(category, many=True).data
 
     def get_instructors(self, obj):
         category = CourseInstructors.objects.filter(course_id=obj.id)
-        return CourseInstructorDetailSerializer(category, many=True).data
+        return CourseInstructorsListSerializer(category, many=True).data
     
     def get_chapters_info(self, obj):
         category = CourseChapters.objects.filter(course_id=obj.id)
@@ -1002,7 +1007,7 @@ class ViewCourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id",'name',"level",'description',"short_description","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","duration", "chapters_info","mock_test_pattern","assessment_test_testlets","assessment_test_each_testlet_questions","instructors","sample_videos"]
+        fields = ["id",'name',"level",'description',"short_description","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","duration", "chapters_info","mock_test_pattern","assessment_test_testlets","assessment_test_each_testlet_questions","instructors","sample_videos","related_courses"]
 
 
 
