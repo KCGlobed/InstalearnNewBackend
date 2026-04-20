@@ -955,6 +955,18 @@ class CourseChapterSerializer(serializers.ModelSerializer):
         fields = ["id","chapter_info"]
 
 
+class CourseInstructorDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstructorProfile
+        fields = "__all__"
+        depth = 1
+
+
+class CourseSampleVideosSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseSampleVideos
+        fields = "__all__"
+
 
 class CourseTagsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -965,6 +977,16 @@ class ViewCourseDetailSerializer(serializers.ModelSerializer):
     categories = serializers.SerializerMethodField('get_categories')
     tags = serializers.SerializerMethodField('get_tags')
     chapters_info = serializers.SerializerMethodField('get_chapters_info')
+    instructors = serializers.SerializerMethodField('get_instructors')
+    sample_videos = serializers.SerializerMethodField('get_sample_videos')
+
+    def get_sample_videos(self, obj):
+        category = CourseSampleVideos.objects.filter(course_id=obj.id)
+        return CourseSampleVideosSerializer(category, many=True).data
+
+    def get_instructors(self, obj):
+        category = CourseInstructors.objects.filter(course_id=obj.id)
+        return CourseInstructorDetailSerializer(category, many=True).data
     
     def get_chapters_info(self, obj):
         category = CourseChapters.objects.filter(course_id=obj.id)
@@ -980,7 +1002,7 @@ class ViewCourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id",'name',"level",'description',"short_description","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","duration", "chapters_info","mock_test_pattern","assessment_test_testlets","assessment_test_each_testlet_questions"]
+        fields = ["id",'name',"level",'description',"short_description","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","duration", "chapters_info","mock_test_pattern","assessment_test_testlets","assessment_test_each_testlet_questions","instructors","sample_videos"]
 
 
 
