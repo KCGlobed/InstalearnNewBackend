@@ -201,9 +201,9 @@ class StaffProfileSerializer(serializers.ModelSerializer):
 class UpdateInstructorPublicProfileSerializer(serializers.ModelSerializer) :
     title_1 = serializers.CharField(max_length = 255, required=True)
     title_2 = serializers.CharField(max_length = 255, required=True)
-    title_3 = serializers.CharField(max_length = 255, required=False)
+    title_3 = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     experience = serializers.CharField(max_length = 255, required=True)
-    linkedin_url = serializers.URLField(max_length = 255, required=False)
+    linkedin_url = serializers.URLField(max_length = 255, required=False, allow_blank=True)
     image = serializers.ImageField(required=True, validators=[FileExtensionValidator( ['png','jpg','jpeg'])])
     company_image_1 = serializers.ImageField(required=True, allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg'])])
     company_image_2 = serializers.ImageField(required=True, allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg'])])
