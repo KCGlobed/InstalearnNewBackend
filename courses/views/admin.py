@@ -39,7 +39,7 @@ class ChapterListingView(APIView):
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name',"description"]
-    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    ordering_fields = ['name', 'created_at', 'id', 'status',"description"] 
     def get(self, request, format=None):
         
         chapters = Chapters.objects.all()
