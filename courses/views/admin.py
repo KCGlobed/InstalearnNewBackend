@@ -1861,7 +1861,7 @@ class CourseListingView(APIView):
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name']
-    ordering_fields = ['name', 'created_at', 'id', 'status'] 
+    ordering_fields = ['name', 'created_at', 'id', 'status',"level","price"] 
     def get(self, request, format=None):
         
         course = Course.objects.all()

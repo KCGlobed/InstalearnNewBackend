@@ -20,7 +20,7 @@ from django.db.models import Sum
 class OrderCoursesSerializer(serializers.ModelSerializer):
     progress = serializers.SerializerMethodField('get_progress')
     def get_progress(self, obj):
-        total_duration_video_watched = UserWatchedTopicVideos.objects.filter(course_id = obj.id, user = self.context.get('user')).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+        total_duration_video_watched = UserLectureProgress.objects.filter(course_id = obj.id, user = self.context.get('user')).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
         video_duration_progress = 0
         if total_duration_video_watched > obj.total_video_duration:
             video_duration_progress =  100

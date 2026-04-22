@@ -367,8 +367,8 @@
                         <p></p>
                         <p>Name: {{order_info.first_name}} {{order_info.last_name}}</p><br>
                         <p>Email: {{order_info.email}}</p><br>
-                        <p>Mobile: {{order_info.mobile}}</p><br>
-                        <p>Address: {{order_info.address}} {{order_info.city}}, {{order_info.country}}, {{order_info.postal_code}}</p><br>
+                        <p>Mobile: {{order_info.phone}}</p><br>
+                        <p>Address: {{order_info.billing_address}} {{order_info.city}}, {{order_info.country}}, {{order_info.postal_code}}</p><br>
                         <p></p>
                         <p></p>
 
@@ -383,7 +383,7 @@
                           {% endfor %}
                           <tr style="width:100%; border: 1px solid black;">
                             <td colspan="3">Tax</td>
-                            <td class="total">INR {{order_info.tax_amount}}</td>
+                            <td class="total">INR {{order_info.gst_amount}}</td>
                           </tr>
                           {% if order_info.discount_amount %}
                             <tr>

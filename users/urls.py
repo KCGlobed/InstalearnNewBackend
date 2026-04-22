@@ -27,6 +27,12 @@ urlpatterns = [
     path('update-user-permission/<int:id>', UpdatetUserPermissionView.as_view(), name="update-user-permission"),
     path('check-lms-reset-permission/', CheckLMSResetPermissionView.as_view(), name="check-lms-reset-permission"),
     
+    path('get-profile/', UserProfileView.as_view(), name="get-profile"),
+    path('update-profile/', UpdateUserProfileView.as_view(), name="update-profile"),
+    path('update-profile-image/', UpdateUserProfileImageView.as_view(), name="update-profile-image"),
+    path('remove-profile-image/', RemoveUserProfileImageView.as_view(), name="remove-profile-image"),
+    path('update-banner-image/', UpdateUserBannerImageView.as_view(), name="update-banner-image"),
+    
     
 
     # Admin APIS

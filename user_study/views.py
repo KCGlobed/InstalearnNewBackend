@@ -28,10 +28,7 @@ class PurchasedCoursesView(APIView):
         category = Course.objects.filter(id__in=course_list)
         serializer = OrderCoursesSerializer(category, many=True, context={'user':request.user})
 
-        info = FrequentlyBoughtCourse.objects.filter(course_id__in = course_list).exclude(bought_course_id__in = course_list)
-        frequntly = FrequentlyBoughtCourseSerializer(info, many=True)
-
-        return success_response(message="Success", data={"purchased_courses":serializer.data,"suggested_courses":frequntly.data}, status_code=status.HTTP_200_OK)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
     
 

@@ -295,3 +295,66 @@ class CheckLMSResetPermissionView(APIView):
             return success_response(message="", data={"permission_status":True}, status_code=status.HTTP_200_OK)
         return success_response(message="", data={"permission_status":False}, status_code=status.HTTP_200_OK)
     
+
+
+class UserProfileView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def get(self, request, format=None):
+        serializer = UserProfileSerializer(request.user)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class UpdateUserProfileView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def post(self, request, format=None):
+        serializer = UpdateUserProfileSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            return success_response(message="Profile Updated Successfully", data={}, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class UpdateUserProfileImageView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def post(self, request, format=None):
+        serializer = UpdateUserProfileImageSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            return success_response(message="Profile Image Updated Successfully", data={}, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class RemoveUserProfileImageView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def post(self, request, format=None):
+        serializer = RemoveUserProfileSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            return success_response(message="Profile Image Removed Successfully", data={}, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class UpdateUserBannerImageView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def post(self, request, format=None):
+        serializer = UpdateUserBannerImageSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            return success_response(message="Banner Image Updated Successfully", data={}, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)

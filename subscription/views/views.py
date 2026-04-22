@@ -167,6 +167,7 @@ class WebhookResponseView(APIView):
                         "order_info":order_info,
                         'total_price': order_info.total_amount,
                         'price': order_info.total_amount,
+                        'tax': order_info.gst_amount,
                         'raz_pay_id':order_info.orderID
                     }
                 )
@@ -187,6 +188,7 @@ class WebhookResponseView(APIView):
                         'user_name': order_info.first_name + order_info.last_name,
                         'order_list':order_list,
                         "order_info":order_info,
+                        'tax': order_info.gst_amount,
                         'total_price': order_info.total_amount,
                         'price': order_info.total_amount,
                         'raz_pay_id':order_info.orderID
@@ -195,7 +197,7 @@ class WebhookResponseView(APIView):
                 email = EmailMessage(
                     subject, html_message, email_from, recipient_list)
                 
-                email.attach_file(destination + str(ts) +'_invoice.pdf')
+                # email.attach_file(destination + str(ts) +'_invoice.pdf')
                 email.content_subtype = "html"
                 email.send()
                 

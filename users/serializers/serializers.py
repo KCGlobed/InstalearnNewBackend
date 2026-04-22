@@ -458,3 +458,81 @@ class UpdateUserPermissionSerializer(serializers.ModelSerializer) :
 
         for revoke in validate_data.get('revoke_permission'):
             revoke_permission(info, revoke)
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(max_length = 255)
+    class Meta:
+        model = User
+        fields = ['id','first_name','last_name', 'email','phone1','phone2','address','city','state','country','image','banner_image','pincode']
+
+
+class UpdateUserProfileSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(max_length = 255, required=True)
+    last_name = serializers.CharField(max_length = 255, required=True)
+    phone_1 = serializers.CharField(required=True, allow_blank=True)
+    phone_2 = serializers.CharField(required=False, allow_blank=True)
+    address = serializers.CharField(max_length = 255, required=True)
+    city = serializers.CharField(max_length = 255, required=True)
+    state = serializers.CharField(max_length = 255, required=True)
+    country = serializers.CharField(max_length = 255, required=True)
+    pincode = serializers.CharField(max_length = 255, required=True)
+    class Meta:
+        model = User
+        fields = ['first_name','last_name','phone_1','phone_2','address','city','state','country','pincode']
+
+    
+    def validate(self, data):
+        user = self.context.get('user')
+        user.first_name = data.get('first_name')
+        user.last_name = data.get('last_name')
+        user.phone1 = data.get('phone_1')
+        user.phone2 = data.get('phone_2')
+        user.address = data.get('address')
+        user.city = data.get('city')
+        user.state = data.get('state')
+        user.country = data.get('country')
+        user.pincode = data.get('pincode')
+        user.save()
+        return data
+
+
+class UpdateUserProfileImageSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=True)
+    class Meta:
+        model = User
+        fields = ['image']
+
+    
+    def validate(self, data):
+        user = self.context.get('user')
+        user.image = data.get('image')
+        user.save()
+        return data
+    
+
+class RemoveUserProfileSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=False)
+    class Meta:
+        model = User
+        fields = ['image']
+
+    
+    def validate(self, data):
+        user = self.context.get('user')
+        user.image = ''
+        user.save()
+        return data
+    
+
+class UpdateUserBannerImageSerializer(serializers.ModelSerializer):
+    banner_image = serializers.ImageField(required=False)
+    class Meta:
+        model = User
+        fields = ['banner_image']
+
+    def validate(self, data):
+        user = self.context.get('user')
+        user.banner_image = data.get('banner_image')
+        user.save()
+        return data
