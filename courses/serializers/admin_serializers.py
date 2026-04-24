@@ -640,7 +640,7 @@ class HomepageCourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ['name',"price","discount","objectives_summary","image","categories","duration","level","created_by","avg_rating"]
+        fields = ["id",'name',"price","discount","objectives_summary","image","categories","duration","level","created_by","avg_rating"]
 
 
 class HomepageTagWiseCoursesSerializer(serializers.ModelSerializer):
