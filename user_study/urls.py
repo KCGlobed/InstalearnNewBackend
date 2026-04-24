@@ -3,17 +3,16 @@ from user_study.views import *
 
 urlpatterns = [
     path('purchased-courses/', PurchasedCoursesView.as_view(), name="purchased-courses"),
-    path('dashboard/<int:id>', DashboardCoursesView.as_view(), name="dashboard"),
-    path('dashboard-counters/<int:id>', DashboardCoursesCounterView.as_view(), name="dashboard-counters"),
-    path('get-chapter-videos/<cid>', GetTopicVideosView.as_view(), name="get-chapter-videos"),
-    path('get-chapter-videos/<cid>/<tid>', GetTopicVideosView.as_view(), name="get-chapter-videos"),
-    path('get-videos-detail/<cid>', GetChapterVideoDetailView.as_view(), name="get-videos-detail"),
-    path('complete-video-list/<cid>', GetCompleteVideoListView.as_view(), name="complete-video-list"),
-    path('get-video-report/<cid>', GetChapterVideoReportView.as_view(), name="get-videos-report"),
+    path('dashboard-chapters/<int:id>', DashboardCourseChaptersView.as_view(), name="dashboard-chapters"),
+    path('chapter-lectures/<int:id>', DashboardChapterLecturesView.as_view(), name="chapter-lectures"),
+    path('watch-video/', WatchVideoView.as_view(), name="watch-video"),
+
+
     path('download-video-report/<cid>', DownloadChapterVideoReportView.as_view(), name="download-videos-report"),
     path('download-video-report-csv/<cid>', DownloadChapterVideoReportCSVView.as_view(), name="download-videos-report"),
-    path('watch-video/', WatchVideoView.as_view(), name="watch-video"),
+    
     path('performance-report/<int:id>', PerformaceReportView.as_view(), name="performance-report"),
+    
     path('create-note/', CreateNoteView.as_view(), name="create-note"),
     path('update-note/<cid>', EditNoteView.as_view(), name="edit-note"),
     path('get-user-notes/<cid>', GetUserNotesView.as_view(), name="get-user-notes"),

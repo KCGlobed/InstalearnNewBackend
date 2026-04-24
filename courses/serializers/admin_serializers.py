@@ -1007,7 +1007,7 @@ class ViewCourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id",'name',"level",'description',"short_description","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","duration", "chapters_info","mock_test_pattern","assessment_test_testlets","assessment_test_each_testlet_questions","instructors","sample_videos","related_courses"]
+        fields = ["id",'name',"level",'description',"short_description","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","duration", "chapters_info","instructors","sample_videos","related_courses"]
 
 
 
@@ -1133,9 +1133,6 @@ class EditCourseSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=False)
     requirements = serializers.CharField(required=False)
     price = serializers.IntegerField(required=True)
-    mock_test_pattern = serializers.JSONField(required=False)
-    assessment_test_each_testlet_questions = serializers.IntegerField(required=False)
-    assessment_test_testlets = serializers.IntegerField(required=False)
     discount = serializers.FloatField(required=False,allow_null=True)
     feature_json = serializers.JSONField(required=False)
     level = serializers.IntegerField(required=True)
@@ -1147,7 +1144,7 @@ class EditCourseSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ['name','description',"short_description","requirements","price","discount","feature_json","image","banner_image","category_id","objectives_summary","tags","duration","mock_test_pattern","assessment_test_testlets","assessment_test_each_testlet_questions","level"]
+        fields = ['name','description',"short_description","requirements","price","discount","feature_json","image","banner_image","category_id","objectives_summary","tags","duration","level"]
         
     def validate(self, data):
         return data
@@ -1159,9 +1156,6 @@ class EditCourseSerializer(serializers.ModelSerializer):
         course.description = validate_data.get('description', course.description)
         course.short_description = validate_data.get('short_description', course.short_description)
         course.requirements = validate_data.get('requirements', course.requirements)
-        course.mock_test_pattern = validate_data.get('mock_test_pattern', course.mock_test_pattern)
-        course.assessment_test_testlets = validate_data.get('assessment_test_testlets', course.assessment_test_testlets)
-        course.assessment_test_each_testlet_questions = validate_data.get('assessment_test_each_testlet_questions', course.assessment_test_each_testlet_questions)
         course.price = validate_data.get('price', course.price)
         course.duration = validate_data.get('duration', course.duration)
         course.discount = validate_data.get('discount', course.discount)

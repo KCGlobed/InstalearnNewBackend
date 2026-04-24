@@ -15,6 +15,19 @@ from django.core.mail import EmailMessage
 import os
 from mini_lms.utils import *
 from datetime import date, datetime, timedelta
+import pandas as pd
+import tempfile
+import re
+import calendar
+import time
+import json
+from google.cloud import storage
+from google.oauth2 import service_account
+info = json.loads(os.environ.get("GOOGLE_CREDENTIALS_JSON"))
+credentials = service_account.Credentials.from_service_account_info(info)
+client = storage.Client(credentials=credentials, project=credentials.project_id)
+from google.cloud.video.transcoder_v1 import TranscoderServiceClient
+import whisper
 
 
 class AddtoCartView(APIView):
@@ -141,8 +154,6 @@ class WebhookResponseView(APIView):
                     }
                 
 
-                import time
-                import calendar
                 current_GMT = time.gmtime()
                 ts = calendar.timegm(current_GMT)
                 
@@ -243,3 +254,144 @@ class TrailRegistrationView(APIView):
             user  = serializer.save()
             return success_response(message="Registration Done! Please Check your email for account detail", data={"id":user.id}, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class ManageBackgroundTaskView(APIView):
+    renderer_classes = [SubscriptionRenderer]
+    def get(self, request, format=None):
+        
+        calculate_video_duration_and_questions()
+
+        info = json.loads(os.environ.get("GOOGLE_CREDENTIALS_JSON"))
+        credentials = service_account.Credentials.from_service_account_info(info)
+
+        storage_client = storage.Client(credentials=credentials, project=credentials.project_id)
+
+        client = TranscoderServiceClient(credentials=credentials)
+
+        video_list = Videos.objects.filter(is_uploaded = True, is_completed = True, transcoded_video = "")
+        print(video_list)
+        if video_list is not None:
+            for video_info in video_list:
+                    
+                bucketName, file_name = parse_gcs_url(video_info.video_file.url)
+                
+                input_uri = f'gs://instalearn-public-bucket/'+str(file_name)
+                output_uri = f'gs://instalearn-public-bucket/media/mini_lms/transcoder/'
+
+                current_GMT = time.gmtime()
+                unique_id = str(calendar.timegm(current_GMT))
+
+                video_file_name = "video_"+str(unique_id)
+                job = {
+                    "input_uri": input_uri,
+                    "output_uri": output_uri,
+                    "template_id": "preset/web-hd",
+                    "config": {
+                        "elementary_streams": [
+                            {
+                                "key": "video-stream0",
+                                "video_stream": {
+                                    "h264": {
+                                        "bitrate_bps": 5500000,
+                                        "frame_rate": 30,
+                                        "height_pixels": 720,
+                                        "width_pixels": 1280,
+                                        "gop_duration": "15.0s"
+                                    }
+                                }
+                            },
+                            {
+                                "key": "audio-stream0",
+                                "audio_stream": {
+                                    "codec": "aac",
+                                    "bitrate_bps": 64000
+                                }
+                            }
+                        ],
+                        "mux_streams": [
+                            {
+                                "key": video_file_name,
+                                "container": "ts",
+                                "elementary_streams": [
+                                    "video-stream0","audio-stream0"
+                                ],
+                                "segment_settings": {
+                                    "segment_duration": "15.0s",
+                                    "individual_segments": True
+                                }
+                            }
+                        ],
+                        "manifests": [
+                            {
+                                "file_name": str(unique_id) + ".m3u8",
+                                "mux_streams": [
+                                    video_file_name
+                                ]
+                            }
+                        ]
+                    }
+                }
+                
+                job = client.create_job(
+                    parent=f'projects/{settings.GS_PROJECT_ID}/locations/asia-south1',
+                    job=job,
+                )
+                
+                
+                video_info.transcoded_video = 'media/lms_2/transcoder/'+f'{video_file_name}.m3u8'
+                video_info.is_completed = True
+                video_info.save()
+                
+                time.sleep(2)
+
+
+        
+        caption_video = Videos.objects.filter(is_uploaded = True, is_completed = True, video_caption__isnull = True) | Videos.objects.filter(is_uploaded = True, is_completed = True, video_caption = "")
+        print(caption_video)
+        if caption_video is not None:
+            
+            for video in caption_video:
+
+                model = whisper.load_model("turbo")
+                option = whisper.DecodingOptions(language="en", fp16=False)
+                result = model.transcribe(video.video_file.url)
+                print(result)
+                with tempfile.NamedTemporaryFile(suffix='.vtt', delete=False) as temp_file:
+                    vtt_file_path = temp_file.name # This is correct, it gets the path
+                    if result['segments']:
+                        # Write directly to the temp_file object, which is already open
+                        temp_file.write(b"WEBVTT \n\n")
+                        
+                        for seg in result['segments']:
+                            temp_file.write(b"\n")
+                            # Use .format() with .encode() to get bytes for the file
+                            temp_file.write(
+                                "{} --> {}\n".format(caption_time(seg['start']), caption_time(seg['end'])).encode('utf-8')
+                            )
+                            temp_file.write("{}\n".format(seg['text']).encode('utf-8'))
+                
+
+                # After the 'with' block, the file is closed, but not deleted yet
+                try:
+                    # GCS file naming logic
+                    timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+                    report_name = "transcribe"
+                    gcs_folder_name = "media/mini_lms/video_transcribe"
+                    gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.vtt"
+
+                    # Upload the temporary file to GCS
+                    bucket = storage_client.get_bucket(settings.GS_BUCKET_NAME)
+                    blob = bucket.blob(gcs_file_name)
+                    blob.upload_from_filename(vtt_file_path)
+
+                finally:
+                    # Ensure the temporary file is deleted from the server's disk
+                    os.remove(vtt_file_path)
+
+                video.video_caption = "/"+gcs_file_name
+                video.save()
+
+        
+        return success_response(message="Success", data={}, status_code=status.HTTP_200_OK)

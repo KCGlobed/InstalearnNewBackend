@@ -32,7 +32,7 @@ class PurchasedCoursesView(APIView):
     
     
 
-class DashboardCoursesView(APIView):
+class DashboardCourseChaptersView(APIView):
     renderer_classes = [UserStudyRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_roles(
@@ -42,96 +42,25 @@ class DashboardCoursesView(APIView):
         
         course_list = UserCourses.objects.filter(course_id = id, paid = 1).count()
         if course_list == 0:
-            return Response({"errors": {"non_field_errors": ["Invalid Course ID"]}}, status.HTTP_403_FORBIDDEN)
+            return error_response(message="Invalid Course ID", data = [], status_code=status.HTTP_400_BAD_REQUEST)
         
         category = CourseChapters.objects.filter(course_id=id)
         serializer = DashboardCourseChapterListingSerializer(category, many=True, context={'user':request.user})
 
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
 
-    
 
-class DashboardCoursesCounterView(APIView):
+class DashboardChapterLecturesView(APIView):
     renderer_classes = [UserStudyRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_roles(
                             [Student]
                         )]
     def get(self, request, id = None, format=None):
-        
-        course_list = UserCourses.objects.filter(course_id = id, paid = 1).count()
-        if course_list == 0:
-            return Response({"errors": {"non_field_errors": ["Invalid Course ID"]}}, status.HTTP_403_FORBIDDEN)
-        
-        category = CourseChapters.objects.only('id').filter(course_id=id).count()
-        course = Course.objects.filter(id = id).first()
-        total_duration_video_watched = UserWatchedTopicVideos.objects.filter(course_id = id, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
-        total_video_watched = UserWatchedTopicVideos.objects.filter(course_id = id, user = request.user).count()
-        
-        video_duration_progress = 0
-
-        if total_duration_video_watched > course.total_video_duration:
-            video_duration_progress =  100
-        else:
-            if course.total_video_duration > 0:
-                video_duration_progress =  math.ceil(total_duration_video_watched * 100 / course.total_video_duration)
-        
-        data = {
-            "total_chapters" : category,
-            "total_videos": course.total_video,
-            "total_video_duration": course.total_video_duration,
-            "total_watched_video": total_video_watched,
-            "total_duration_video_watched":total_duration_video_watched,
-            "total_video_progress":video_duration_progress
-        }
-
-        return success_response(message="Success", data=data, status_code=status.HTTP_200_OK)
-    
-    
-
-    
-class GetTopicVideosView(APIView):
-    renderer_classes = [UserStudyRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [Student]
-                        )]
-    def get(self, request, cid = None, tid=None, format=None):
-        
-        if cid is None:
-            return Response({"errors": {"non_field_errors": ["Chapter ID is required"]}}, status.HTTP_403_FORBIDDEN)
-
-        if tid is not None:
-            category = TopicVideos.objects.filter(chapter_topics_id = tid).order_by('order','id')
-        else:
-            chapter_list = ChapterTopics.objects.filter(course_chapters_id__in = cid).values_list('id', flat=True)
-            category = TopicVideos.objects.filter(chapter_topics_id__in = chapter_list).order_by('order','id')
-        
-        serializer = TopicVideosSerializer(category, many=True)
+        category = ChapterLectures.objects.filter(chapter_id=id)
+        serializer = ChapterLectureSerializer(category, many=True, context={'user':request.user})
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
-
-class GetChapterVideoReportView(APIView):
-    renderer_classes = [UserStudyRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [Student]
-                        )]
-    def get(self, request, cid = None, format=None):
-        
-        category = CourseChapters.objects.filter(course_id=cid)
-        serializer = ChapterVideoReportSerializer(category, many=True,context={'user':request.user})
-        watch_videos = UserWatchedTopicVideos.objects.filter(course_id = cid, user = request.user).count()
-        total_duration_video_watched = UserWatchedTopicVideos.objects.filter(course_id = cid, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
-        
-        result = {
-                'watched_videos':watch_videos,
-                'watch_video_duration':total_duration_video_watched,
-                'video_report': serializer.data,
-            }
-        return success_response(message="Success", data=result, status_code=status.HTTP_200_OK)
-    
-
 
 class DownloadChapterVideoReportView(APIView):
     renderer_classes = [UserStudyRenderer]
@@ -146,8 +75,8 @@ class DownloadChapterVideoReportView(APIView):
         course = Course.objects.filter(id=cid).first()
         category = CourseChapters.objects.filter(course_id=cid)
         serializer = ChapterVideoReportSerializer(category, many=True,context={'user':request.user})
-        watch_videos = UserWatchedTopicVideos.objects.filter(course_id = cid, user = request.user).count()
-        total_duration_video_watched = UserWatchedTopicVideos.objects.filter(course_id = cid, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+        watch_videos = UserLectureProgress.objects.filter(course_id = cid, user = request.user).count()
+        total_duration_video_watched = UserLectureProgress.objects.filter(course_id = cid, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
         
         result = {
                 'watched_videos':watch_videos,
@@ -194,8 +123,8 @@ class DownloadChapterVideoReportCSVView(APIView):
         course_subject = Course.objects.filter(id = cid).first()
         category = CourseChapters.objects.filter(course_id=cid)
         serializer = ChapterVideoReportSerializer(category, many=True,context={'user':request.user})
-        watch_videos = UserWatchedTopicVideos.objects.filter(course_id = cid, user = request.user).count()
-        total_duration_video_watched = UserWatchedTopicVideos.objects.filter(course_id = cid, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+        watch_videos = UserLectureProgress.objects.filter(course_id = cid, user = request.user).count()
+        total_duration_video_watched = UserLectureProgress.objects.filter(course_id = cid, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
 
         def convert(seconds):
             seconds = seconds % (24 * 3600)
@@ -375,19 +304,7 @@ class DownloadChapterVideoReportCSVView(APIView):
         return success_response(message="Success", data={'file_url':blob.public_url}, status_code=status.HTTP_200_OK)
 
 
-class GetChapterVideoDetailView(APIView):
-    renderer_classes = [UserStudyRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [Student]
-                        )]
-    def get(self, request, cid = None, format=None):
-        
-        category = TopicVideos.objects.filter(id = cid).first()
-        serializer = ChapterSingleVideosSerializer(category,context={'user':request.user})
-        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
-    
-    
+
 class WatchVideoView(APIView):
     renderer_classes = [UserStudyRenderer]
     permission_classes = [IsAuthenticated, 
@@ -468,9 +385,9 @@ class PerformaceReportView(APIView):
             return Response({"errors": {"non_field_errors": ["Invalid Course ID"]}}, status.HTTP_403_FORBIDDEN)
         
         course = Course.objects.filter(id = id).first()
-        total_duration_video_watched = UserWatchedTopicVideos.objects.filter(course_id = id, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
-        total_video_watched = UserWatchedTopicVideos.objects.filter(course_id = id, user = request.user).count()
-        total_completed_videos = UserWatchedTopicVideos.objects.filter(course_id = id, user = request.user,completed = 1).count()
+        total_duration_video_watched = UserLectureProgress.objects.filter(course_id = id, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+        total_video_watched = UserLectureProgress.objects.filter(course_id = id, user = request.user).count()
+        total_completed_videos = UserLectureProgress.objects.filter(course_id = id, user = request.user,completed = 1).count()
         
         video_duration_progress = 0
 
@@ -509,7 +426,7 @@ class GetCourseCertificateView(APIView):
             return Response({"errors": {"non_field_errors": ["Invalid Course ID"]}}, status.HTTP_403_FORBIDDEN)
         
         course = Course.objects.filter(id = id).first()
-        total_duration_video_watched = UserWatchedTopicVideos.objects.filter(course_id = id, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+        total_duration_video_watched = UserLectureProgress.objects.filter(course_id = id, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
         
         video_duration_progress = 0
 
@@ -569,22 +486,6 @@ class GetCourseCertificateView(APIView):
             return Response({"status":"success",'message':'',"data":get_certificate.certificate_url}, status = status.HTTP_200_OK)
         
 
-class GetCompleteVideoListView(APIView):
-    renderer_classes = [UserStudyRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [Student]
-                        )]
-    def get(self, request, cid = None, format=None):
-        
-        course_list = OrderCourses.objects.filter(course_id = cid, paid = 1).count()
-        if course_list == 0:
-            return Response({"errors": {"non_field_errors": ["Invalid Course ID"]}}, status.HTTP_403_FORBIDDEN)
-        
-        category = CourseChapters.objects.filter(course_id=cid)
-        serializer = CompleteVideoListingSerializer(category, many=True, context={'user':request.user})
-        return Response({"status":"success",'message':'',"data":serializer.data}, status = status.HTTP_200_OK)
-    
 
 class CreateMyListView(APIView):
     renderer_classes = [UserStudyRenderer]

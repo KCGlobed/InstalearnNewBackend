@@ -10,6 +10,7 @@ logger = logging.getLogger()
 from urllib.parse import urlparse
 import random
 import string
+from django.db.models import Sum, Count
 import math
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -305,6 +306,77 @@ def new_alert_login(user, ip_address):
     #                 description='You have successfully logged into the system.', 
     #                 notification_type = NotificationType.New_Login_Alert
     #             )
+
+
+def caption_time(seconds):
+    seconds = seconds % (24 * 3600)
+    hour = seconds // 3600
+    seconds %= 3600
+    minutes = seconds // 60
+    seconds %= 60
+    sec = str(seconds)
+    ti = sec.split(".")
+    if len(ti[1]) > 3:
+        f_char = ti[1]
+        tim = f_char[0]+f_char[1]+f_char[2]
+    elif len(ti[1]) == 2:
+        f_char = ti[1]
+        tim = f_char[0]+f_char[1]+"0"
+    else:
+        f_char = ti[1]
+        tim = f_char[0]+"00"
+    return "%02d:%02d:%02d.%03d" % (hour, minutes, seconds,int(tim))
+
+
+
+def calculate_video_duration_and_questions():
+    chapters_list = Chapters.objects.filter(
+            status=True
+        )
+    
+    for chapter in chapters_list:
+        video_stats = ChapterLectures.objects.filter(
+            chapter=chapter,
+            video__is_uploaded=True,
+            video__is_completed=True
+        ).aggregate(
+            total_duration=Sum('video__video_duration'),
+            total_videos=Count("id")
+        )
+
+        question_count = TestQuestions.objects.filter(chapter=chapter, status =True).count()
+        chapter.no_of_videos_duration = video_stats['total_duration'] or 0
+        chapter.no_of_videos = video_stats['total_videos'] or 0
+        chapter.no_of_mcqs = question_count
+        chapter.total_questions = question_count
+        chapter.save()
+    
+
+    courses_to_update = Course.objects.filter(
+        status=True
+    )
+    updated_courses = []
+    for course in courses_to_update:
+        course_stats = Chapters.objects.filter(
+            coursechapters__course=course,
+            status=True # Ensure only active subjects are included
+        ).aggregate(
+            total_videos_sum=Sum('no_of_videos'),
+            total_duration_sum=Sum('no_of_videos_duration'),
+            total_mcqs_sum=Sum('no_of_mcqs'),
+            total_questions_sum=Sum('total_questions')
+        )
+        course.total_videos = course_stats['total_videos_sum'] or 0
+        course.total_video_duration = course_stats['total_duration_sum'] or 0
+        course.no_of_mcqs = course_stats['total_mcqs_sum'] or 0
+        course.total_questions = course_stats['total_questions_sum'] or 0
+        updated_courses.append(course)
+    
+    if updated_courses:
+        Course.objects.bulk_update(updated_courses, ['total_videos', 'total_video_duration',"no_of_mcqs","total_questions"])
+
+    return True
+
 
 
 def difficulty_level(value):
