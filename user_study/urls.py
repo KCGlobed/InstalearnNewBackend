@@ -7,7 +7,7 @@ urlpatterns = [
     path('chapter-lectures/<int:id>', DashboardChapterLecturesView.as_view(), name="chapter-lectures"),
     path('watch-video/', WatchVideoView.as_view(), name="watch-video"),
 
-
+    path('get-video-report/<int:id>', GetVideoReportView.as_view(), name="dashboard-chapters"),
     path('download-video-report/<cid>', DownloadChapterVideoReportView.as_view(), name="download-videos-report"),
     path('download-video-report-csv/<cid>', DownloadChapterVideoReportCSVView.as_view(), name="download-videos-report"),
     

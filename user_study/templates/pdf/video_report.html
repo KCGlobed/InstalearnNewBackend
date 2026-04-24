@@ -93,15 +93,15 @@
                         <thead>
                             <tr>
                                 <th style="display: inline-block; text-align: center; margin-top: 40px; height: 120px; color: #302c2c;"><span style="font-size: 20px;">
-                                    {% if watch_video_duration %}
-                                        {{watch_video_duration|convert}}
+                                    {% if total_duration_video_watched %}
+                                        {{total_duration_video_watched|convert}}
                                     {% else %}
                                         00:00:00
                                     {% endif %}
                                 </span><br><span style="font-size: 12px;">Hours Watched</span></th>
-                                <th style="display: inline-block; text-align: center; margin-top: 40px; height: 120px; color: #302c2c;"><span style="font-size: 20px;">
-                                    {% if watched_videos %}
-                                        {{watched_videos}}
+                                <th style="display*: inline-block; text-align: center; margin-top: 40px; height: 120px; color: #302c2c;"><span style="font-size: 20px;">
+                                    {% if total_video_watched %}
+                                        {{total_video_watched}}
                                         {% else %}
                                         0
                                     {% endif %}
@@ -123,9 +123,6 @@
                         <td width="25%">
                             <b>Chapters</b>
                         </td>
-                        <td width="25%">
-                            <b>Topics</b>
-                        </td>
                         <td>
                             <b>Total Videos</b>
                         </td>
@@ -140,36 +137,20 @@
                     <tr>
                         <td><h3>{{topic.chapter_info.name}}</h3></td>
                         <td>&nbsp;</td>
-                        <td><h3>{{topic.no_of_videos}}</h3></td>
-                        <td><h3>{{topic.total_watched_videos}}</h3></td>
+                        <td><h3>{{topic.chapter_info.no_of_videos}}</h3></td>
+                        <td><h3>{{topic.total_video_watched}}</h3></td>
                         <td><h3>
-                            {% if topic.total_duration_watched_videos %}
-                                {{topic.total_duration_watched_videos|convert_minutes}}
+                            {% if topic.video_watched %}
+                                {{topic.video_watched|convert_minutes}}
                             {% else %}
                                 0s
                             {% endif %}
                         </h3></td>
                     </tr>
-                    {% for comp in  topic.topics %}
-                    <tr>
-                        <td>&nbsp;</td>
-                      <td>{{comp.topic_info.name}}</td>
-                      <td>{{comp.no_of_videos}}</td>
-                      <td>{{comp.total_watched_videos}}</td>
-                      <td>{% if comp.total_duration_watched_videos %}
-                        {{comp.total_duration_watched_videos|convert_minutes}}
-                        {% else %}
-                            0s
-                    {% endif %}</td>
-                    </tr>
-                    {% endfor %}
                     {% endfor %}
                 </table>
             </div>
         </div>
-        
-
-        
     </div>
     </body>
 </html>

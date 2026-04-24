@@ -12,9 +12,13 @@ from rolepermissions.checkers import has_role
 from rest_framework.permissions import IsAuthenticated
 import time , calendar
 import pandas as pd
-from google.cloud import storage
 from mini_lms.permissions import RoleOrPermissionCheck
-client = settings.GS_CREDENTIALS
+import json
+from google.cloud import storage
+from google.oauth2 import service_account
+info = json.loads(os.environ.get("GOOGLE_CREDENTIALS_JSON"))
+credentials = service_account.Credentials.from_service_account_info(info)
+client = storage.Client(credentials=credentials, project=credentials.project_id)
 
 class PurchasedCoursesView(APIView):
     renderer_classes = [UserStudyRenderer]
@@ -48,6 +52,26 @@ class DashboardCourseChaptersView(APIView):
         serializer = DashboardCourseChapterListingSerializer(category, many=True, context={'user':request.user})
 
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class GetVideoReportView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def get(self, request, id = None, format=None):
+        
+        course_list = UserCourses.objects.filter(course_id = id, paid = 1).count()
+        if course_list == 0:
+            return error_response(message="Invalid Course ID", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+        
+        category = CourseChapters.objects.filter(course_id=id)
+        serializer = CourseVideoReportSerializer(category, many=True, context={'user':request.user})
+        total_video_watched = UserLectureProgress.objects.filter( course_id = id, user = request.user).count()
+        total_duration_video_watched = UserLectureProgress.objects.filter( course_id = id, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+
+        return success_response(message="Success", data={"report_data":serializer.data, "total_video_watched":total_video_watched, "total_duration_video_watched":total_duration_video_watched}, status_code=status.HTTP_200_OK)
 
 
 class DashboardChapterLecturesView(APIView):
@@ -68,22 +92,24 @@ class DownloadChapterVideoReportView(APIView):
                           RoleOrPermissionCheck.for_roles(
                             [Student]
                         )]
-    def get(self, request, cid = None, sid = None, format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
-
-        course = Course.objects.filter(id=cid).first()
+    def get(self, request, cid = None, format=None):
+        course_list = UserCourses.objects.filter(course_id = cid, paid = 1).count()
+        if course_list == 0:
+            return error_response(message="Invalid Course ID", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+        
+        course = Course.objects.get(id = cid)
         category = CourseChapters.objects.filter(course_id=cid)
-        serializer = ChapterVideoReportSerializer(category, many=True,context={'user':request.user})
-        watch_videos = UserLectureProgress.objects.filter(course_id = cid, user = request.user).count()
-        total_duration_video_watched = UserLectureProgress.objects.filter(course_id = cid, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+        serializer = CourseVideoReportSerializer(category, many=True, context={'user':request.user})
+        total_video_watched = UserLectureProgress.objects.filter( course_id = cid, user = request.user).count()
+        total_duration_video_watched = UserLectureProgress.objects.filter( course_id = cid, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+
         
         result = {
-                'watched_videos':watch_videos,
-                'watch_video_duration':total_duration_video_watched,
                 'video_report': serializer.data,
                 'username':request.user.first_name +' '+request.user.last_name,
                 'user_id':request.user.email,
+                "total_video_watched":total_video_watched,
+                "total_duration_video_watched":total_duration_video_watched,
                 'course':course.name,
             }
 
@@ -100,6 +126,7 @@ class DownloadChapterVideoReportView(APIView):
         html = html.encode('latin-1', 'replace').decode('latin-1')
         pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), dest=file)
         file.close()
+        
         bucket = client.get_bucket(settings.GS_BUCKET_NAME)
         blob = bucket.blob(destination + str(request.user.id) +"_"+str(ts)+'_video_report.pdf')
         
