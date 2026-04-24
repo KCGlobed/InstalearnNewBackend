@@ -113,7 +113,7 @@ class DownloadChapterVideoReportView(APIView):
                 'course':course.name,
             }
 
-        template = get_template('pdf/video_report.html')
+        template = get_template('pdf/video_progress_report.html')
         html  = template.render(result)
         result = BytesIO()
         destination = settings.MEDIA_ROOT+ 'pdf_reports/'
@@ -149,34 +149,10 @@ class DownloadChapterVideoReportCSVView(APIView):
 
         course_subject = Course.objects.filter(id = cid).first()
         category = CourseChapters.objects.filter(course_id=cid)
-        serializer = ChapterVideoReportSerializer(category, many=True,context={'user':request.user})
-        watch_videos = UserLectureProgress.objects.filter(course_id = cid, user = request.user).count()
-        total_duration_video_watched = UserLectureProgress.objects.filter(course_id = cid, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+        serializer = CourseVideoReportSerializer(category, many=True, context={'user':request.user})
+        total_video_watched = UserLectureProgress.objects.filter( course_id = cid, user = request.user).count()
+        total_duration_video_watched = UserLectureProgress.objects.filter( course_id = cid, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
 
-        def convert(seconds):
-            seconds = seconds % (24 * 3600)
-            hour = seconds // 3600
-            seconds %= 3600
-            minutes = seconds // 60
-            seconds %= 60
-            
-            return "%02d:%02d:%02d" % (hour, minutes, seconds)
-        
-        def convert_minutes(seconds):
-            seconds = seconds % (24 * 3600)
-            hour = seconds // 3600
-            seconds %= 3600
-            minutes = seconds // 60
-            seconds %= 60
-            format = ""
-            if hour > 0:
-                format += str(hour)+"h "
-            if minutes > 0:
-                format += str(minutes)+"m "
-            
-            format += str(seconds)+"s"
-            
-            return format
 
         lis = []
         
@@ -244,7 +220,7 @@ class DownloadChapterVideoReportCSVView(APIView):
             })
         lis.append({
                 "name":"Video Watched",
-                "email":watch_videos,
+                "email":total_video_watched,
                 "subject":'',
                 "Chapter":'',
                 "Topic":'',
@@ -264,9 +240,9 @@ class DownloadChapterVideoReportCSVView(APIView):
             })
         lis.append({
                 "name":"Chapter Name",
-                "email":'Topic Name',
-                "subject":'Total Videos',
-                "Chapter":'Videos Watched',
+                "email":'Total Videos',
+                "subject":'Videos Watched',
+                "Chapter":'Watch Time',
                 "Topic":'Watch Time',
                 "total_videos":'',
                 "total_watched_videos":'',
@@ -275,43 +251,22 @@ class DownloadChapterVideoReportCSVView(APIView):
         
         
         for info in serializer.data:
-            if info['total_duration_watched_videos'] is not None:
-                time = convert_minutes(info['total_duration_watched_videos'])
+            if info['video_watched'] is not None:
+                video_watched = convert_minutes(info['video_watched'])
             else :
-                time = "0s"
+                video_watched = "0s"
 
             lis.append({
                 "name":info['chapter_info']['name'],
-                "email":'',
-                "subject":info['no_of_videos'],
-                "Chapter":info['total_watched_videos'],
-                "Topic":time,
+                "email":info['chapter_info']['no_of_videos'],
+                "subject":info['total_video_watched'],
+                "Chapter":video_watched,
+                "Topic":"",
                 "total_videos":"",
                 "total_watched_videos":"",
                 "total_time_spend":""
             })
 
-            if len(info['topics']) > 0:
-                for top in info['topics']:
-                    if top['total_duration_watched_videos'] is not None:
-                        time1 = convert_minutes(top['total_duration_watched_videos'])
-                    else :
-                        time1 = "0s"
-                        
-                    lis.append({
-                        "name":'',
-                        "email":top['topic_info']['name'],
-                        "subject":top['no_of_videos'],
-                        "Chapter":top['total_watched_videos'],
-                        "Topic":time1,
-                        "total_videos":"",
-                        "total_watched_videos":"",
-                        "total_time_spend":""
-                    })
-
-
-        
-        import time
         current_GMT = time.gmtime()
         ts = calendar.timegm(current_GMT)
 

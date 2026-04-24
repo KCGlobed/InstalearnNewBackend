@@ -1093,12 +1093,29 @@ class UserSerializer(serializers.ModelSerializer) :
         fields = ['id','first_name',"last_name","image"]
 
 
+class FrequentlyBoughtCourseSerializer(serializers.ModelSerializer):
+    course = serializers.SerializerMethodField()
+    
+    def get_course(self, parent):
+        info = Course.objects.get(id = parent.bought_course.id)
+        return CourseSerializer(info).data
+
+    class Meta:
+        model = FrequentlyBoughtCourse
+        fields = ["id",'course']
+
+        
 class CourseDetailSerializer(serializers.ModelSerializer):
     categories = serializers.SerializerMethodField('get_categories')
     tags = serializers.SerializerMethodField('get_tags')
     instrcutor_info = serializers.SerializerMethodField('get_instrcutor_info')
     sample_videos = serializers.SerializerMethodField('get_sample_videos')
     created_by = serializers.SerializerMethodField('get_created_by')
+    related_course = serializers.SerializerMethodField()
+
+    def get_related_course(self, parent):
+        info = FrequentlyBoughtCourse.objects.filter(course_id = parent.id)
+        return FrequentlyBoughtCourseSerializer(info, many=True).data
     
     def get_created_by(self, obj):
         return UserSerializer(obj.created_by).data
@@ -1122,7 +1139,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id",'name','description',"short_description","duration","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","status","created_at","instrcutor_info","sample_videos","avg_rating","total_reviews","created_by"]
+        fields = ["id",'name','description',"short_description","duration","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","status","created_at","instrcutor_info","sample_videos","avg_rating","total_reviews","created_by","level","related_course"]
 
 
 

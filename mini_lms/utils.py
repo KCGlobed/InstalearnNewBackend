@@ -307,6 +307,31 @@ def new_alert_login(user, ip_address):
     #                 notification_type = NotificationType.New_Login_Alert
     #             )
 
+def convert(seconds):
+    seconds = seconds % (24 * 3600)
+    hour = seconds // 3600
+    seconds %= 3600
+    minutes = seconds // 60
+    seconds %= 60
+    
+    return "%02d:%02d:%02d" % (hour, minutes, seconds)
+
+def convert_minutes(seconds):
+    seconds = seconds % (24 * 3600)
+    hour = seconds // 3600
+    seconds %= 3600
+    minutes = seconds // 60
+    seconds %= 60
+    format = ""
+    if hour > 0:
+        format += str(hour)+"h "
+    if minutes > 0:
+        format += str(minutes)+"m "
+    
+    format += str(seconds)+"s"
+    
+    return format
+
 
 def caption_time(seconds):
     seconds = seconds % (24 * 3600)
