@@ -36,7 +36,9 @@ class AddtoCartView(APIView):
         serializer = AddtoCartSerializer(data = request.data)
         if serializer.is_valid(raise_exception = True):
             user  = serializer.save()
-            return success_response(message="Course added in Cart Successfully", data={}, status_code=status.HTTP_200_OK)
+            course = Cart.objects.filter(device_id = request.data.get('device_id'), course_id = request.data.get('course_id')).first()
+            serializer = CartSerializer(course)
+            return success_response(message="Course added in Cart Successfully", data=serializer.data, status_code=status.HTTP_200_OK)
 
         return error_response(message="", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
