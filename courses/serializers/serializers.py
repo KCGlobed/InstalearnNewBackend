@@ -63,7 +63,7 @@ class SearchCategorySerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Categories
-        fields = ['id',"name","subcategory"]
+        fields = ['id',"name","subcategory","icon"]
 
 
 class SearchCourseSerializer(serializers.ModelSerializer):

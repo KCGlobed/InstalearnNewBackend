@@ -8,23 +8,26 @@ urlpatterns = [
     path('watch-video/', WatchVideoView.as_view(), name="watch-video"),
 
     path('get-video-report/<int:id>', GetVideoReportView.as_view(), name="dashboard-chapters"),
-    path('download-video-report/<cid>', DownloadChapterVideoReportView.as_view(), name="download-videos-report"),
-    path('download-video-report-csv/<cid>', DownloadChapterVideoReportCSVView.as_view(), name="download-videos-report"),
+    path('download-video-report/<int:cid>', DownloadChapterVideoReportView.as_view(), name="download-videos-report"),
+    path('download-video-report-csv/<int:cid>', DownloadChapterVideoReportCSVView.as_view(), name="download-videos-report"),
     
     path('performance-report/<int:id>', PerformaceReportView.as_view(), name="performance-report"),
     
     path('create-note/', CreateNoteView.as_view(), name="create-note"),
-    path('update-note/<cid>', EditNoteView.as_view(), name="edit-note"),
-    path('get-user-notes/<cid>', GetUserNotesView.as_view(), name="get-user-notes"),
-    path('get-course-certificate/<id>', GetCourseCertificateView.as_view(), name="get-course-certificate"),
+    path('update-note/<int:cid>', EditNoteView.as_view(), name="edit-note"),
+    path('get-user-notes/<int:cid>', GetUserNotesView.as_view(), name="get-user-notes"),
+    path('get-lecture-notes/<int:cid>', GetLectureNotesView.as_view(), name="get-lecture-notes"),
+    path('delete-note/<int:cid>', DeleteNoteView.as_view(), name="delete-my-list"),
+
+    path('get-course-certificate/<int:id>', GetCourseCertificateView.as_view(), name="get-course-certificate"),
 
     path('mylist/create/', CreateMyListView.as_view(), name="create-my-list"),
     path('mylist/update/', UpdateMyListView.as_view(), name="create-my-list"),
     path('mylist/get-my-list/', GetMyListView.as_view(), name="get-my-list"),
     path('mylist/delete/<cid>', DeleteMyListView.as_view(), name="delete-my-list"),
+    
     path('review/add/', AddReviewAndRatingView.as_view(), name="add-review-rating"),
-
-
+    
     path('get-user-wishlist/', GetUserWishlistView.as_view(), name="user-wishlist"),
     path('update-wishlist/', AddUserWishlistView.as_view(), name="add-user-wishlist"),
 

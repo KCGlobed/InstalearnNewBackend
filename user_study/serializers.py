@@ -315,12 +315,11 @@ class ChapterSingleVideosSerializer(serializers.ModelSerializer):
 
 
 class GetUserNotesSerializer(serializers.ModelSerializer):
-    video_title = serializers.SerializerMethodField('get_video')
-    def get_video(self, obj):
-        video_detail  = Videos.objects.filter(id = obj.chapter_video.id).first()
-        if video_detail is not None:
-            return video_detail.name
-        return ""
+    lecture_info = serializers.SerializerMethodField('get_lecture_info')
+    def get_lecture_info(self, obj):
+        category = ChapterLectures.objects.filter(id=obj.chapter_lecture.id).first()
+        serializer = ChapterLectureSerializer(category, context={'user':self.context.get('user')})
+        return serializer.data
 
     class Meta:
         model = Notes
@@ -330,12 +329,13 @@ class GetUserNotesSerializer(serializers.ModelSerializer):
 
 class CreateNoteSerializer(serializers.ModelSerializer) :
     course_id = serializers.IntegerField(required=True)
-    video_id = serializers.IntegerField(required=True)
+    lecture_id = serializers.IntegerField(required=True)
     note_content = serializers.CharField(required=True)
     duration = serializers.IntegerField(required=True)
+
     class Meta:
         model = Notes
-        fields = ['video_id','course_id','note_content',"duration"]
+        fields = ['lecture_id','course_id','note_content',"duration"]
         
         
     def validate(self, data):
@@ -345,24 +345,24 @@ class CreateNoteSerializer(serializers.ModelSerializer) :
         if course_count == 0:
             raise serializers.ValidationError("Course does not exists")
 
-        chapter_id = data.get('video_id')
-        chapter_count = Videos.objects.filter(id=chapter_id).count()
+        chapter_id = data.get('lecture_id')
+        chapter_count = ChapterLectures.objects.filter(id=chapter_id).count()
         if chapter_count == 0:
-            raise serializers.ValidationError("Video ID "+str(chapter_id)+" does not exists")
+            raise serializers.ValidationError("Lecture ID "+str(chapter_id)+" does not exists")
 
         return data
 
     def create(self , validate_data):
 
         courseInfo = Course.objects.get(id=validate_data.get('course_id'))
-        chaptervideo = Videos.objects.get(id=validate_data.get('video_id'))
+        chapter_lecture = ChapterLectures.objects.get(id=validate_data.get('lecture_id'))
         
         user = User.objects.get(id = self.context.get('user').id)
 
         chap = Notes(
             user = user,
             course = courseInfo,
-            chapter_video = chaptervideo,
+            chapter_lecture = chapter_lecture,
             note_content = validate_data.get('note_content'),
             duration = validate_data.get('duration'),
         )

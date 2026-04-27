@@ -300,7 +300,7 @@ class WatchVideoView(APIView):
             serializer.save()
             return success_response(message="Success", data={}, status_code=status.HTTP_200_OK)
 
-        return Response({"status":"failed","message":"","data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
 class CreateNoteView(APIView):
@@ -310,15 +310,11 @@ class CreateNoteView(APIView):
                             [Student]
                         )]
     def post(self, request, format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
-
         serializer = CreateNoteSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
             serializer.save()
             return success_response(message="Note created successfully", data={}, status_code=status.HTTP_200_OK)
-        
-        return Response({"status":"failed","message":"","data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
 
 
 class EditNoteView(APIView):
@@ -335,7 +331,7 @@ class EditNoteView(APIView):
             user  = serializer.save()
             return success_response(message="Note Updated successfully", data={}, status_code=status.HTTP_200_OK)
 
-        return Response({"status":"failed",'message':'',"data":serializer.errors}, status.HTTP_400_BAD_REQUEST)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
     
 class GetUserNotesView(APIView):
@@ -345,14 +341,37 @@ class GetUserNotesView(APIView):
                             [Student]
                         )]
     def get(self, request, cid=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
-
         notes = Notes.objects.filter(user = request.user, course_id = cid)
-        serializer = GetUserNotesSerializer(notes, many= True)
+        serializer = GetUserNotesSerializer(notes, many= True, context={'user':request.user})
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
 
+class GetLectureNotesView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def get(self, request, cid=None):
+        notes = Notes.objects.filter(chapter_lecture_id = cid)
+        serializer = GetUserNotesSerializer(notes, many= True, context={'user':request.user})
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class DeleteNoteView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def delete(self, request, cid=None, format=None):
+        try:
+            note = Notes.objects.get(id = cid)
+            note.delete()
+            return success_response(message="Note Deleted Successfully!", data={}, status_code=status.HTTP_200_OK)
+        except MyList.DoesNotExist:
+            return error_response(message="Note not found!", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
+        
 
 class PerformaceReportView(APIView):
     renderer_classes = [UserStudyRenderer]
@@ -482,7 +501,7 @@ class CreateMyListView(APIView):
             serializer.save()
             return Response({"status":"success",'message':'List created successfully',"data":[] }, status = status.HTTP_201_CREATED)
 
-        return Response({"status":"failed","message":"","data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
 
@@ -499,7 +518,7 @@ class CreateMyListView(APIView):
             serializer.save()
             return Response({"status":"success",'message':'List created successfully',"data":[] }, status = status.HTTP_201_CREATED)
 
-        return Response({"status":"failed","message":"","data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
 class UpdateMyListView(APIView):
@@ -515,7 +534,7 @@ class UpdateMyListView(APIView):
             serializer.save()
             return Response({"status":"success",'message':'List updated successfully',"data":[] }, status = status.HTTP_201_CREATED)
 
-        return Response({"status":"failed","message":"","data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
 class GetMyListView(APIView):
@@ -562,7 +581,7 @@ class AddReviewAndRatingView(APIView):
             serializer.save()
             return Response({"status":"success",'message':'Review added successfully',"data":[] }, status = status.HTTP_201_CREATED)
 
-        return Response({"status":"failed","message":"","data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
 
@@ -592,4 +611,4 @@ class AddUserWishlistView(APIView):
         if serializer.is_valid(raise_exception = True):
             serializer.save()
             return Response({"status":"success",'message':'Success',"data":[]}, status = status.HTTP_200_OK)
-        return Response({"status":"failed",'message':'',"data":serializer.errors}, status.HTTP_400_BAD_REQUEST) 
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST) 

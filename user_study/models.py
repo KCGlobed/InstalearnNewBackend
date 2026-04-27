@@ -24,7 +24,7 @@ class UserLectureProgress(models.Model):
 class Notes(models.Model):
     user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
     course = models.ForeignKey('courses.Course', null=True, blank=True, on_delete=models.CASCADE)
-    chapter_video = models.ForeignKey('courses.ChapterLectures', null=True, blank=True, on_delete=models.SET_NULL)
+    chapter_lecture = models.ForeignKey('courses.ChapterLectures', null=True, blank=True, on_delete=models.SET_NULL)
     note_type = models.CharField(max_length=255, null=True, blank=True,default="video")
     note_content = models.TextField(null=True, blank=True)
     duration = models.CharField(max_length=255, null=True, blank=True)
