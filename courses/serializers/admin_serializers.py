@@ -1579,6 +1579,14 @@ class AddCourseInstructorsSerializer(serializers.ModelSerializer) :
             if course_list == 0:
                 raise serializers.ValidationError("Invalid Instructor ID: "+str(cat))
             
+            categ = CourseInstructors(
+                instructor = InstructorProfile.objects.get(id = cat),
+                course = Course.objects.get(id = data.get('course_id'))
+            ).count()
+
+            if categ > 0:
+                raise serializers.ValidationError("Instructor ID: "+str(cat)+" already exists in course")
+
         return data
 
     def create(self , validate_data):
