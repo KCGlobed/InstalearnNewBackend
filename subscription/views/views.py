@@ -128,7 +128,8 @@ class WebhookResponseView(APIView):
                 payment.save()
             
                 order_info.isPaid = True
-                order_info.payment_status = 'completed'
+                order_info.subscription_status = OrderStatus.Active
+                order_info.start_date = date.today()
                 order_info.end_date = date.today() + timedelta(days=365)
                 order_info.next_due = date.today() + timedelta(days=365)
                 order_info.save()

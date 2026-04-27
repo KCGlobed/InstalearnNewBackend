@@ -245,6 +245,9 @@ class CompletePaymentSerializer(serializers.ModelSerializer) :
         
         order.isPaid = True
         order.subscription_status = OrderStatus.Active
+        order.start_date = date.today()
+        order.end_date = date.today() + timedelta(days=365)
+        order.next_due = date.today() + timedelta(days=365)
         order.save()
         ordered_course = UserCourses.objects.filter(order_id = order.id)
         for ord in ordered_course:
