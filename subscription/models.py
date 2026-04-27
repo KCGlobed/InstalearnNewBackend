@@ -98,6 +98,7 @@ class Order(models.Model):
     payment_method = models.IntegerField(choices=PaymentMethod.choices,default=PaymentMethod.Online)
     order_date = models.DateTimeField(auto_now=True)
     no_of_licence = models.IntegerField(null=True, blank=True, default=0)
+    isPaid = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)
     history = HistoricalRecords()

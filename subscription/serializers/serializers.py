@@ -235,16 +235,16 @@ class CompletePaymentSerializer(serializers.ModelSerializer) :
         order.save()
         
         razorpay_key = GeneralSettings.objects.all().first()
-        # try:
-        #     client = razorpay.Client(auth=(razorpay_key.public_key, razorpay_key.secret_key))
-        #     check = client.utility.verify_payment_signature(data)
-        #     if check == False:
-        #         raise serializers.ValidationError('Invalid Signature')
-        # except Exception as error:
-        #     raise serializers.ValidationError("Unale to verify your Payment")
+        try:
+            client = razorpay.Client(auth=(razorpay_key.public_key, razorpay_key.secret_key))
+            check = client.utility.verify_payment_signature(data)
+            if check == False:
+                raise serializers.ValidationError('Invalid Signature')
+        except Exception as error:
+            raise serializers.ValidationError("Unale to verify your Payment")
         
         order.isPaid = True
-        order.payment_status = "completed"
+        order.subscription_status = OrderStatus.Active
         order.save()
         ordered_course = UserCourses.objects.filter(order_id = order.id)
         for ord in ordered_course:
