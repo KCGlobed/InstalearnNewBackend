@@ -48,15 +48,10 @@ class FrequentlyBoughtCourseSerializer(serializers.ModelSerializer):
 
 class CourseSerializer(serializers.ModelSerializer):
     updated_at = serializers.DateTimeField(read_only=True, format="%Y-%m-%d")
-    course_instructor = serializers.SerializerMethodField()
-
-    def get_course_instructor(self, parent):
-        info = CourseInstructors.objects.filter(course_id = parent.id)
-        return CourseInstructorSerializer(info, many=True).data
-
+    
     class Meta:
         model = Course
-        fields = ['id',"name","short_description","image","price","discount","objectives_summary","total_video_duration","total_video","avg_rating","total_reviews","updated_at","tags","course_instructor"]
+        fields = ['id',"name","short_description","image","price","discount","objectives_summary","total_video_duration","avg_rating","total_reviews","updated_at"]
 
 
 class CourseInstructorSerializer(serializers.ModelSerializer) :
@@ -592,7 +587,7 @@ class AddReviewAndReviewSerializer(serializers.ModelSerializer) :
 class CourseInfoListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
-        fields = ['id','name',"image","avg_rating","total_reviews"]
+        fields = ['id','name',"image","avg_rating","total_reviews","price","discount"]
 
 
 class WishlistSerializer(serializers.ModelSerializer):
