@@ -1584,7 +1584,7 @@ class AddCourseInstructorsSerializer(serializers.ModelSerializer) :
     def create(self , validate_data):
         category = validate_data.get('instructor_id').split(",")
         CourseInstructors.objects.filter(
-                instructor_id__in = cat,
+                instructor_id__in = category,
                 course_id = validate_data.get('course_id')
             ).delete()
         
