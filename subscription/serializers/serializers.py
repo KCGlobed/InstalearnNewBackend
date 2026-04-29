@@ -234,9 +234,12 @@ class CompletePaymentSerializer(serializers.ModelSerializer) :
         order.razorpay_signature = raz_signature
         order.save()
         
-        razorpay_key = GeneralSettings.objects.all().first()
+        setting = GeneralSettings.objects.all().first()
         try:
-            client = razorpay.Client(auth=(razorpay_key.public_key, razorpay_key.secret_key))
+            if setting.payment_type == 1:
+                client = razorpay.Client(auth=(setting.test_public_key, setting.test_secret_key))
+            else:
+                client = razorpay.Client(auth=(setting.live_public_key, setting.live_secret_key))
             check = client.utility.verify_payment_signature(data)
             if check == False:
                 raise serializers.ValidationError('Invalid Signature')

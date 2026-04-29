@@ -32,4 +32,7 @@ urlpatterns = [
     path('update-wishlist/', AddUserWishlistView.as_view(), name="add-user-wishlist"),
 
     
+    path('get-user-notification-setting/', GetUserNotificationSettingView.as_view(), name="get-user-notification-setting"),
+    path('update-user-notification-setting/', UpdateUserNotificationSettingView.as_view(), name="update-user-notification-setting"),
+    
 ]

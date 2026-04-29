@@ -628,3 +628,44 @@ class AddUserWishlistSerializer(serializers.ModelSerializer) :
             noti.save()
 
         return True
+    
+
+
+class UserNotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserNotificationSetting
+        fields = ["id",'promotional',"announcements","reminders","instructor_notification","new_login"]
+
+
+class UpdateUserNotificationSettingSerializer(serializers.ModelSerializer):
+    promotional = serializers.BooleanField(required=True)
+    announcements = serializers.BooleanField(required=True)
+    reminders = serializers.BooleanField(required=True)
+    instructor_notification = serializers.BooleanField(required=True)
+    new_login = serializers.BooleanField(required=True)
+
+    class Meta:
+        model = UserNotificationSetting
+        fields = ['promotional','announcements','reminders','instructor_notification','new_login']
+
+    def validate(self, data):
+        return data
+    
+    
+    def create(self , validate_data):
+        user = self.context.get('user')
+
+        try:
+            noti = UserNotificationSetting.objects.get(user = user)
+        except UserNotificationSetting.DoesNotExist:
+            noti = UserNotificationSetting()
+            noti.user = user
+
+        noti.promotional = validate_data.get('promotional')
+        noti.announcements = validate_data.get('announcements')
+        noti.reminders = validate_data.get('reminders')
+        noti.instructor_notification = validate_data.get('instructor_notification')
+        noti.new_login = validate_data.get('new_login')
+        noti.save()
+
+        return noti

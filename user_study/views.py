@@ -612,3 +612,33 @@ class AddUserWishlistView(APIView):
             serializer.save()
             return Response({"status":"success",'message':'Success',"data":[]}, status = status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST) 
+    
+
+
+class GetUserNotificationSettingView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def get(self, request, format=None):
+        notification = UserNotificationSetting.objects.filter(user_id = request.user.id).first()
+        if notification is None:
+            return success_response(message="", data={}, status_code=status.HTTP_200_OK)
+        serializer = UserNotificationSerializer(notification)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+
+class UpdateUserNotificationSettingView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def post(self, request, format=None):
+        serializer = UpdateUserNotificationSettingSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user = serializer.save()
+            return success_response(message="Setting Updated successfully!", data=UserNotificationSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)

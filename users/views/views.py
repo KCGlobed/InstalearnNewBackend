@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate, login
 from users.serializers import *
+from cms.models import *
 from users.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.tokens import AccessToken
@@ -35,7 +36,7 @@ class UserLoginView(APIView):
                         return error_response(message=f"Account is locked. Please Contact to support.", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
 
 
-                    setting = Settings.objects.all().first()
+                    setting = GeneralSettings.objects.all().first()
                     if setting.allow_device_restriction:
                         
                         if not check_devices_login(user, serializer.data.get('device_type'), serializer.data.get('device_id'), setting):

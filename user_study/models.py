@@ -52,6 +52,23 @@ class UserCertificates(models.Model):
         return '%s' % self.id
     
 
+class UserNotificationSetting(models.Model):
+    user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
+    promotional = models.BooleanField(default=False)
+    announcements = models.BooleanField(default=False)
+    reminders = models.BooleanField(default=False)
+    instructor_notification = models.BooleanField(default=False)
+    new_login = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add = True)
+    updated_at = models.DateTimeField(auto_now = True)
+    
+    class Meta:
+        verbose_name = 'User Notification Setting'
+        verbose_name_plural = 'User Notification Setting'
+        
+    def __str__(self):
+        return '%s' % self.id
+    
 
 class UserNotifications(models.Model):
     user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)

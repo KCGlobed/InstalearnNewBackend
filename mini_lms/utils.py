@@ -4,6 +4,7 @@ from rest_framework import status
 from rolepermissions.checkers import has_role
 from mini_lms.roles import *
 from users.models import *
+from user_study.models import *
 from questions.models import *
 import logging
 logger = logging.getLogger()
@@ -286,26 +287,23 @@ def facebook_login_token_check(token):
     
 
 def new_alert_login(user, ip_address):
-    pass
-    # notification_setting = UserNotificationSetting.objects.filter(user = user).first()
-    # if notification_setting is not None:
-    #     if notification_setting.new_login == 1:
-    #         user_act = UserLoginActivity.objects.only("id","login_IP").filter(user = user).first()
-    #         if user_act is not None:
-    #             if user_act.login_IP != ip_address:
-    #                 Notification.objects.create(
-    #                     title='New Login Alert',
-    #                     user=user,
-    #                     description='You have successfully logged into the system.', 
-    #                     notification_type = NotificationType.New_Login_Alert
-    #                 )
-    #         else:
-    #             Notification.objects.create(
-    #                 title='New Login Alert',
-    #                 user=user,
-    #                 description='You have successfully logged into the system.', 
-    #                 notification_type = NotificationType.New_Login_Alert
-    #             )
+    notification_setting = UserNotificationSetting.objects.filter(user = user).first()
+    if notification_setting is not None:
+        if notification_setting.new_login == 1:
+            user_act = UserLoginActivity.objects.only("id","login_IP").filter(user = user).first()
+            if user_act is not None:
+                if user_act.login_IP != ip_address:
+                    UserNotifications.objects.create(
+                        title='New Login Alert',
+                        user=user,
+                        description='You have successfully logged into the system.' 
+                    )
+            else:
+                UserNotifications.objects.create(
+                    title='New Login Alert',
+                    user=user,
+                    description='You have successfully logged into the system.',
+                )
 
 def convert(seconds):
     seconds = seconds % (24 * 3600)
