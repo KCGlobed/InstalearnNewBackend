@@ -34,5 +34,9 @@ urlpatterns = [
     
     path('get-user-notification-setting/', GetUserNotificationSettingView.as_view(), name="get-user-notification-setting"),
     path('update-user-notification-setting/', UpdateUserNotificationSettingView.as_view(), name="update-user-notification-setting"),
-    
+
+    path('get-user-notification/', GetUserNotificationView.as_view(), name="user-notification"),
+    path('get-all-notification/', GetAllNotificationView.as_view(), name="all-notification"),
+    path('change-notification-status/', ChangeNotificationStatusView.as_view(), name="change-notification-status"),
+
 ]

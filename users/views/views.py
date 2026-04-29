@@ -95,7 +95,7 @@ class UserLoginView(APIView):
                     user=user,
                     token=token['access'],
                 )
-
+                
                 new_alert_login(user, get_client_ip(request))
                 
                 user.failed_login_attempts = 0

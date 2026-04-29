@@ -291,6 +291,7 @@ def new_alert_login(user, ip_address):
     if notification_setting is not None:
         if notification_setting.new_login == 1:
             user_act = UserLoginActivity.objects.only("id","login_IP").filter(user = user).first()
+            print("user_act",user_act)
             if user_act is not None:
                 if user_act.login_IP != ip_address:
                     UserNotifications.objects.create(

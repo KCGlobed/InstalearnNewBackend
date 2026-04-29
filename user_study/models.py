@@ -75,6 +75,7 @@ class UserNotifications(models.Model):
     course = models.ForeignKey('courses.Course', null=True, blank=True, on_delete=models.CASCADE)
     title = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
+    status = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:

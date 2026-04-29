@@ -669,3 +669,23 @@ class UpdateUserNotificationSettingSerializer(serializers.ModelSerializer):
         noti.save()
 
         return noti
+    
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserNotifications
+        fields = '__all__'
+
+
+class ChangeNotificationSerializer(serializers.ModelSerializer):
+    notification_id = serializers.ListField(required=True)
+    class Meta:
+        model = UserNotifications
+        fields = ["notification_id"]
+        
+    def validate(self, data):
+        return data
+
+    def create(self , validate_data):
+        UserNotifications.objects.filter(id__in=validate_data.get('notification_id')).update(status=True)
+        return True

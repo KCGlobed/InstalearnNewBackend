@@ -628,6 +628,8 @@ class GetUserNotificationSettingView(APIView):
         serializer = UserNotificationSerializer(notification)
         return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
     
+    
+    
 
 
 class UpdateUserNotificationSettingView(APIView):
@@ -641,4 +643,43 @@ class UpdateUserNotificationSettingView(APIView):
         if serializer.is_valid(raise_exception = True):
             user = serializer.save()
             return success_response(message="Setting Updated successfully!", data=UserNotificationSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class GetUserNotificationView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def get(self, request, sid = None, format=None):
+        category = UserNotifications.objects.filter(user=request.user, status = False).order_by("-id")
+        serializer = NotificationSerializer(category, many=True)
+        return success_response(message="Success!", data={"count": len(category), "notifications":serializer.data}, status_code=status.HTTP_200_OK)
+    
+
+class GetAllNotificationView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def get(self, request, sid = None, format=None):
+        category = UserNotifications.objects.filter(user=request.user).order_by("-id")
+        serializer = NotificationSerializer(category, many=True)
+        return success_response(message="Success!", data={"count": len(category), "notifications":serializer.data}, status_code=status.HTTP_200_OK)
+
+
+class ChangeNotificationStatusView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def post(self, request,  format=None):
+        serializer = ChangeNotificationSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Notification Status Updated Successfully!", data={}, status_code=status.HTTP_200_OK)
+
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
