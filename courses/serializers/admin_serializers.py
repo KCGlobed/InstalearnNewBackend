@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from courses.models import *
 from instructor.models import *
+from subscription.models import *
 from mini_lms.validator import *
 from django.core.validators import FileExtensionValidator
 import os
@@ -640,7 +641,7 @@ class HomepageCourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id",'name',"price","discount","objectives_summary","image","categories","duration","level","created_by","avg_rating"]
+        fields = ["id",'name',"price","discount","objectives_summary","image","categories","duration","level","created_by","avg_rating","language","subtitle_language","original_price"]
 
 
 class HomepageTagWiseCoursesSerializer(serializers.ModelSerializer):
@@ -924,7 +925,7 @@ class CourseSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id","name","level","short_description","description","requirements","duration","categories","tags","status","price","discount","objectives_summary","feature_json","image","banner_image","created_at"]
+        fields = ["id","name","level","short_description","description","requirements","duration","categories","tags","status","price","discount","objectives_summary","feature_json","image","banner_image","created_at","language","subtitle_language","original_price"]
 
 
 class CourseSearchSerializer(serializers.ModelSerializer):
@@ -941,7 +942,7 @@ class CourseSearchSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id","name","level","duration","categories","tags","status","price","discount","objectives_summary","image","created_at"]
+        fields = ["id","name","level","duration","categories","tags","status","price","discount","objectives_summary","image","created_at","language","subtitle_language","original_price"]
 
 
 class CourseChapterSerializer(serializers.ModelSerializer):
@@ -1007,7 +1008,7 @@ class ViewCourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id",'name',"level",'description',"short_description","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","duration", "chapters_info","instructors","sample_videos","related_courses"]
+        fields = ["id",'name',"level",'description',"short_description","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","duration", "chapters_info","instructors","sample_videos","related_courses","language","subtitle_language","original_price"]
 
 
 
@@ -1017,6 +1018,9 @@ class CreateCourseSerializer(serializers.ModelSerializer) :
     duration = serializers.CharField(max_length=255, required=True)
     description = serializers.CharField(required=True)
     requirements = serializers.CharField(required=False)
+    language = serializers.CharField(required=False)
+    subtitle_language = serializers.CharField(required=False)
+    original_price = serializers.IntegerField(required=True)
     price = serializers.IntegerField(required=True)
     level = serializers.IntegerField(required=True)
     discount = serializers.FloatField(required=False,allow_null=True)
@@ -1029,7 +1033,7 @@ class CreateCourseSerializer(serializers.ModelSerializer) :
     
     class Meta:
         model = Course
-        fields = ['name','description',"short_description","requirements","price","discount","feature_json","image","banner_image","category_id","objectives_summary","tags","duration","level"]
+        fields = ['name','description',"short_description","requirements","price","discount","feature_json","image","banner_image","category_id","objectives_summary","tags","duration","level","language","subtitle_language","original_price"]
         
     def validate(self, data):
         if data.get('discount') is not None:
@@ -1048,6 +1052,9 @@ class CreateCourseSerializer(serializers.ModelSerializer) :
             name = validate_data.get('name'),
             description = validate_data.get('description'),
             short_description = validate_data.get('short_description'),
+            language = validate_data.get('language'),
+            subtitle_language = validate_data.get('subtitle_language'),
+            original_price = validate_data.get('original_price'),
             requirements = validate_data.get('requirements'),
             price = validate_data.get('price'),
             discount = validate_data.get('discount'),
@@ -1164,6 +1171,12 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     created_by = serializers.SerializerMethodField('get_created_by')
     related_course = serializers.SerializerMethodField()
     course_chapters = serializers.SerializerMethodField()
+    enrolled_students = serializers.SerializerMethodField()
+
+    def get_enrolled_students(self, parent):
+        category = UserCourses.objects.filter(course_id=parent.id, paid = True).count()
+        return category
+
 
     def get_course_chapters(self, parent):
         category = CourseChapters.objects.filter(course_id=parent.id)
@@ -1197,7 +1210,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id",'name','description',"short_description","duration","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","status","created_at","instrcutor_info","sample_videos","avg_rating","total_reviews","created_by","level","related_course","course_chapters"]
+        fields = ["id",'name','description',"short_description","duration","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","status","created_at","instrcutor_info","sample_videos","avg_rating","total_reviews","created_by","level","related_course","course_chapters","language","subtitle_language","original_price","enrolled_students"]
 
 
 
@@ -1208,6 +1221,9 @@ class EditCourseSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=False)
     requirements = serializers.CharField(required=False)
     price = serializers.IntegerField(required=True)
+    language = serializers.CharField(required=False)
+    subtitle_language = serializers.CharField(required=False)
+    original_price = serializers.IntegerField(required=True)
     discount = serializers.FloatField(required=False,allow_null=True)
     feature_json = serializers.JSONField(required=False)
     level = serializers.IntegerField(required=True)
@@ -1219,7 +1235,7 @@ class EditCourseSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ['name','description',"short_description","requirements","price","discount","feature_json","image","banner_image","category_id","objectives_summary","tags","duration","level"]
+        fields = ['name','description',"short_description","requirements","price","discount","feature_json","image","banner_image","category_id","objectives_summary","tags","duration","level","language","subtitle_language","original_price"]
         
     def validate(self, data):
         return data
@@ -1230,6 +1246,9 @@ class EditCourseSerializer(serializers.ModelSerializer):
         course.name = validate_data.get('name', course.name)
         course.description = validate_data.get('description', course.description)
         course.short_description = validate_data.get('short_description', course.short_description)
+        course.language = validate_data.get('language', course.language)
+        course.subtitle_language = validate_data.get('subtitle_language', course.subtitle_language)
+        course.original_price = validate_data.get('original_price', course.original_price)
         course.requirements = validate_data.get('requirements', course.requirements)
         course.price = validate_data.get('price', course.price)
         course.duration = validate_data.get('duration', course.duration)
