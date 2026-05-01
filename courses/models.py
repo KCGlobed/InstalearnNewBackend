@@ -328,7 +328,6 @@ class TrailCourses(models.Model):
     course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    
     class Meta:
         verbose_name = 'Trail Courses'
         verbose_name_plural = 'Trail Courses'

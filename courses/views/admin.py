@@ -2420,11 +2420,11 @@ class CourseListView(APIView):
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
 
-class CourseSubjectListView(APIView):
+class CourseChapterListView(APIView):
     renderer_classes = [CourseRenderer]
     def get(self, request, cid, format=None):
         subject = CourseChapters.objects.filter(course_id=cid, chapter__status = True).order_by("order")
-        serializer = CourseSubjectInfoSerializer(subject, many=True)
+        serializer = CourseChapterInfoSerializer(subject, many=True)
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
 

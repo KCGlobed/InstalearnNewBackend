@@ -1104,7 +1104,58 @@ class FrequentlyBoughtCourseSerializer(serializers.ModelSerializer):
         model = FrequentlyBoughtCourse
         fields = ["id",'course']
 
-        
+
+
+class EbookDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChapterBooks
+        fields = ["id",'name']
+
+class VideoDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Videos
+        fields = ["id",'name',"video_duration"]
+
+
+class ChapterLectureSerializer(serializers.ModelSerializer) :
+    video_info = serializers.SerializerMethodField('get_video')
+    ebook_info = serializers.SerializerMethodField('get_ebook')
+   
+    def get_ebook(self, obj):
+        if obj.ebook:
+            ebook_detail = ChapterBooks.objects.filter(id = obj.ebook.id).first()
+            return EbookDetailSerializer(ebook_detail).data
+        return {}
+    
+    def get_video(self, obj):
+        if obj.video:
+            video_detail = Videos.objects.filter(id = obj.video.id).first()
+            return VideoDetailSerializer(video_detail).data
+        return {}
+    
+    class Meta:
+        model = ChapterLectures
+        fields = "__all__"
+
+
+class CourseChapterListingSerializer(serializers.ModelSerializer) :
+    chapter_info = serializers.SerializerMethodField()
+    chapter_lectures = serializers.SerializerMethodField()
+
+    def get_chapter_lectures(self, parent):
+        category = ChapterLectures.objects.filter(chapter_id=parent.chapter.id)
+        serializer = ChapterLectureSerializer(category, many=True)
+        return serializer.data
+    
+    def get_chapter_info(self, parent):
+        info = Chapters.objects.get(id = parent.chapter.id)
+        return ChapterInfoSerializer(info).data
+
+    class Meta:
+        model = CourseChapters
+        fields = ['id','chapter_info',"chapter_lectures"]
+
+
 class CourseDetailSerializer(serializers.ModelSerializer):
     categories = serializers.SerializerMethodField('get_categories')
     tags = serializers.SerializerMethodField('get_tags')
@@ -1112,6 +1163,13 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     sample_videos = serializers.SerializerMethodField('get_sample_videos')
     created_by = serializers.SerializerMethodField('get_created_by')
     related_course = serializers.SerializerMethodField()
+    course_chapters = serializers.SerializerMethodField()
+
+    def get_course_chapters(self, parent):
+        category = CourseChapters.objects.filter(course_id=parent.id)
+        serializer = CourseChapterListingSerializer(category, many=True)
+        return serializer.data
+
 
     def get_related_course(self, parent):
         info = FrequentlyBoughtCourse.objects.filter(course_id = parent.id)
@@ -1139,7 +1197,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id",'name','description',"short_description","duration","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","status","created_at","instrcutor_info","sample_videos","avg_rating","total_reviews","created_by","level","related_course"]
+        fields = ["id",'name','description',"short_description","duration","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","status","created_at","instrcutor_info","sample_videos","avg_rating","total_reviews","created_by","level","related_course","course_chapters"]
 
 
 
@@ -1311,21 +1369,21 @@ class AssignChapterCourseSerializer(serializers.ModelSerializer):
 
 
         
-class SubjectInfoSerializer(serializers.ModelSerializer):
+class ChapterInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chapters
         fields = ["id","name"]
 
 
-class CourseSubjectInfoSerializer(serializers.ModelSerializer):
-    subject_detail = serializers.SerializerMethodField('get_subject_detail')
-    def get_subject_detail(self, obj):
-        category = Chapters.objects.filter(id=obj.subject.id).first()
-        return SubjectInfoSerializer(category).data
+class CourseChapterInfoSerializer(serializers.ModelSerializer):
+    chapter_detail = serializers.SerializerMethodField('get_chapter_detail')
+    def get_chapter_detail(self, obj):
+        category = Chapters.objects.filter(id=obj.chapter.id).first()
+        return ChapterInfoSerializer(category).data
     
     class Meta:
         model = CourseChapters
-        fields = ['id',"subject_detail"]
+        fields = ['id',"chapter_detail"]
 
 
 class CourseListSerializer(serializers.ModelSerializer):
@@ -1380,7 +1438,7 @@ class CreateTrailCourseSerializer(serializers.ModelSerializer) :
                 
                 processed_chapter_ids.append(chap_instance.id)
 
-            TrailCourseChapters.objects.filter(course_id=course_data).exclude(id__in=processed_chapter_ids).delete()
+            TrailCourseChapters.objects.filter(trail_course_id=chap.id).exclude(id__in=processed_chapter_ids).delete()
            
         return info
     
@@ -1405,13 +1463,26 @@ class SubjectChapterInfoSerializer(serializers.ModelSerializer):
         fields = ['id','chapter',"chapter_detail"]
 
 
+class TrailCourseChaptersSerializer(serializers.ModelSerializer):
+    chapter_detail = serializers.SerializerMethodField('get_chapter_detail')
+    
+    def get_chapter_detail(self, obj):
+        print(obj)
+        category = CourseChapters.objects.filter(id=obj.chapter.id).first()
+        return ChaptersSerializer(category).data
+    
+    class Meta:
+        model = TrailCourseChapters
+        fields = ['id','chapter',"chapter_detail"]
+
+
 class TrailCoursesSerializer(serializers.ModelSerializer):
     course_detail = serializers.SerializerMethodField('get_course_detail')
-    chapter_detail = serializers.SerializerMethodField('get_chapter_detail')
+    chapter_info = serializers.SerializerMethodField('get_chapter_info')
 
-    def get_chapter_detail(self, obj):
-        category = CourseChapters.objects.filter(trail_course_id=obj.id)
-        return CourseListSerializer(category).data
+    def get_chapter_info(self, obj):
+        category = TrailCourseChapters.objects.filter(trail_course_id=obj.id)
+        return TrailCourseChaptersSerializer(category, many=True).data
     
     def get_course_detail(self, obj):
         category = Course.objects.filter(id=obj.course.id).first()
@@ -1419,7 +1490,7 @@ class TrailCoursesSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = TrailCourses
-        fields = ['id',"course_detail","chapter_detail"]
+        fields = ['id',"course_detail","chapter_info"]
 
 
 

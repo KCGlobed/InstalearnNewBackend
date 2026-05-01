@@ -101,7 +101,7 @@ urlpatterns = [
     path('delete-trail-course/<cid>', DeleteTrailCourseView.as_view(), name="delete-trail-course"),
 
     path('get-course-list/', CourseListView.as_view(), name="get-course-list"),
-    path('get-subject-list/<cid>', CourseSubjectListView.as_view(), name="get-subject-list"),
+    path('get-course-chapter-list/<cid>', CourseChapterListView.as_view(), name="get-course-chapter-list"),
     
     path('get-topics-history/<int:tid>', GetTopicHistoryView.as_view(), name="get-history-topics"),
     path('get-chapters-history/<int:tid>', GetChaptersHistoryView.as_view(), name="get-history-chapters"),
