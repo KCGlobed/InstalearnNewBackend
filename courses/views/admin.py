@@ -2861,3 +2861,48 @@ class DeleteTrailCourseView(APIView):
             return success_response(message="Trial Course Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
         except TrailCourses.DoesNotExist:
             return error_response(message="Trial Course not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+        
+
+
+class GetCourseIncludesView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [SuperAdmin]
+                        )]
+    def get(self, request, cid =None, format=None):
+        category = CourseIncludes.objects.filter(course_id = cid).order_by("id")
+        serializer = CourseIncludesListSerializer(category, many=True)
+        return Response({"status":"success",'message':'',"data":serializer.data }, status = status.HTTP_200_OK)
+    
+
+
+class DeleteCourseIncludesView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [SuperAdmin]
+                        )]
+    def delete(self, request, cid, format=None):
+        try:
+            course = CourseIncludes.objects.get(id = cid)
+            course.delete()
+            return success_response(message="success", data={}, status_code=status.HTTP_200_OK)
+        except CourseIncludes.DoesNotExist:
+            return error_response(message="failed", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
+        
+
+
+class AddCourseIncludesView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        
+        serializer = AddCoursesIncludesSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            serializer.save()
+            return success_response(message="Course Include uploaded successfully", data={}, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)

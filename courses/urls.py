@@ -82,6 +82,12 @@ urlpatterns = [
     path('delete-courses-sample-video/<int:cid>', DeleteCourseSampleVideoView.as_view(), name="delete-course-sample-video"),
     path('upload-course-sample-video/', UploadCourseSampleVideoView.as_view(), name="upload-course-sample-video"),
 
+
+    path('get-courses-includes-listing/<int:cid>', GetCourseIncludesView.as_view(), name="get-course-includes"),
+    path('delete-courses-includes/<int:cid>', DeleteCourseIncludesView.as_view(), name="delete-course-includes"),
+    path('upload-course-includes/', AddCourseIncludesView.as_view(), name="upload-course-includes"),
+
+
     path('get-instructor-list/', GetInstructorListView.as_view(), name="get-instructor-list"),
     path('get-course-instructor/<int:cid>', GetCourseInstructorsView.as_view(), name="get-course-instructor"),
     path('add-course-instructor/', AddCourseInstructorsView.as_view(), name="add-course-instructor"),
@@ -132,8 +138,6 @@ urlpatterns = [
     
     path('plans-listing/', GetPlansListingView.as_view(), name="plans-listing"),
 
-
-    
 
     path('partner/listing/', GetPartnerListingView.as_view(), name="partner-listing"),
     path('get-testimonial-list/', GetLMSTestimonialView.as_view(), name="get-testimonial-list"),

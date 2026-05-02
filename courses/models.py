@@ -168,6 +168,21 @@ class CourseSampleVideos(models.Model):
         return '%s' % self.id
     
 
+class CourseIncludes(models.Model):
+    course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
+    text = models.CharField(max_length=255, null=True, blank=True)
+    icon = models.ImageField(upload_to='mini_lms/images/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Course Includes'
+        verbose_name_plural = 'Course Includes'
+        
+    def __str__(self):
+        return '%s' % self.id
+    
+
 class CourseImages(models.Model):
     course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
     image = models.FileField(upload_to='mini_lms/images/', null=True, blank=True)

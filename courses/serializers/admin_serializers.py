@@ -974,6 +974,7 @@ class CourseTagsSerializer(serializers.ModelSerializer):
         model = Tags
         fields = ["id","name"]
 
+
 class ViewCourseDetailSerializer(serializers.ModelSerializer):
     categories = serializers.SerializerMethodField('get_categories')
     tags = serializers.SerializerMethodField('get_tags')
@@ -981,6 +982,11 @@ class ViewCourseDetailSerializer(serializers.ModelSerializer):
     instructors = serializers.SerializerMethodField('get_instructors')
     sample_videos = serializers.SerializerMethodField('get_sample_videos')
     related_courses = serializers.SerializerMethodField('get_related_courses')
+    course_includes = serializers.SerializerMethodField('get_course_includes')
+
+    def get_course_includes(self, obj):
+        category = CourseIncludes.objects.filter(course_id=obj.id)
+        return CourseIncludesListSerializer(category, many=True).data
 
     def get_related_courses(self, obj):
         category = FrequentlyBoughtCourse.objects.filter(course_id=obj.id)
@@ -1008,7 +1014,7 @@ class ViewCourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id",'name',"level",'description',"short_description","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","duration", "chapters_info","instructors","sample_videos","related_courses","language","subtitle_language","original_price"]
+        fields = ["id",'name',"level",'description',"short_description","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","duration", "chapters_info","instructors","sample_videos","related_courses","language","subtitle_language","original_price","course_includes"]
 
 
 
@@ -1172,6 +1178,11 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     related_course = serializers.SerializerMethodField()
     course_chapters = serializers.SerializerMethodField()
     enrolled_students = serializers.SerializerMethodField()
+    course_includes = serializers.SerializerMethodField('get_course_includes')
+
+    def get_course_includes(self, obj):
+        category = CourseIncludes.objects.filter(course_id=obj.id)
+        return CourseIncludesListSerializer(category, many=True).data
 
     def get_enrolled_students(self, parent):
         category = UserCourses.objects.filter(course_id=parent.id, paid = True).count()
@@ -1210,7 +1221,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id",'name','description',"short_description","duration","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","status","created_at","instrcutor_info","sample_videos","avg_rating","total_reviews","created_by","level","related_course","course_chapters","language","subtitle_language","original_price","enrolled_students"]
+        fields = ["id",'name','description',"short_description","duration","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","status","created_at","instrcutor_info","sample_videos","avg_rating","total_reviews","created_by","level","related_course","course_chapters","language","subtitle_language","original_price","enrolled_students","course_includes"]
 
 
 
@@ -1317,6 +1328,12 @@ class CategoriesListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Categories
         fields = ["id","name"]
+
+
+class CourseIncludesListSerializer(serializers.ModelSerializer) :
+    class Meta:
+        model = CourseIncludes
+        fields = ['id','text',"icon"]
 
 
 class CourseSampleVideoListSerializer(serializers.ModelSerializer) :
@@ -1635,6 +1652,33 @@ class UpdateCoursesSampleVideoSerializer(serializers.ModelSerializer) :
         return True
     
 
+class AddCoursesIncludesSerializer(serializers.ModelSerializer) :
+    course_id = serializers.IntegerField(required=True)
+    icon = serializers.FileField(required=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
+    text = serializers.CharField(required=True)
+    class Meta:
+        model = CourseIncludes
+        fields = ['course_id','icon',"text"]
+        
+        
+    def validate(self, data):
+        course = Course.objects.filter(id = data.get('course_id')).count()
+        if course == 0:
+            raise serializers.ValidationError("Invalid Course ID ")
+        return data
+        
+
+    def create(self , validate_data):
+        
+        categ = CourseIncludes(
+            course = Course.objects.get(id = validate_data.get('course_id')),
+            text = validate_data.get('text'),
+            icon = validate_data.get('icon')
+        )
+        categ.save()
+
+        return True
+    
 
 class CourseInstructorsListSerializer(serializers.ModelSerializer) :
     instructor_info = serializers.SerializerMethodField()
