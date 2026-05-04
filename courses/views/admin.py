@@ -2864,6 +2864,15 @@ class DeleteTrailCourseView(APIView):
         
 
 
+class GetTrailCoursesView(APIView):
+    renderer_classes = [CourseRenderer]
+    def get(self, request, cid =None, format=None):
+        course_list = TrailCourses.objects.values_list("course", flat=True)
+        category = Course.objects.filter(status = True, id__in = course_list).order_by("-id")
+        serializer = CourseInfoserializer(category, many=True)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
 class GetCourseIncludesView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 

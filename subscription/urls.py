@@ -29,6 +29,7 @@ urlpatterns = [
     path('complete-subscription/', CompleteSubscriptionView.as_view(), name="complete-subscription"),
 
     path('trail-registration/', TrailRegistrationView.as_view(), name="trail-registration"),
+    
 
     path('manage-background-tasks/', ManageBackgroundTaskView.as_view(), name="manage-background-tasks"),
     

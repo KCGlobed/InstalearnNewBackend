@@ -82,7 +82,6 @@ urlpatterns = [
     path('delete-courses-sample-video/<int:cid>', DeleteCourseSampleVideoView.as_view(), name="delete-course-sample-video"),
     path('upload-course-sample-video/', UploadCourseSampleVideoView.as_view(), name="upload-course-sample-video"),
 
-
     path('get-courses-includes-listing/<int:cid>', GetCourseIncludesView.as_view(), name="get-course-includes"),
     path('delete-courses-includes/<int:cid>', DeleteCourseIncludesView.as_view(), name="delete-course-includes"),
     path('upload-course-includes/', AddCourseIncludesView.as_view(), name="upload-course-includes"),
@@ -98,13 +97,14 @@ urlpatterns = [
     path('add-related-courses/', AddRelatedCoursesView.as_view(), name="add-related-courses"),
     path('delete-related-course/<int:cid>', DeleteRelatedCourseView.as_view(), name="delete-related-course"),
 
-
     path('get-subcategory-list/<int:cid>', SubCategoryListView.as_view(), name="subcategory-list"),
     
     path('generate-upload-signed-url/', GenerateUploadSignedUrlView.as_view(), name="generate-upload-signed-url"),
     path('get-trail-course-list/', TrailCourseListView.as_view(), name="get-trail-course-list"),
     path('create-trail-course/', CreateTrailCourseView.as_view(), name="create-trail-course"),
     path('delete-trail-course/<cid>', DeleteTrailCourseView.as_view(), name="delete-trail-course"),
+    path('get-trail-courses/', GetTrailCoursesView.as_view(), name="get-trail-courses"),
+    
 
     path('get-course-list/', CourseListView.as_view(), name="get-course-list"),
     path('get-course-chapter-list/<cid>', CourseChapterListView.as_view(), name="get-course-chapter-list"),
@@ -114,8 +114,6 @@ urlpatterns = [
     path('get-course-history/<int:tid>', GetCourseHistoryView.as_view(), name="get-history-course"),
     path('get-ebook-history/<int:tid>', GetEbookHistoryView.as_view(), name="get-history-ebook"),
     path('get-video-history/<int:tid>', GetVideoHistoryView.as_view(), name="get-history-video"),
-    
-
     
 
     path('get-courses-faqs/<int:cid>', GetCoursesFAQsListingView.as_view(), name="get-courses-faqs"),

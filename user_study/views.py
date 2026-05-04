@@ -44,12 +44,19 @@ class DashboardCourseChaptersView(APIView):
                         )]
     def get(self, request, id = None, format=None):
         
-        course_list = UserCourses.objects.filter(course_id = id, paid = 1).count()
+        course_list = UserCourses.objects.filter(course_id = id, paid = 1,user = request.user).count()
         if course_list == 0:
             return error_response(message="Invalid Course ID", data = [], status_code=status.HTTP_400_BAD_REQUEST)
         
-        category = CourseChapters.objects.filter(course_id=id)
-        serializer = DashboardCourseChapterListingSerializer(category, many=True, context={'user':request.user})
+        if course_list.trail == True:
+            chapters = TrailCourseChapters.objects.filter(trail_course__course_id = id).values_list("chapter", flat=True)
+            category = CourseChapters.objects.filter(course_id=id, chapter_id__in = chapters)
+            serializer = DashboardCourseChapterListingSerializer(category, many=True, context={'user':request.user})
+
+        else:
+
+            category = CourseChapters.objects.filter(course_id=id)
+            serializer = DashboardCourseChapterListingSerializer(category, many=True, context={'user':request.user})
 
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
@@ -599,6 +606,22 @@ class GetUserWishlistView(APIView):
         serializer = WishlistSerializer(category, many=True)
         return Response({"status":"success",'message':'',"data":serializer.data}, status = status.HTTP_200_OK)
 
+
+class CheckCourseInWishlistView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def post(self, request,format=None):
+        cart_count = UserWishlist.objects.filter(user=request.user, course_id = request.data.get('course_id')).count()
+        if cart_count > 0:
+            course = UserWishlist.objects.filter(user=request.user, course_id = request.data.get('course_id')).first()
+            serializer = WishlistSerializer(course)
+            return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+        else:
+            return success_response(message="", data=[], status_code=status.HTTP_200_OK)
+        
 
 class AddUserWishlistView(APIView):
     renderer_classes = [UserStudyRenderer]

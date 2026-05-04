@@ -531,7 +531,7 @@ class TrailRegistrationSerializer(serializers.ModelSerializer) :
             trail_user.user =  user
             trail_user.save()
 
-            trail_setting = Settings.objects.all().first()
+            trail_setting = GeneralSettings.objects.all().first()
 
 
             url = settings.BASE_URL+"/login"
@@ -557,7 +557,12 @@ class TrailRegistrationSerializer(serializers.ModelSerializer) :
             Begindatestring = date.today()
             Enddate = Begindatestring + timedelta(days=trail_setting.no_days_trail)
 
+            current_year = datetime.now().year
+            count = Order.objects.all().count()
+            order_id = f"{current_year}-{str(count + 1).zfill(4)}" 
+            
             order_info = Order(
+                orderID = order_id,
                 user = user,
                 first_name = validate_data.get('first_name'),
                 last_name = validate_data.get('last_name'),
@@ -571,7 +576,8 @@ class TrailRegistrationSerializer(serializers.ModelSerializer) :
                 start_date = Begindatestring,
                 next_due = Enddate,
                 end_date = Enddate,
-                subscription_status = OrderStatus.Active
+                subscription_status = OrderStatus.Active,
+                isPaid = True
             )
             order_info.save()
 
@@ -590,7 +596,8 @@ class TrailRegistrationSerializer(serializers.ModelSerializer) :
                         order = order_info,
                         user = user,
                         course = course,
-                        trail = True
+                        trail = True,
+                        paid = True
                     )
                     user_course.save()
 

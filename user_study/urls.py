@@ -29,6 +29,7 @@ urlpatterns = [
     path('review/add/', AddReviewAndRatingView.as_view(), name="add-review-rating"),
     
     path('get-user-wishlist/', GetUserWishlistView.as_view(), name="user-wishlist"),
+    path('check-course-wishlist/', CheckCourseInWishlistView.as_view(), name="check-course-wishlist"),
     path('update-wishlist/', AddUserWishlistView.as_view(), name="add-user-wishlist"),
 
     
