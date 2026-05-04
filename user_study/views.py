@@ -633,7 +633,10 @@ class AddUserWishlistView(APIView):
         serializer = AddUserWishlistSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
             serializer.save()
-            return Response({"status":"success",'message':'Success',"data":[]}, status = status.HTTP_200_OK)
+            course = UserWishlist.objects.filter(user=request.user, course_id = request.data.get('course_id')).first()
+            serializer1 = WishlistSerializer(course)
+
+            return Response({"status":"success",'message':'Success',"data":serializer1.data}, status = status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST) 
     
 
