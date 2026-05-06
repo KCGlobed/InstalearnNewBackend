@@ -178,6 +178,8 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
             )
             cart_order.save()
 
+        cart_count.delete()
+
         setting = GeneralSettings.objects.all().first()
         if total_amount > 0 :
             if setting.payment_type == 1:
