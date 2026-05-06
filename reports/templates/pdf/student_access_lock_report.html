@@ -1,0 +1,137 @@
+{% load reports_tags %}
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <title>Student Access Lock Report</title>
+        <style type="text/css">
+            @page {
+                size: letter landscape;
+                margin: 1cm;
+            }
+            body {
+                font-weight: 200;
+                font-size: 11.5px;
+            }
+            .header {
+                font-size: 20px;
+                font-weight: 100;
+                text-align: center;
+                color: #007cae;
+            }
+            .title {
+                font-size: 22px;
+                font-weight: 100;
+               /* text-align: right;*/
+               padding: 10px 20px 0px 20px;  
+            }
+            .title span {
+                color: #007cae;
+            }
+            .details {
+                padding: 10px 20px 0px 20px;
+                text-align: left !important;
+                /*margin-left: 40%;*/
+            }
+            .hrItem {
+                border: none;
+                height: 1px;
+                /* Set the hr color */
+                color: #333; /* old IE */
+                background-color: #fff; /* Modern Browsers */
+            }
+            table {
+                border-collapse: collapse;
+                border-spacing: 0;
+                width: 100%;
+                border: 1px solid #ddd;
+                }
+
+                th, td {
+                text-align: left;
+                padding: 3px;
+                }
+
+                tr:nth-child(even) {
+                    background-color: #f2f2f2;
+                }
+                .card {
+                    
+                    background-color: #eaecee;
+                    border:white 10px solid;
+                }
+        </style>
+    </head>
+    <body>
+        <style>
+            #header,
+            #footer {
+              padding: 0 !important;
+            }
+          </style>
+          <table style="width: 100%; padding-left: 0px; padding-right: 0px; padding-top: 5px;padding-bottom: 8px;margin: 0px!important;font-size: 15px; border:0;">
+            <tr>
+              <td style="text-align:left; width:25%!important;">
+                <div>
+                    <img height="42" src="https://storage.googleapis.com/static_files_backend/media/landing/logo_kcglobed.svg" alt="">
+                </div>
+              </td>
+              <td style="text-align:center; width:50%!important;font-size: 17px; color: #007cae;">
+                <div>
+                    <p class='title'>Student Access Lock Report</p>
+                </div>
+              </td>
+              <td style="text-align:right; width:25%!important;font-size: 14px">
+                <div>
+                    {{user_data|report_date}}
+                </div>
+              </td>
+            </tr>
+          </table>
+
+            
+        <div class='details'>
+            <div>
+                <table style="padding-top: 70px;">
+                    <tr>
+                        <td width="20%">
+                            <b>User Info</b>
+                        </td>
+                        <td>
+                            <b>User Category / Type / Reference ID</b>
+                        </td>
+                        <td width="25%">
+                            <b>Device ID / IP Address</b>
+                        </td>
+                        <td>
+                            <b>Device Type</b>
+                        </td>
+                        <td width="25%">
+                            <b>User Devices List</b>
+                        </td>
+                        <td>
+                            <b>Locked At</b>
+                        </td>
+                    </tr>
+                    {% for order_info in  user_data %}
+                        <tr>
+                            <td>{{order_info.user_detail.first_name}} {{order_info.user_detail.last_name}} <br>{{order_info.user_detail.email}}<br>{{order_info.user_detail.phone1}}</td>
+                            <td>{{order_info.user_detail.category}} / {{order_info.user_detail.student_type}} / {{order_info.user_detail.reference_id}}</td>
+                            <td>{{order_info.device_id}} / {{order_info.ip_address}}</td>
+                            <td>{{order_info.device_type}}</td>
+                            <td>
+                                {% for device in  order_info.user_devices %}
+                                    {{device.device_id}} ({{device.device_type}})<br>
+                                {% endfor %}
+                            </td>
+                            <td>{{order_info.created_at}}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        
+
+        
+    </div>
+    </body>
+</html>

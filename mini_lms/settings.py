@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "assessment",
     "questions",
     "forums",
+    "reports",
     "adminpanel.authentication",
     "adminpanel.layout",
     "adminpanel.course_app"

@@ -22,6 +22,8 @@ from django.core.validators import FileExtensionValidator
 
 
 class StudentListingSerializer(serializers.ModelSerializer):
+    date_joined = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+
     class Meta:
         model = User
         fields = ['id','first_name','last_name', 'email','phone1',"is_active","date_joined","reference_id","category","student_type"]
@@ -35,22 +37,9 @@ class UserListingSerializer(serializers.ModelSerializer):
 
 
 class OrderListingSerializer(serializers.ModelSerializer):
-    plan = serializers.SerializerMethodField('get_plan')
-    def get_plan(self, obj):
-        if obj.plan is not None:
-             return {
-                    "id":obj.plan.id,
-                    "plan_name":obj.plan.plan_name
-                }
-
-        return {
-            "id":None,
-            "plan_name":"Trail"
-        }
-    
     class Meta:
         model = Order
-        fields = ["id","plan","total_amount","start_date","next_due","end_date","subscription_type","subscription_status","created_at"]
+        fields = ["id","total_amount","start_date","next_due","end_date","subscription_status","created_at"]
 
 
 
@@ -265,7 +254,7 @@ class UserDevicesListSerializer(serializers.ModelSerializer):
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):
-    active_subscriptions = serializers.SerializerMethodField('get_active_subscriptions')
+    active_orders = serializers.SerializerMethodField('get_active_orders')
     courses = serializers.SerializerMethodField('get_courses')
     user_devices = serializers.SerializerMethodField('get_user_devices')
     
@@ -275,11 +264,11 @@ class StudentProfileSerializer(serializers.ModelSerializer):
     
     
     def get_courses(self, obj):
-        users_courses = UserCourses.objects.filter(user=obj).select_related("course").order_by("-id")
+        users_courses = UserCourses.objects.filter(user=obj, paid=True).select_related("course").order_by("-id")
         return UserCoursesListSerializer(users_courses, many=True, context={"user": obj.id}).data
     
     
-    def get_active_subscriptions(self, obj):
+    def get_active_orders(self, obj):
         order_list = Order.objects.filter(user = obj, subscription_status = OrderStatus.Active).order_by("-id").first()
         if order_list is not None:
             return OrderListingSerializer(order_list).data
@@ -288,13 +277,14 @@ class StudentProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id','first_name','last_name', 'email','phone1','phone2','address','city','state','country','image','banner_image','pincode',"dob","active_subscriptions","courses","user_devices"]
+        fields = ['id','first_name','last_name', 'email','phone1','phone2','address','city','state','country','image','banner_image','pincode',"dob","active_orders","courses","user_devices"]
 
 
 class CreateStudentSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(max_length = 255, required=True)
     last_name = serializers.CharField(max_length = 255, required=True)
     email = serializers.EmailField(max_length = 255, required=True)
+    phone = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     address = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     city = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     state = serializers.CharField(max_length = 255, required=False, allow_blank=True)
@@ -304,7 +294,7 @@ class CreateStudentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email','first_name','last_name',"address","city","state","country","pincode","dob"]
+        fields = ['email','first_name','last_name',"address","city","state","country","pincode","dob","phone"]
         
 
     def validate(self, data):
@@ -324,6 +314,7 @@ class CreateStudentSerializer(serializers.ModelSerializer):
         user.role = User.Student
         user.email_verified = 1
         user.is_active = True
+        user.phone1 = validate_data.get('phone')
         user.address = validate_data.get('address')
         user.country = validate_data.get('country')
         user.state = validate_data.get('state')
@@ -357,6 +348,7 @@ class CreateStudentSerializer(serializers.ModelSerializer):
 class UpdateStudentSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(max_length = 255, required=True)
     last_name = serializers.CharField(max_length = 255, required=True)
+    phone = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     address = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     city = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     state = serializers.CharField(max_length = 255, required=False, allow_blank=True)
@@ -366,7 +358,7 @@ class UpdateStudentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['first_name','last_name',"address","city","state","country","pincode","dob"]
+        fields = ['first_name','last_name',"address","city","state","country","pincode","dob","phone"]
         
 
     def validate(self, data):
@@ -377,6 +369,7 @@ class UpdateStudentSerializer(serializers.ModelSerializer):
 
         info.first_name = validate_data.get('first_name', info.first_name)
         info.last_name = validate_data.get('last_name', info.last_name)
+        info.phone1 = validate_data.get('phone', info.phone1)
         info.address = validate_data.get('address', info.address)
         info.city = validate_data.get('city', info.city)
         info.state = validate_data.get('state', info.state)
@@ -406,8 +399,8 @@ class ChangeStudentStatusSerializer(serializers.ModelSerializer) :
 
 class AdminUpdateStudentPasswordSerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField(required=False)
-    password = serializers.CharField(style = { 'input_type': 'password'}, write_only = True, min_length=8)
-    confirm_password = serializers.CharField(style = { 'input_type': 'password'}, write_only = True,min_length=8)
+    password = serializers.CharField(style = { 'input_type': 'password'}, write_only = True, min_length=6)
+    confirm_password = serializers.CharField(style = { 'input_type': 'password'}, write_only = True,min_length=6)
     class Meta:
         model = User
         fields = ['password','confirm_password','user_id']

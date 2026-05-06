@@ -8,6 +8,7 @@ from io import BytesIO
 from django.template.loader import get_template
 import os
 from mini_lms.utils import *
+import tempfile
 from rolepermissions.checkers import has_role
 from rest_framework.permissions import IsAuthenticated
 import time , calendar
@@ -48,7 +49,9 @@ class DashboardCourseChaptersView(APIView):
         if course_list == 0:
             return error_response(message="Invalid Course ID", data = [], status_code=status.HTTP_400_BAD_REQUEST)
         
-        if course_list.trail == True:
+        course_info = UserCourses.objects.filter(course_id = id, paid = 1,user = request.user).first()
+
+        if course_info.trail == True:
             chapters = TrailCourseChapters.objects.filter(trail_course__course_id = id).values_list("chapter", flat=True)
             category = CourseChapters.objects.filter(course_id=id, chapter_id__in = chapters)
             serializer = DashboardCourseChapterListingSerializer(category, many=True, context={'user':request.user})
@@ -122,24 +125,33 @@ class DownloadChapterVideoReportView(APIView):
 
         template = get_template('pdf/video_progress_report.html')
         html  = template.render(result)
-        result = BytesIO()
-        destination = settings.MEDIA_ROOT+ 'pdf_reports/'
-        if not os.path.exists(destination):
-            os.makedirs(destination)
-        current_GMT = time.gmtime()
-        ts = calendar.timegm(current_GMT)
 
-        file = open(destination + str(request.user.id) +"_"+str(ts)+'_video_report.pdf', "w+b")
-        html = html.encode('latin-1', 'replace').decode('latin-1')
-        pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), dest=file)
-        file.close()
-        
-        bucket = client.get_bucket(settings.GS_BUCKET_NAME)
-        blob = bucket.blob(destination + str(request.user.id) +"_"+str(ts)+'_video_report.pdf')
-        
-        blob.upload_from_filename(destination + str(request.user.id) +"_"+str(ts)+'_video_report.pdf')
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            html = html.encode('latin-1', 'replace').decode('latin-1')
+            pdf = pisa.CreatePDF(BytesIO(html.encode("ISO-8859-1")), dest=temp_file)
 
-        return success_response(message="Success", data={'file_url':blob.public_url}, status_code=status.HTTP_200_OK)
+            if pdf.err:
+                raise Exception("PDF generation error!")
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "video_progress_report"
+            gcs_folder_name = "media/lms_2/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
     
     
 
@@ -151,9 +163,7 @@ class DownloadChapterVideoReportCSVView(APIView):
                             [Student]
                         )]
     def get(self, request, cid = None,  format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
-
+        
         course_subject = Course.objects.filter(id = cid).first()
         category = CourseChapters.objects.filter(course_id=cid)
         serializer = CourseVideoReportSerializer(category, many=True, context={'user':request.user})
@@ -274,23 +284,29 @@ class DownloadChapterVideoReportCSVView(APIView):
                 "total_time_spend":""
             })
 
-        current_GMT = time.gmtime()
-        ts = calendar.timegm(current_GMT)
-
-        df = pd.DataFrame.from_dict(lis)
-        destination = settings.MEDIA_ROOT+ 'pdf_reports/'
-        path = destination + str(request.user.id) +"_"+str(ts)+'_video_report.csv'
-        df.to_csv(path, encoding="UTF-8", header=False, index=False)
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            df = pd.DataFrame.from_dict(lis)
+            df.to_excel(pdf_path, header=False, index=False)
         
-        if not os.path.exists(destination):
-            os.makedirs(destination)
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "video_report"
+            gcs_folder_name = "media/mini_lms/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
 
-        bucket = client.get_bucket(settings.GS_BUCKET_NAME)
-        blob = bucket.blob(destination + str(request.user.id) +"_"+str(ts)+'_video_report.csv')
-        
-        blob.upload_from_filename(destination + str(request.user.id) +"_"+str(ts)+'_video_report.csv')
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
 
-        return success_response(message="Success", data={'file_url':blob.public_url}, status_code=status.HTTP_200_OK)
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
 
 
 
@@ -429,7 +445,7 @@ class GetCourseCertificateView(APIView):
                         )]
     def get(self, request, id = None, format=None):
         
-        course_list = OrderCourses.objects.filter(course_id = id, paid = 1).count()
+        course_list = UserCourses.objects.filter(course_id = id, paid = 1).count()
         if course_list == 0:
             return Response({"errors": {"non_field_errors": ["Invalid Course ID"]}}, status.HTTP_403_FORBIDDEN)
         
@@ -599,9 +615,7 @@ class GetUserWishlistView(APIView):
                             [Student]
                         )]
     def get(self, request, format=None):
-        if not has_role(request.user, [Student]):
-            return Response({"status": "failed","message": "error","errors": {"non_field_errors": "you have not a required role to access this api"}}, status.HTTP_403_FORBIDDEN)
-
+        
         category = UserWishlist.objects.filter(user=request.user).order_by("-id")
         serializer = WishlistSerializer(category, many=True)
         return Response({"status":"success",'message':'',"data":serializer.data}, status = status.HTTP_200_OK)
@@ -654,9 +668,6 @@ class GetUserNotificationSettingView(APIView):
         serializer = UserNotificationSerializer(notification)
         return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
     
-    
-    
-
 
 class UpdateUserNotificationSettingView(APIView):
     renderer_classes = [UserStudyRenderer]

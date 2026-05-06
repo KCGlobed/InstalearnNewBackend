@@ -554,10 +554,10 @@ class MyListCourseListingSerializer(serializers.ModelSerializer):
 class AddReviewAndReviewSerializer(serializers.ModelSerializer) :
     review = serializers.CharField(max_length=255, required=True)
     rating = serializers.IntegerField(required = True)
-    course_id = serializers.IntegerField(required = True, min_value=5)
+    course_id = serializers.IntegerField(required = True)
     class Meta:
         model = MyList
-        fields = ['review','rating']
+        fields = ['review','rating',"course_id"]
         
         
     def validate(self, data):

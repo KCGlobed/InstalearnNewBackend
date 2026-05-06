@@ -308,11 +308,11 @@ class GetStudentListingView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['first_name','last_name',"email"]
-    ordering_fields = ['first_name',"last_name","email", 'created_at', 'id', 'status'] 
+    search_fields = ['first_name',"last_name","email", 'date_joined', 'id', 'is_active',"phone1","category"]
+    ordering_fields = ['first_name',"last_name","email", 'date_joined', 'id', 'is_active',"phone1","category"] 
     def get(self, request, format=None):
         
-        users_list = User.objects.filter(role = User.Student, corporate__isnull = True, institute_id__isnull =True)
+        users_list = User.objects.filter(role = User.Student)
 
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
@@ -382,7 +382,7 @@ class GetStudentDetailView(APIView):
                         )]
     def get(self, request, id=None,format=None):
         subadmin_list = User.objects.filter(role = User.Student, id=id).first()
-        serializer = StudentProfileSerializer(subadmin_list)
+        serializer = StudentProfileSerializer(subadmin_list,context={'user':request.user})
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
 
