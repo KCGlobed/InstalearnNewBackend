@@ -113,3 +113,31 @@ class ChangeUserAccounttatusSerializer(serializers.ModelSerializer) :
         category.save()
 
         return category
+    
+
+
+
+class CourseListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ["id",'name']
+
+
+class OrderDetailAdminSerializer(serializers.ModelSerializer):
+    ordered_courses = serializers.SerializerMethodField('get_ordered_courses')
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+
+    def get_ordered_courses(self, obj):
+        category = Course.objects.filter(usercourses__user_id=obj.user.id).distinct()
+        return CourseListSerializer(category, many=True).data
+    
+    class Meta:
+        model = Order
+        fields = ["id","first_name","last_name","email","phone","start_date","next_due","end_date","subscription_status","created_at","ordered_courses","trail_mode"]
+
+
+class StudentRegistrationSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    class Meta:
+        model = User
+        fields = ["id",'first_name',"last_name","email","phone1","category","reference_id","student_type","is_active","created_at"]

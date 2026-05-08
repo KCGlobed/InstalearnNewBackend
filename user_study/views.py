@@ -11,7 +11,7 @@ from mini_lms.utils import *
 import tempfile
 from rolepermissions.checkers import has_role
 from rest_framework.permissions import IsAuthenticated
-import time , calendar
+from datetime import timedelta , timezone
 import pandas as pd
 from mini_lms.permissions import RoleOrPermissionCheck
 import json
@@ -72,12 +72,21 @@ class GetVideoReportView(APIView):
                         )]
     def get(self, request, id = None, format=None):
         
-        course_list = UserCourses.objects.filter(course_id = id, paid = 1).count()
+        course_list = UserCourses.objects.filter(course_id = id, paid = 1, user = request.user).count()
         if course_list == 0:
             return error_response(message="Invalid Course ID", data = [], status_code=status.HTTP_400_BAD_REQUEST)
         
-        category = CourseChapters.objects.filter(course_id=id)
-        serializer = CourseVideoReportSerializer(category, many=True, context={'user':request.user})
+        course_info = UserCourses.objects.filter(course_id = id, paid = 1,user = request.user).first()
+
+        if course_info.trail == True:
+            chapters = TrailCourseChapters.objects.filter(trail_course__course_id = id).values_list("chapter", flat=True)
+            category = CourseChapters.objects.filter(course_id=id, chapter_id__in = chapters)
+            serializer = DashboardCourseChapterListingSerializer(category, many=True, context={'user':request.user})
+
+        else:
+
+            category = CourseChapters.objects.filter(course_id=id)
+            serializer = CourseVideoReportSerializer(category, many=True, context={'user':request.user})
         total_video_watched = UserLectureProgress.objects.filter( course_id = id, user = request.user).count()
         total_duration_video_watched = UserLectureProgress.objects.filter( course_id = id, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
 
@@ -103,13 +112,21 @@ class DownloadChapterVideoReportView(APIView):
                             [Student]
                         )]
     def get(self, request, cid = None, format=None):
-        course_list = UserCourses.objects.filter(course_id = cid, paid = 1).count()
+        course_list = UserCourses.objects.filter(course_id = id, paid = 1, user = request.user).count()
         if course_list == 0:
             return error_response(message="Invalid Course ID", data = [], status_code=status.HTTP_400_BAD_REQUEST)
         
+        course_info = UserCourses.objects.filter(course_id = id, paid = 1,user = request.user).first()
         course = Course.objects.get(id = cid)
-        category = CourseChapters.objects.filter(course_id=cid)
-        serializer = CourseVideoReportSerializer(category, many=True, context={'user':request.user})
+        if course_info.trail == True:
+            chapters = TrailCourseChapters.objects.filter(trail_course__course_id = id).values_list("chapter", flat=True)
+            category = CourseChapters.objects.filter(course_id=id, chapter_id__in = chapters)
+            serializer = DashboardCourseChapterListingSerializer(category, many=True, context={'user':request.user})
+
+        else:
+            category = CourseChapters.objects.filter(course_id=cid)
+            serializer = CourseVideoReportSerializer(category, many=True, context={'user':request.user})
+
         total_video_watched = UserLectureProgress.objects.filter( course_id = cid, user = request.user).count()
         total_duration_video_watched = UserLectureProgress.objects.filter( course_id = cid, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
 
@@ -164,9 +181,21 @@ class DownloadChapterVideoReportCSVView(APIView):
                         )]
     def get(self, request, cid = None,  format=None):
         
-        course_subject = Course.objects.filter(id = cid).first()
-        category = CourseChapters.objects.filter(course_id=cid)
-        serializer = CourseVideoReportSerializer(category, many=True, context={'user':request.user})
+        course_list = UserCourses.objects.filter(course_id = id, paid = 1, user = request.user).count()
+        if course_list == 0:
+            return error_response(message="Invalid Course ID", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+        
+        course_info = UserCourses.objects.filter(course_id = id, paid = 1,user = request.user).first()
+        course = Course.objects.get(id = cid)
+        if course_info.trail == True:
+            chapters = TrailCourseChapters.objects.filter(trail_course__course_id = id).values_list("chapter", flat=True)
+            category = CourseChapters.objects.filter(course_id=id, chapter_id__in = chapters)
+            serializer = DashboardCourseChapterListingSerializer(category, many=True, context={'user':request.user})
+
+        else:
+            category = CourseChapters.objects.filter(course_id=cid)
+            serializer = CourseVideoReportSerializer(category, many=True, context={'user':request.user})
+            
         total_video_watched = UserLectureProgress.objects.filter( course_id = cid, user = request.user).count()
         total_duration_video_watched = UserLectureProgress.objects.filter( course_id = cid, user = request.user).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
 
@@ -293,7 +322,7 @@ class DownloadChapterVideoReportCSVView(APIView):
         try:
             timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
             report_name = "video_report"
-            gcs_folder_name = "media/mini_lms/reports"
+            gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
 
             bucket = client.get_bucket(settings.GS_BUCKET_NAME)
@@ -324,6 +353,25 @@ class WatchVideoView(APIView):
             return success_response(message="Success", data={}, status_code=status.HTTP_200_OK)
 
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class ViewBookSignedUrlView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def get(self, request,  cid , format=None):
+        chapter = ChapterLectures.objects.filter(id=cid).first()
+        if chapter is None:
+            raise ValidationError("Invalid Lecture ID!")
+        
+        bucket_name, object_name = parse_gcs_url(chapter.ebook.book_file.url)
+        expiration_time = datetime.now(timezone.utc) + timedelta(seconds=10)
+        bucket = client.get_bucket(settings.GS_BUCKET_NAME_2)
+        blob = bucket.blob(object_name)
+        
+        return success_response(message="Success", data=blob.generate_signed_url(expiration=expiration_time), status_code=status.HTTP_200_OK)
     
 
 class CreateNoteView(APIView):

@@ -14,4 +14,13 @@ urlpatterns = [
     path('get-student-access-lock-report-pdf/', GetStudentAccessLockReportPDFView.as_view(), name="get-student-access-lock-report-pdf"),
     path('get-student-access-lock-report-excel/', GetStudentAccessLockReportExcelView.as_view(), name="get-student-access-lock-report-excel"),
     path('update-student-account-status/<int:cid>', UpdateStudentAccountStatusView.as_view(), name="update-student-account-status"),
+
+
+    path('get-trail-user-listing/', TrailUserListingView.as_view(), name="trail-user-listing"),
+    path('get-trail-user-report-pdf/', ExportPDFTrailUserListingView.as_view(), name="get-trail-user-report-pdf"),
+    path('get-trail-user-report-excel/', ExportExcelTrailUserListingView.as_view(), name="get-trail-user-report-excel"),
+
+    path('get-student-registration-report-pdf/', GetStudentRegistrationReportPDFView.as_view(), name="get-student-registration-report-pdf"),
+    path('get-student-registration-report-excel/', GetStudentRegistrationReportExcelView.as_view(), name="get-student-registration-report-excel"),
+        
 ]

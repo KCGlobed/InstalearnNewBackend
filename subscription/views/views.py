@@ -163,7 +163,7 @@ class WebhookResponseView(APIView):
                 template = get_template('pdf/invoice.html')
                 html  = template.render(result)
                 result = BytesIO()
-                destination = settings.MEDIA_ROOT+ 'pdf_reports/'
+                destination = settings.MEDIA_ROOT+ 'reports/'
                 if not os.path.exists(destination):
                     os.makedirs(destination)
                 file = open(destination + str(ts) +'_invoice.pdf', "w+b")
