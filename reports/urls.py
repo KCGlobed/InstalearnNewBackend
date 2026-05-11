@@ -22,5 +22,12 @@ urlpatterns = [
 
     path('get-student-registration-report-pdf/', GetStudentRegistrationReportPDFView.as_view(), name="get-student-registration-report-pdf"),
     path('get-student-registration-report-excel/', GetStudentRegistrationReportExcelView.as_view(), name="get-student-registration-report-excel"),
-        
+
+    path('get-active-order-listing/', ActiveOrderListingView.as_view(), name="get-order-listing"),
+    path('get-active-report-pdf/', ExportPDFActiveOrderListingView.as_view(), name="get-active-report-pdf"),
+    path('get-active-report-excel/', ExportExcelActiveOrderListingView.as_view(), name="get-active-report-excel"),
+
+    path('get-contact-us-list/', GetContactUSView.as_view(), name="get-contact-us-list"),
+    path('get-contact-us-csv-report/', CSVContactUsReportView.as_view(), name="get-contact-us-csv-report"),
+    path('get-contact-us-pdf-report/', PDFContactUsReportView.as_view(), name="get-contact-us-pdf-report"),
 ]

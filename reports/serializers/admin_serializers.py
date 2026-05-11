@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from users.models import *
+from cms.models import *
 from subscription.models import *
 from mini_lms.utils import *
 from itertools import chain
@@ -123,6 +124,13 @@ class CourseListSerializer(serializers.ModelSerializer):
         fields = ["id",'name']
 
 
+class StudentRegistrationSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    class Meta:
+        model = User
+        fields = ["id",'first_name',"last_name","email","phone1","category","reference_id","student_type","is_active","created_at"]
+
+
 class OrderDetailAdminSerializer(serializers.ModelSerializer):
     ordered_courses = serializers.SerializerMethodField('get_ordered_courses')
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
@@ -130,14 +138,16 @@ class OrderDetailAdminSerializer(serializers.ModelSerializer):
     def get_ordered_courses(self, obj):
         category = Course.objects.filter(usercourses__user_id=obj.user.id).distinct()
         return CourseListSerializer(category, many=True).data
+
     
     class Meta:
         model = Order
-        fields = ["id","first_name","last_name","email","phone","start_date","next_due","end_date","subscription_status","created_at","ordered_courses","trail_mode"]
+        fields = ["id","first_name","last_name","email","phone","total_amount","start_date","next_due","end_date","subscription_type","subscription_status","created_at","ordered_courses","trail_mode"]
 
 
-class StudentRegistrationSerializer(serializers.ModelSerializer):
-    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+class ContactListSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(read_only=True, format="%Y-%m-%d")
+    
     class Meta:
-        model = User
-        fields = ["id",'first_name',"last_name","email","phone1","category","reference_id","student_type","is_active","created_at"]
+        model = ContactUs
+        fields = ['id',"first_name","last_name",'email',"phone","message","created_at"]

@@ -314,6 +314,22 @@ class GetStudentListingView(APIView):
         
         users_list = User.objects.filter(role = User.Student)
 
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            users_list = users_list.filter(first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            users_list = users_list.filter(last_name__icontains = last_name)
+
+        email = request.query_params.get('email')
+        if email:
+            users_list = users_list.filter(email__icontains = email)
+
+        phone1 = request.query_params.get('phone')
+        if phone1:
+            users_list = users_list.filter(phone1__icontains = phone1)
+
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         category = request.query_params.get('category')

@@ -23,4 +23,5 @@ urlpatterns = [
     path('get-homepage-faq-topic-list/', FaqTopicListView.as_view(), name="get-homepage-faq-topic-list"),
     path('get-homepage-faq-list/<int:cid>', FaqsListView.as_view(), name="get-homepage-faq-list"), 
 
+    path('contact-us/', ContactUsView.as_view(), name="contact-us"),
 ]   

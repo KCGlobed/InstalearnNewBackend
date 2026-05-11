@@ -36,3 +36,15 @@ class FaqsListView(APIView):
         category = FAQs.objects.filter(status = True, faq_topic_id = id)
         serializer = FaqListingSerializer(category, many=True)
         return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class ContactUsView(APIView):
+    renderer_classes = [CMSRenderer]
+    def post(self, request, format=None):
+
+        serializer = ContactUsSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Message sent Successfully", data=serializer.data, status_code=status.HTTP_200_OK)
+
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)

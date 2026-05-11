@@ -85,3 +85,21 @@ class GeneralSettings(models.Model):
         
     def __str__(self):
         return '%s' % self.id
+
+
+
+class ContactUs(models.Model):
+    first_name = models.CharField(max_length=255, null=True, blank=True)
+    last_name = models.CharField(max_length=255, null=True, blank=True)
+    email = models.CharField(max_length=255, null=True, blank=True)
+    phone = models.CharField(max_length=255, null=True, blank=True)
+    message = models.TextField(null=True, blank=True)
+    attach_file = models.FileField(upload_to='landing/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Contact Us'
+        verbose_name_plural = 'Contact Us'
+        
+    def __str__(self):
+        return '%s' % self.id
