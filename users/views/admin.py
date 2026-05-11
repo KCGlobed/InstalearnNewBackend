@@ -349,18 +349,18 @@ class GetStudentListingView(APIView):
 
         if category:
             category = category.split(',')
-            topics = topics.filter(user__category__in = category)
+            users_list = users_list.filter(user__category__in = category)
 
         student_type = request.query_params.get('student_type')
         if student_type:
             student_type = student_type.split(',')
-            topics = topics.filter(user__student_type__in =student_type)
+            users_list = users_list.filter(user__student_type__in =student_type)
 
         if start_date:
             try:
                 start_datetime = datetime.fromisoformat(start_date)
                 start_datetime_aware = timezone.make_aware(start_datetime, timezone.get_current_timezone())
-                topics = topics.filter(created_at__gte=start_datetime_aware)
+                users_list = users_list.filter(created_at__gte=start_datetime_aware)
             except ValueError:
                 raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
                 
@@ -368,7 +368,7 @@ class GetStudentListingView(APIView):
             try:
                 end_datetime = datetime.fromisoformat(end_date)
                 end_datetime_aware = timezone.make_aware(end_datetime, timezone.get_current_timezone())
-                topics = topics.filter(created_at__lte=end_datetime_aware)
+                users_list = users_list.filter(created_at__lte=end_datetime_aware)
             except ValueError:
                 raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
             
