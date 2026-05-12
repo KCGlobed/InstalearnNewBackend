@@ -1391,6 +1391,10 @@ class GetStudentRegistrationReportPDFView(APIView):
         if phone1:
             topics = topics.filter(phone1__icontains = phone1)
 
+        is_active = request.query_params.get('status')
+        if is_active:
+            topics = topics.filter(is_active = is_active)
+
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         category = request.query_params.get('category')
@@ -1510,7 +1514,11 @@ class GetStudentRegistrationReportExcelView(APIView):
         phone1 = request.query_params.get('phone')
         if phone1:
             topics = topics.filter(phone1__icontains = phone1)
-            
+
+        is_active = request.query_params.get('status')
+        if is_active:
+            topics = topics.filter(is_active = is_active)
+              
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         category = request.query_params.get('category')

@@ -330,6 +330,10 @@ class GetStudentListingView(APIView):
         if phone1:
             users_list = users_list.filter(phone1__icontains = phone1)
 
+        is_active = request.query_params.get('status')
+        if is_active:
+            users_list = users_list.filter(is_active = is_active)
+
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         category = request.query_params.get('category')
