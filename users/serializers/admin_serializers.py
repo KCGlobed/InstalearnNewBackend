@@ -291,10 +291,11 @@ class CreateStudentSerializer(serializers.ModelSerializer):
     country = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     dob = serializers.DateField(required=False)
     pincode = serializers.CharField(max_length = 8, required=False, allow_blank=True)
+    image = serializers.FileField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
 
     class Meta:
         model = User
-        fields = ['email','first_name','last_name',"address","city","state","country","pincode","dob","phone"]
+        fields = ['email','first_name','last_name',"address","city","state","country","pincode","dob","phone","image"]
         
 
     def validate(self, data):
@@ -321,6 +322,7 @@ class CreateStudentSerializer(serializers.ModelSerializer):
         user.city = validate_data.get('city')
         user.pincode = validate_data.get('pincode')
         user.dob = validate_data.get('dob')
+        user.image = validate_data.get('image')
         user.save()
 
         subject = 'Welcome to KCGLOBED!'
@@ -355,10 +357,11 @@ class UpdateStudentSerializer(serializers.ModelSerializer):
     country = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     pincode = serializers.CharField(max_length = 8, required=False, allow_blank=True)
     dob = serializers.DateField(required=True)
+    image = serializers.FileField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
 
     class Meta:
         model = User
-        fields = ['first_name','last_name',"address","city","state","country","pincode","dob","phone"]
+        fields = ['first_name','last_name',"address","city","state","country","pincode","dob","phone","image"]
         
 
     def validate(self, data):
@@ -376,6 +379,7 @@ class UpdateStudentSerializer(serializers.ModelSerializer):
         info.country = validate_data.get('country', info.country)
         info.pincode = validate_data.get('pincode', info.pincode)
         info.dob = validate_data.get('dob', info.dob)
+        info.image = validate_data.get('image', info.image)
         info.save()
         return info
 

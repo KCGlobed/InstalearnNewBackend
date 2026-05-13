@@ -3027,6 +3027,21 @@ class UpdateCourseAnnouncementView(APIView):
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
+class ViewCourseAnnouncementView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "get_course_announcements_listing",
+                            [SuperAdmin]
+                        )]
+    def get(self, request,  cid , format=None):
+        
+        course = CourseAnnouncements.objects.filter(id=cid).first()
+        if course is None:
+            return error_response(message="Invalid Announcement ID", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
+        serializer = ViewCourseAnnouncementSerializer(course)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+        
 
 class UpdateCourseAnnouncementStatusView(APIView):
     renderer_classes = [CourseRenderer]
@@ -3047,3 +3062,21 @@ class UpdateCourseAnnouncementStatusView(APIView):
             return success_response(message="Announcement Status Updated successfully", data={}, status_code=status.HTTP_200_OK)
             
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class DeleteCoursAnnouncementView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "delete_course_announcements",
+                            [SuperAdmin]
+                        )]
+    def delete(self, request, cid, format=None):
+        try:
+            course = CourseAnnouncements.objects.get(id = cid)
+            course.delete()
+            return success_response(message="Announcement deleted successfully", data={}, status_code=status.HTTP_200_OK)
+            
+        except CourseFaqs.DoesNotExist: 
+            return error_response(message="No Record Found!", data = {}, status_code=status.HTTP_400_BAD_REQUEST)

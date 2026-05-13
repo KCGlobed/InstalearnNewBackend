@@ -1961,3 +1961,31 @@ class UpdateAnnouncementStatusSerializer(serializers.ModelSerializer) :
         info.save()
 
         return info
+    
+
+
+class UserInfoserializer(serializers.ModelSerializer) :
+    class Meta:
+        model = User
+        fields = ['id',"first_name","last_name","image"]
+
+class AnnouncementCommentsserializer(serializers.ModelSerializer) :
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    user = UserInfoserializer(read_only=True)
+    class Meta:
+        model = AnnouncementComments
+        fields = ['id',"user","content","created_at"]
+
+class ViewCourseAnnouncementSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    course = CourseListSerializer(read_only=True)
+    instructor = InstructorInfoserializer(read_only=True)
+    announcement_comments = serializers.SerializerMethodField()
+
+    def get_announcement_comments(self, parent):
+        info = AnnouncementComments.objects.filter(announcement_id = parent.id).order_by("-id")
+        return AnnouncementCommentsserializer(info, many=True).data
+    
+    class Meta:
+        model = CourseAnnouncements
+        fields = ["id","title","description","status","created_at","course","instructor","announcement_comments"]
