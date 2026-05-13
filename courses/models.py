@@ -365,3 +365,37 @@ class TrailCourseChapters(models.Model):
         
     def __str__(self):
         return '%s' % self.id
+    
+
+
+class CourseAnnouncements(models.Model):
+    course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
+    instructor = models.ForeignKey('instructor.InstructorProfile', null=True, blank=True, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    status = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    
+    class Meta:
+        verbose_name = 'Course Announcements'
+        verbose_name_plural = 'Course Announcements'
+        
+    def __str__(self):
+        return f"{self.title} - {self.course.name}"
+    
+
+class AnnouncementComments(models.Model):
+    announcement = models.ForeignKey('CourseAnnouncements', null=True, blank=True, on_delete=models.CASCADE)
+    user = models.ForeignKey("users.User", null=True, blank=True, on_delete=models.CASCADE)
+    content = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Announcement Comments'
+        verbose_name_plural = 'Announcement Comments'
+
+    def __str__(self):
+        return '%s' % self.id

@@ -2915,3 +2915,135 @@ class AddCourseIncludesView(APIView):
             serializer.save()
             return success_response(message="Course Include uploaded successfully", data={}, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class GetCoursesAnnouncementsListingView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "get_course_announcements_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title']
+    ordering_fields = ['title', 'created_at', 'id', 'status',"course__name","instructor__text_1"] 
+    def get(self, request, format=None):
+        category = CourseAnnouncements.objects.all()
+        
+        title = request.query_params.get('title')
+        if title:
+            category = category.filter(title__icontains = title)
+
+        course_name = request.query_params.get('course')
+        if course_name:
+            category = category.filter(course__name__icontains = course_name)
+
+        instructor = request.query_params.get('instructor')
+        if instructor:
+            category = category.filter(instructor__text_1__icontains = instructor)
+
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                category = category.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                category = category.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        category = search_filter.filter_queryset(request, category, self)
+
+        ordering_filter = filters.OrderingFilter()
+        category = ordering_filter.filter_queryset(request, category, self)
+
+        if not category.ordered:
+            category = category.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(category, request, view=self)
+        serializer = CourseAnnouncementsListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+class CourseListingWithInstructorView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, format=None):
+        topic = Course.objects.filter(status=True).order_by("-id")
+        serializer = CourseListWithInstructorSerializer(topic, many=True)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+
+class AddCourseAnnouncementsView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_course_announcements",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        
+        serializer = CreateCourseAnnouncementsSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            serializer.save()
+            return success_response(message="Course Announcement created successfully", data={}, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class UpdateCourseAnnouncementView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_course_announcements",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        
+        course = CourseAnnouncements.objects.filter(id=cid).first()
+        if course is None:
+            return error_response(message="Invalid Announcement ID", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
+            
+        serializer = UpdateCourseAnnouncementSerializer(course, data = request.data, partial=True)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Announcement updated successfully", data={}, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class UpdateCourseAnnouncementStatusView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_course_announcements",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, id=None, format=None):
+        
+        course = CourseAnnouncements.objects.filter(id=id).first()
+        if course is None:
+            return error_response(message="Invalid Announcement ID", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = UpdateAnnouncementStatusSerializer(course ,data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Announcement Status Updated successfully", data={}, status_code=status.HTTP_200_OK)
+            
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)

@@ -1848,3 +1848,116 @@ class AddRelatedCoursesSerializer(serializers.ModelSerializer) :
             categ.save()
 
         return True
+    
+
+
+class CourseAnnouncementsListingSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    course = CourseListSerializer(read_only=True)
+    instructor = InstructorInfoserializer(read_only=True)
+    
+    class Meta:
+        model = CourseAnnouncements
+        fields = ["id","title","description","status","created_at","course","instructor"]
+
+
+
+class CourseListWithInstructorSerializer(serializers.ModelSerializer):
+    instructor_list = serializers.SerializerMethodField()
+    def get_instructor_list(self, parent):
+        category = CourseInstructors.objects.filter(course_id=parent.id).values_list("instructor",flat=True)
+        info = InstructorProfile.objects.filter(id__in = category)
+        return InstructorInfoserializer(info, many=True).data
+    
+    class Meta:
+        model = Course
+        fields = ["id",'name',"instructor_list"]
+
+
+class CreateCourseAnnouncementsSerializer(serializers.ModelSerializer) :
+    course_id = serializers.IntegerField(required=True)
+    instructor_id = serializers.IntegerField(required=True)
+    title = serializers.CharField(max_length=255, required=True)
+    description = serializers.CharField(required=True)
+    class Meta:
+        model = CourseAnnouncements
+        fields = ['title','description',"course_id","instructor_id"]
+        
+        
+    def validate(self, data):
+
+        return data
+
+    def create(self , validate_data):
+        course = Course.objects.filter(id=validate_data.get('course_id')).first()
+        instructor = InstructorProfile.objects.filter(id=validate_data.get('instructor_id')).first()
+
+        announcement_obj = CourseAnnouncements.objects.create(
+            title=validate_data.get('title'),
+            description=validate_data.get('description'),
+            course=course,
+            instructor=instructor
+        )
+
+        users_to_notify = UserNotificationSetting.objects.filter(
+            announcements=True,
+        )
+
+        notification_list = []
+        for setting in users_to_notify:
+            notification_list.append(
+                UserNotifications(
+                    title=f"New Announcement: {announcement_obj.title}",
+                    description=announcement_obj.description,
+                    course=announcement_obj.course,
+                    user=setting.user,     
+                    announcement=announcement_obj
+                )
+            )
+
+        if notification_list:
+            UserNotifications.objects.bulk_create(notification_list)
+
+        return announcement_obj
+    
+
+
+class UpdateCourseAnnouncementSerializer(serializers.ModelSerializer) :
+    course_id = serializers.IntegerField(required=True)
+    instructor_id = serializers.IntegerField(required=True)
+    title = serializers.CharField(max_length=255, required=True)
+    description = serializers.CharField(required=True)
+    class Meta:
+        model = CourseAnnouncements
+        fields = ['title','description',"course_id","instructor_id"]
+        
+    def validate(self, data):
+        return data
+
+
+    def update(self , category, validate_data):
+        category.title = validate_data.get('title', category.title)
+        category.description = validate_data.get('description', category.description)
+        category.course = Course.objects.filter(id = validate_data.get('course_id')).first()
+        category.instructor = InstructorProfile.objects.filter(id=validate_data.get('instructor_id')).first()
+        category.save()
+        return category
+    
+
+class UpdateAnnouncementStatusSerializer(serializers.ModelSerializer) :
+    status = serializers.BooleanField(required=True)
+
+    class Meta:
+        model = CourseAnnouncements
+        fields = ['status']
+        
+
+    def validate(self, data):
+        return data
+
+    def update(self, info, validate_data):
+
+        info.status = validate_data.get('status', info.status)
+        info.save()
+
+        return info

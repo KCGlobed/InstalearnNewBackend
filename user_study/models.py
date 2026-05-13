@@ -73,6 +73,7 @@ class UserNotificationSetting(models.Model):
 class UserNotifications(models.Model):
     user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
     course = models.ForeignKey('courses.Course', null=True, blank=True, on_delete=models.CASCADE)
+    announcement = models.ForeignKey('courses.CourseAnnouncements', null=True, blank=True, on_delete=models.CASCADE)
     title = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     status = models.BooleanField(default=False)

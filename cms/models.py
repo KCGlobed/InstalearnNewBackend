@@ -94,7 +94,6 @@ class ContactUs(models.Model):
     email = models.CharField(max_length=255, null=True, blank=True)
     phone = models.CharField(max_length=255, null=True, blank=True)
     message = models.TextField(null=True, blank=True)
-    attach_file = models.FileField(upload_to='landing/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:

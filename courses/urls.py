@@ -29,6 +29,13 @@ urlpatterns = [
     path('export-subcategory-listing-pdf/', ExportSubCategoryListingPDFView.as_view(), name="export-subcategory-listing-pdf"),
     path('export-subcategory-listing-excel/', ExportSubCategoryListingExcelView.as_view(), name="export-subcategory-listing-excel"),
 
+    path('get-courses-announcements/', GetCoursesAnnouncementsListingView.as_view(), name="get-courses-announcements"),
+    path('get-course-list-with-instructor/', CourseListingWithInstructorView.as_view(), name="get-course-list-with-instructor"),
+    path('add-course-announcements/', AddCourseAnnouncementsView.as_view(), name="add-courses-announcements"),
+    path('update-courses-announcements/<int:cid>', UpdateCourseAnnouncementView.as_view(), name="update-courses-announcements"),
+    path('update-announcements-status/<int:id>', UpdateCourseAnnouncementStatusView.as_view(), name="update-announcements-status"),
+    path('delete-course-announcements/<cid>', DeleteCoursFAQeView.as_view(), name="delete-course-announcements"),
+
     # Manage Chapters Books APIS
     path('get-book-listing/', ChapterBookListingView.as_view(), name="chapters-listing"),
     path('view-book-detail/<int:cid>', ViewChapterBookView.as_view(), name="view-book-detail"),

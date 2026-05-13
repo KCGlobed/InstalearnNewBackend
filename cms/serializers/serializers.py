@@ -14,10 +14,9 @@ class ContactUsSerializer(serializers.ModelSerializer) :
     email = serializers.CharField(max_length = 255, required=True)
     phone = serializers.CharField(max_length = 255, required=True)
     message = serializers.CharField(required=True)
-    attach_file = serializers.FileField(required=False)
     class Meta:
         model = ContactUs
-        fields = ['first_name','last_name','message','email','phone','attach_file']
+        fields = ['first_name','last_name','message','email','phone']
         
     def validate(self, data):
 
@@ -32,7 +31,6 @@ class ContactUsSerializer(serializers.ModelSerializer) :
             email = validate_data.get('email'),
             phone = validate_data.get('phone'),
             message = validate_data.get('message'),
-            attach_file = validate_data.get('attach_file'),
 
         )
         course_category.save()
@@ -55,8 +53,6 @@ class ContactUsSerializer(serializers.ModelSerializer) :
         email = EmailMessage(
             subject, html_message, email_from, recipient_list)
         
-        if validate_data.get('attach_file') is not None:
-            email.attach_file(course_category.attach_file.path)
         email.content_subtype = "html"
         email.send()
 
