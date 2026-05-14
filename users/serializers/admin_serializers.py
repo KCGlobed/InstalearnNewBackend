@@ -26,7 +26,7 @@ class StudentListingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id','first_name','last_name', 'email','phone1',"is_active","date_joined","reference_id","category","student_type"]
+        fields = ['id','first_name','last_name', 'email','phone1',"is_active","date_joined","reference_id","category","student_type","image"]
 
 
 class UserListingSerializer(serializers.ModelSerializer):

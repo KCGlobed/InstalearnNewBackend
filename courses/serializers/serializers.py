@@ -89,3 +89,27 @@ class GetLMStestimonialSerializer(serializers.ModelSerializer) :
     class Meta:
         model = Testimonials
         fields = ['id',"testimonials_type",'name',"image","college","qualification","content","featured"]
+
+
+class AddCommentInCourseAnnouncementsSerializer(serializers.ModelSerializer) :
+    announcement_id = serializers.IntegerField(required=True)
+    content = serializers.CharField(required=True)
+    class Meta:
+        model = AnnouncementComments
+        fields = ['announcement_id','content']
+        
+        
+    def validate(self, data):
+
+        return data
+
+    def create(self , validate_data):
+        announcement = CourseAnnouncements.objects.filter(id=validate_data.get('announcement_id')).first()
+        
+        announcement_obj = AnnouncementComments.objects.create(
+            content=validate_data.get('content'),
+            announcement=announcement,
+            user=self.context.get('user')
+        )
+        
+        return announcement_obj

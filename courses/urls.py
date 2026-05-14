@@ -153,4 +153,7 @@ urlpatterns = [
     path('course-detail/<int:id>', GetCourseDetailView.as_view(), name="course-detail"),
     path('search/dropdown/', SearchDropdownView.as_view(), name="search-dropdown"),
 
+    path('get-courses-announcements-listing/<int:cid>', GetCourseAnnouncementListingView.as_view(), name="get-courses-announcements-listing"),
+    path('add-comment-in-course-announcements/', AddCommentCourseAnnouncementsView.as_view(), name="add-comment-in-course-announcements"),
+
 ]

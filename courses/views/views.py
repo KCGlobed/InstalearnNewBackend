@@ -265,3 +265,27 @@ class GetLMSTestimonialView(APIView):
         content = Testimonials.objects.filter(status = 1)
         serializer = GetLMStestimonialSerializer(content, many=True)
         return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class GetCourseAnnouncementListingView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated]
+    def get(self, request,  cid , format=None):
+        course = CourseAnnouncements.objects.filter(course_id=cid).order_by("-id")
+        serializer = ViewCourseAnnouncementSerializer(course,many=True)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class AddCommentCourseAnnouncementsView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def post(self, request, format=None):
+        
+        serializer = AddCommentInCourseAnnouncementsSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            serializer.save()
+            return success_response(message="Comment Added in Announcement successfully", data={}, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
