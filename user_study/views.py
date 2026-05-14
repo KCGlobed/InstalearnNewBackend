@@ -35,7 +35,24 @@ class PurchasedCoursesView(APIView):
 
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
+
+class GetCourseProgressView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def get(self, request,id=None):
+        
+        course_list = UserCourses.objects.filter(course_id = id, paid = 1,user = request.user).count()
+        if course_list == 0:
+            return error_response(message="Invalid Course ID", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+        category = Course.objects.filter(id = id).first()
+        serializer = CourseProgressSerializer(category, context={'user':request.user})
+
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
+
 
 class DashboardCourseChaptersView(APIView):
     renderer_classes = [UserStudyRenderer]
