@@ -29,7 +29,9 @@ urlpatterns = [
     path('mylist/get-my-list/', GetMyListView.as_view(), name="get-my-list"),
     path('mylist/delete/<cid>', DeleteMyListView.as_view(), name="delete-my-list"),
     
-    path('review/add/', AddReviewAndRatingView.as_view(), name="add-review-rating"),
+    path('add-review-rating/', AddReviewAndRatingView.as_view(), name="add-review-rating"),
+    path('get-course-review/<int:cid>', GetCourseReviewView.as_view(), name="get-course-review"),
+    path('update-review-rating/<int:cid>', UpdateCourseReviewRatingView.as_view(), name="edit-note"),
     
     path('get-user-wishlist/', GetUserWishlistView.as_view(), name="user-wishlist"),
     path('check-course-wishlist/', CheckCourseInWishlistView.as_view(), name="check-course-wishlist"),

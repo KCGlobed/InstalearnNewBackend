@@ -569,11 +569,12 @@ class MyListCourseListingSerializer(serializers.ModelSerializer):
 
 
 class AddReviewAndReviewSerializer(serializers.ModelSerializer) :
-    review = serializers.CharField(max_length=255, required=True)
-    rating = serializers.IntegerField(required = True)
+    review = serializers.CharField(required=True)
+    rating = serializers.FloatField(required = True)
     course_id = serializers.IntegerField(required = True)
+
     class Meta:
-        model = MyList
+        model = CourseReviewRating
         fields = ['review','rating',"course_id"]
         
         
@@ -590,7 +591,6 @@ class AddReviewAndReviewSerializer(serializers.ModelSerializer) :
         categ = CourseReviewRating(
             user = self.context.get('user'),
             course = Course.objects.get(id = validate_data.get('course_id')),
-            name = self.context.get('user').first_name+" "+self.context.get('user').last_name,
             review = validate_data.get('review'),
             rating = validate_data.get('rating'),
             status = 0
@@ -599,6 +599,31 @@ class AddReviewAndReviewSerializer(serializers.ModelSerializer) :
 
         return True
     
+
+class UpdateCourseReviewSerializer(serializers.ModelSerializer) :
+    review = serializers.CharField(required=True)
+    rating = serializers.FloatField(required = True)
+    class Meta:
+        model = CourseReviewRating
+        fields = ['review',"rating"]
+        
+    def validate(self, data):
+        return data
+
+    def update(self , category, validate_data):    
+        
+        category.review = validate_data.get('review', category.review)
+        category.rating = validate_data.get('rating', category.rating)
+        category.approvad = 0
+        category.save()
+
+        return category
+    
+
+class GetUserCourseReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseReviewRating
+        fields = ['id',"review","rating"]
 
 
 class CourseInfoListSerializer(serializers.ModelSerializer):

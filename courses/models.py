@@ -217,11 +217,10 @@ class CourseFaqs(models.Model):
 class CourseReviewRating(models.Model):
     course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
     user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
-    name = models.CharField(max_length=255, null=True, blank=True)
-    image = models.CharField(max_length=255, null=True, blank=True)
     review = models.TextField(null=True, blank=True)
     rating = models.FloatField(blank=True, null=True, default=0)
     status = models.BooleanField(default=True)
+    approvad = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

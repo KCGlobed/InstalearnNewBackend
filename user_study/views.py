@@ -672,6 +672,35 @@ class AddReviewAndRatingView(APIView):
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
+class UpdateCourseReviewRatingView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def post(self, request, cid=None):
+        review = CourseReviewRating.objects.filter(id = cid).first()
+        serializer = UpdateCourseReviewSerializer(review, data = request.data, partial=True)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Review Updated successfully", data={}, status_code=status.HTTP_200_OK)
+
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class GetCourseReviewView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def get(self, request, cid=None):
+        notes = CourseReviewRating.objects.filter(user = request.user, course_id = cid).first()
+        if notes is None:
+            return success_response(message="Success", data={}, status_code=status.HTTP_200_OK)
+        serializer = GetUserCourseReviewSerializer(notes, context={'user':request.user})
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+
 
 class GetUserWishlistView(APIView):
     renderer_classes = [UserStudyRenderer]
