@@ -1505,7 +1505,7 @@ class TrailCourseChaptersSerializer(serializers.ModelSerializer):
     def get_chapter_detail(self, obj):
         print(obj)
         category = CourseChapters.objects.filter(id=obj.chapter.id).first()
-        return ChaptersSerializer(category).data
+        return SubjectChapterInfoSerializer(category).data
     
     class Meta:
         model = TrailCourseChapters

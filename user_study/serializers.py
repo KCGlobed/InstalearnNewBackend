@@ -13,7 +13,7 @@ from django.template import loader
 from datetime import datetime
 import random, string
 import razorpay
-from django.db.models import Sum
+from django.db.models import Sum, Avg, Count
 
 
 
@@ -616,6 +616,16 @@ class UpdateCourseReviewSerializer(serializers.ModelSerializer) :
         category.rating = validate_data.get('rating', category.rating)
         category.approvad = 0
         category.save()
+
+        stats = CourseReviewRating.objects.filter(course_id=category.course_id,approvad = 1).aggregate(
+                average_rating=Avg('rating'),
+                review_count=Count('id')
+            )
+        
+        Course.objects.filter(id=category.course_id).update(
+            average_rating=stats['average_rating'] or 0,
+            total_reviews=stats['review_count']
+        )
 
         return category
     
