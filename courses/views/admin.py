@@ -2825,6 +2825,11 @@ class TrailCourseListView(APIView):
     def get(self, request, format=None):
         
         chapters = TrailCourses.objects.all().order_by('-id')
+        
+        name = request.query_params.get('name')
+        if name:
+            chapters = chapters.filter(course__name__icontains = name)
+
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(chapters, request, view=self)
         serializer = TrailCoursesSerializer(page, many=True)
