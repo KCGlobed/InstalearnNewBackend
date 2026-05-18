@@ -593,7 +593,7 @@ class AddReviewAndReviewSerializer(serializers.ModelSerializer) :
             course = Course.objects.get(id = validate_data.get('course_id')),
             review = validate_data.get('review'),
             rating = validate_data.get('rating'),
-            status = 0
+            status = True
         )
         categ.save()
 
@@ -615,6 +615,7 @@ class UpdateCourseReviewSerializer(serializers.ModelSerializer) :
         category.review = validate_data.get('review', category.review)
         category.rating = validate_data.get('rating', category.rating)
         category.approved = 0
+        category.status = True
         category.save()
 
         stats = CourseReviewRating.objects.filter(course_id=category.course_id,approved = 1).aggregate(

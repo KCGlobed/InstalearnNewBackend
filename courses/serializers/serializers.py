@@ -113,3 +113,18 @@ class AddCommentInCourseAnnouncementsSerializer(serializers.ModelSerializer) :
         )
         
         return announcement_obj
+    
+
+
+class UserInfoserializer(serializers.ModelSerializer) :
+    class Meta:
+        model = User
+        fields = ['id',"first_name","last_name","image","email"]
+
+class CourseReviewRatingSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    user = UserInfoserializer(read_only=True)
+    
+    class Meta:
+        model = CourseReviewRating
+        fields = ["id","rating","review","status","approved","created_at","user"]

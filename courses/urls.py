@@ -155,6 +155,7 @@ urlpatterns = [
     path('search/filters-list/', SearchFiltersListView.as_view(), name="search-filters-listing"),
     path('search/course/', SearchCourseView.as_view(), name="search-course"),
     path('course-detail/<int:id>', GetCourseDetailView.as_view(), name="course-detail"),
+    path('course-review-rating/<int:id>', GetCourseReviewRatingView.as_view(), name="course-detail"),
     path('search/dropdown/', SearchDropdownView.as_view(), name="search-dropdown"),
 
     path('get-courses-announcements-listing/<int:cid>', GetCourseAnnouncementListingView.as_view(), name="get-courses-announcements-listing"),

@@ -114,6 +114,14 @@ class GetCourseDetailView(APIView):
         return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
     
 
+class GetCourseReviewRatingView(APIView):
+    renderer_classes = [CourseRenderer]
+    def get(self, request, id=None, format=None):
+        category = CourseReviewRating.objects.filter(course_id = id,approved = 1, status=True).order_by("-id")
+        serializer = CourseReviewRatingSerializer(category, many=True)
+        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
 
 class SearchDropdownView(APIView):
     renderer_classes = [CourseRenderer]

@@ -2822,11 +2822,11 @@ class TrailCourseListView(APIView):
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
-    search_fields = ['name']
+    search_fields = ['course__name']
     ordering_fields = ['course__name', 'created_at', 'id'] 
     def get(self, request, format=None):
         
-        chapters = TrailCourses.objects.all().order_by('-id')
+        chapters = TrailCourses.objects.select_related('course').all()
         
         name = request.query_params.get('name')
         if name:
