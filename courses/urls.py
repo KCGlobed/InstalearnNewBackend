@@ -37,6 +37,10 @@ urlpatterns = [
     path('update-announcements-status/<int:id>', UpdateCourseAnnouncementStatusView.as_view(), name="update-announcements-status"),
     path('delete-course-announcements/<cid>', DeleteCoursAnnouncementView.as_view(), name="delete-course-announcements"),
 
+
+    path('get-courses-review-rating/', GetCoursesReviewRatingListingView.as_view(), name="get-courses-review-rating"),
+    path('approve-reject-courses-review-rating/<int:id>', ApproveRejectCoursesReviewRatingView.as_view(), name="approve-reject-courses-review-rating"),
+
     # Manage Chapters Books APIS
     path('get-book-listing/', ChapterBookListingView.as_view(), name="chapters-listing"),
     path('view-book-detail/<int:cid>', ViewChapterBookView.as_view(), name="view-book-detail"),

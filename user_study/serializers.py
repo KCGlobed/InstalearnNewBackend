@@ -614,16 +614,16 @@ class UpdateCourseReviewSerializer(serializers.ModelSerializer) :
         
         category.review = validate_data.get('review', category.review)
         category.rating = validate_data.get('rating', category.rating)
-        category.approvad = 0
+        category.approved = 0
         category.save()
 
-        stats = CourseReviewRating.objects.filter(course_id=category.course_id,approvad = 1).aggregate(
-                average_rating=Avg('rating'),
+        stats = CourseReviewRating.objects.filter(course_id=category.course_id,approved = 1).aggregate(
+                avg_rating=Avg('rating'),
                 review_count=Count('id')
             )
         
         Course.objects.filter(id=category.course_id).update(
-            average_rating=stats['average_rating'] or 0,
+            avg_rating=stats['avg_rating'] or 0,
             total_reviews=stats['review_count']
         )
 

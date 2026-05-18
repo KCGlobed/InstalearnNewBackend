@@ -15,6 +15,7 @@ from google.oauth2 import service_account
 from google.cloud.video.transcoder_v1 import TranscoderServiceClient
 import calendar
 import time
+from django.db.models import Sum, Avg, Count
 from mini_lms.utils import *
 from datetime import datetime,timezone, timedelta
 
@@ -942,7 +943,7 @@ class CourseSearchSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id","name","level","duration","categories","tags","status","price","discount","objectives_summary","image","created_at","language","subtitle_language","original_price"]
+        fields = ["id","name","level","duration","categories","tags","status","price","discount","objectives_summary","image","created_at","language","subtitle_language","original_price","total_reviews","avg_rating"]
 
 
 class CourseChapterSerializer(serializers.ModelSerializer):
@@ -1967,7 +1968,7 @@ class UpdateAnnouncementStatusSerializer(serializers.ModelSerializer) :
 class UserInfoserializer(serializers.ModelSerializer) :
     class Meta:
         model = User
-        fields = ['id',"first_name","last_name","image"]
+        fields = ['id',"first_name","last_name","image","email"]
 
 class AnnouncementCommentsserializer(serializers.ModelSerializer) :
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
@@ -1989,3 +1990,43 @@ class ViewCourseAnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = CourseAnnouncements
         fields = ["id","title","description","status","created_at","course","instructor","announcement_comments"]
+
+
+class CourseReviewRatingListingSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    course = CourseListSerializer(read_only=True)
+    user = UserInfoserializer(read_only=True)
+    
+    class Meta:
+        model = CourseReviewRating
+        fields = ["id","rating","review","status","approved","created_at","course","user"]
+
+
+
+class ApproveRejectCoursesReviewRatingSerializer(serializers.ModelSerializer) :
+    approved = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = CourseReviewRating
+        fields = ['approved']
+        
+
+    def validate(self, data):
+        return data
+
+    def update(self, info, validate_data):
+
+        info.approved = validate_data.get('approved', info.approved)
+        info.save()
+
+        stats = CourseReviewRating.objects.filter(course_id=info.course_id,approved = 1).aggregate(
+                avg_rating=Avg('rating'),
+                review_count=Count('id')
+            )
+        
+        Course.objects.filter(id=info.course_id).update(
+            avg_rating=stats['avg_rating'] or 0,
+            total_reviews=stats['review_count']
+        )
+
+        return info

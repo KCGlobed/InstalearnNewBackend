@@ -2822,6 +2822,8 @@ class TrailCourseListView(APIView):
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
+    search_fields = ['name']
+    ordering_fields = ['course__name', 'created_at', 'id'] 
     def get(self, request, format=None):
         
         chapters = TrailCourses.objects.all().order_by('-id')
@@ -2829,6 +2831,15 @@ class TrailCourseListView(APIView):
         name = request.query_params.get('name')
         if name:
             chapters = chapters.filter(course__name__icontains = name)
+
+        search_filter = filters.SearchFilter()
+        chapters = search_filter.filter_queryset(request, chapters, self)
+
+        ordering_filter = filters.OrderingFilter()
+        chapters = ordering_filter.filter_queryset(request, chapters, self)
+
+        if not chapters.ordered:
+            chapters = chapters.order_by('-id')
 
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(chapters, request, view=self)
@@ -3083,5 +3094,94 @@ class DeleteCoursAnnouncementView(APIView):
             course.delete()
             return success_response(message="Announcement deleted successfully", data={}, status_code=status.HTTP_200_OK)
             
-        except CourseFaqs.DoesNotExist: 
+        except CourseAnnouncements.DoesNotExist: 
             return error_response(message="No Record Found!", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
+        
+
+
+class GetCoursesReviewRatingListingView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "get_course_review_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title']
+    ordering_fields = ['title', 'created_at', 'id', 'status',"course__name","user__first_name","user__last_name","approvad"] 
+    def get(self, request, format=None):
+        category = CourseReviewRating.objects.all().order_by("-id")
+        
+        course_name = request.query_params.get('course')
+        if course_name:
+            category = category.filter(course__name__icontains = course_name)
+
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            category = category.filter(user__first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            category = category.filter(user__last_name__icontains = last_name)
+
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
+
+        approved = request.query_params.get('approved')
+        if approved:
+            category = category.filter(approved=approved)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                category = category.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                category = category.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        category = search_filter.filter_queryset(request, category, self)
+
+        ordering_filter = filters.OrderingFilter()
+        category = ordering_filter.filter_queryset(request, category, self)
+
+        if not category.ordered:
+            category = category.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(category, request, view=self)
+        serializer = CourseReviewRatingListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+
+class ApproveRejectCoursesReviewRatingView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_course_review_rating",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, id=None, format=None):
+        
+        course = CourseReviewRating.objects.filter(id=id).first()
+        if course is None:
+            return error_response(message="Invalid Review ID", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = ApproveRejectCoursesReviewRatingSerializer(course ,data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Review Status Updated successfully", data={}, status_code=status.HTTP_200_OK)
+            
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
