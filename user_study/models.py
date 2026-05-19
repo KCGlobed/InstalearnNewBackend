@@ -126,3 +126,27 @@ class UserWishlist(models.Model):
     def __str__(self):
         return '%s' % self.id
     
+
+
+class Frequency(models.IntegerChoices):
+    Daily = 1, 'Daily'
+    Weekly = 2, 'Weekly'
+    Once = 3, 'Once'
+
+class LearningReminders(models.Model):
+    user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
+    course = models.ForeignKey('courses.Course', null=True, blank=True, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255, null=True, blank=True)
+    frequency = models.IntegerField(choices=Frequency.choices,default=Frequency.Daily)
+    time = models.TimeField(null=True, blank=True)
+    date = models.DateField(null=True, blank=True)
+    days = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True) 
+    
+    class Meta:
+        verbose_name = 'Learning Reminders'
+        verbose_name_plural = 'Learning Reminders'
+        
+    def __str__(self):
+        return '%s' % self.id

@@ -742,3 +742,99 @@ class ChangeNotificationSerializer(serializers.ModelSerializer):
     def create(self , validate_data):
         UserNotifications.objects.filter(id__in=validate_data.get('notification_id')).update(status=True)
         return True
+    
+
+class AllowEmptyDateField(serializers.DateField):
+    def to_internal_value(self, data):
+        # If the data is an empty string, treat it as None
+        if data == '':
+            return None
+        return super().to_internal_value(data)
+    
+class CreateRemindersSerializer(serializers.ModelSerializer) :
+    title = serializers.CharField(max_length=255, required=True)
+    course_id = serializers.IntegerField(required = True)
+    frequency = serializers.IntegerField(required=True)
+    time = serializers.TimeField(required=True)
+    date = AllowEmptyDateField(required=False, allow_null=True)
+    days = serializers.CharField(max_length=255, required=False, allow_blank=True)
+
+    class Meta:
+        model = LearningReminders
+        fields = ['course_id','title',"frequency","time","date","days"]
+        
+        
+    def validate(self, data):
+        category = data.get('course_id')
+        course_list = Course.objects.filter(id = category).count()
+        if course_list == 0:
+            raise serializers.ValidationError("Invalid Course ID: "+str(category))
+        
+        return data
+
+    def create(self , validate_data):
+
+        course_info = Course.objects.filter(id = validate_data.get('course_id')).first()
+
+        categ = LearningReminders(
+            course = course_info,
+            user = self.context.get('user'),
+            title = validate_data.get('title'),
+            frequency = validate_data.get('frequency'),
+            time = validate_data.get('time'),
+            date = validate_data.get('date'),
+            days = validate_data.get('days')
+        )
+        categ.save()
+
+        return categ
+    
+
+
+class UpdateReminderSerializer(serializers.ModelSerializer) :
+    reminder_id = serializers.IntegerField(required = True)
+    title = serializers.CharField(max_length=255, required=True)
+    course_id = serializers.IntegerField(required = True)
+    frequency = serializers.IntegerField(required=True)
+    time = serializers.TimeField(required=True)
+    date = AllowEmptyDateField(required=False, allow_null=True)
+    days = serializers.CharField(max_length=255, required=False, allow_blank=True)
+
+    class Meta:
+        model = LearningReminders
+        fields = ['course_id','title',"frequency","time","date","days","reminder_id"]
+        
+        
+    def validate(self, data):
+        category = data.get('reminder_id')
+        course_list = LearningReminders.objects.filter(id = category).count()
+        if course_list == 0:
+            raise serializers.ValidationError("Invalid Reminder ID")
+            
+        return data
+
+    def create(self , validate_data):
+
+        course_info = Course.objects.filter(id = validate_data.get('course_id')).first()
+        reminder = LearningReminders.objects.filter(id = validate_data.get('reminder_id')).first()
+        reminder.title = validate_data.get('title')
+        reminder.frequency = validate_data.get('frequency')
+        reminder.time = validate_data.get('time')
+        reminder.date = validate_data.get('date')
+        reminder.days = validate_data.get('days')
+        reminder.save()
+
+        return True
+    
+
+
+class RemindersListingSerializer(serializers.ModelSerializer):
+    course = serializers.SerializerMethodField()
+    
+    def get_course(self, parent):
+        info = Course.objects.get(id = parent.course.id)
+        return CourseSerializer(info).data
+
+    class Meta:
+        model = LearningReminders
+        fields = "__all__"

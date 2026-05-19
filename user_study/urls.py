@@ -45,4 +45,10 @@ urlpatterns = [
     path('get-all-notification/', GetAllNotificationView.as_view(), name="all-notification"),
     path('change-notification-status/', ChangeNotificationStatusView.as_view(), name="change-notification-status"),
 
+
+    path('reminder/create/', CreateRemindersView.as_view(), name="create-reminder"),
+    path('reminder/update/', UpdateRemindersView.as_view(), name="update-reminder"),
+    path('reminder/get-reminders/', GetRemindersView.as_view(), name="get-reminder"),
+    path('reminder/delete/<cid>', DeleteRemindersView.as_view(), name="delete-reminder"),
+
 ]
