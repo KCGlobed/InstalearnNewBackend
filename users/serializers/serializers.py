@@ -29,7 +29,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
         fields = ['email', 'password',"role",'device_type','device_id']
 
     def validate(self, data):
-        user = User.objects.filter(email =data.get('email').lower()).first()
+        user = User.objects.filter(email =data.get('email').lower(), email_verified = 1).first()
         if user is None:
             raise serializers.ValidationError("User Not found with this email!")
         

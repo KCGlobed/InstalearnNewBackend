@@ -226,6 +226,35 @@ class SearchCourseView(APIView):
     
 
 
+class CategoryCourseView(APIView):
+    renderer_classes = [CourseRenderer]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
+    ordering_fields = ['name', 'created_at', 'id',"total_reviews","avg_rating"]
+    def get(self, request, id=None):
+        queryset = Course.objects.filter(status=1)
+        cat_list = Categories.objects.filter(parent_id = id).values_list("id",flat =True)
+        cat_matches = CourseCategories.objects.filter(
+            category_id__in=cat_list
+        ).values_list('course', flat=True)
+        queryset = queryset.filter(id__in=cat_matches)
+
+        search_filter = filters.SearchFilter()
+        queryset = search_filter.filter_queryset(request, queryset, self)
+
+        ordering_filter = filters.OrderingFilter()
+        queryset = ordering_filter.filter_queryset(request, queryset, self)
+
+        # 4. Pagination and Serialization
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset, request, view=self)
+
+        serializer = CourseSearchSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+
 class SearchFiltersListView(APIView):
     renderer_classes = [CourseRenderer]
     def get(self, request, format=None):

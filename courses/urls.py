@@ -157,6 +157,7 @@ urlpatterns = [
     path('course-detail/<int:id>', GetCourseDetailView.as_view(), name="course-detail"),
     path('course-review-rating/<int:id>', GetCourseReviewRatingView.as_view(), name="course-detail"),
     path('search/dropdown/', SearchDropdownView.as_view(), name="search-dropdown"),
+    path('category/course/<int:id>', CategoryCourseView.as_view(), name="category-course"),
 
     path('get-courses-announcements-listing/<int:cid>', GetCourseAnnouncementListingView.as_view(), name="get-courses-announcements-listing"),
     path('add-comment-in-course-announcements/', AddCommentCourseAnnouncementsView.as_view(), name="add-comment-in-course-announcements"),
