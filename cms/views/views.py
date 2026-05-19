@@ -28,12 +28,12 @@ class FaqTopicListView(APIView):
 
 class FaqsListView(APIView):
     renderer_classes = [CMSRenderer]
-    def get(self, request, id=None):
-        topic = FAQTopic.objects.filter(id=id).first()
+    def get(self, request, cid=None):
+        topic = FAQTopic.objects.filter(id=cid).first()
         if topic is None:
             raise ValidationError("Invalid FAQ Topic ID!")
         
-        category = FAQs.objects.filter(status = True, faq_topic_id = id)
+        category = FAQs.objects.filter(status = True, faq_topic_id = cid)
         serializer = FaqListingSerializer(category, many=True)
         return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
     
