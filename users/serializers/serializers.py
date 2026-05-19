@@ -135,7 +135,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer) :
         if password != confirm_password:
             raise serializers.ValidationError("Password and confirm password doesn't match")
 
-        user = User.objects.filter(email =data.get('email').lower()).count()
+        user = User.objects.filter(email =data.get('email').lower(), email_verified = 1).count()
         if user > 0:
             raise serializers.ValidationError("User already registered with this email")
         
@@ -143,10 +143,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer) :
 
 
     def create(self , validate_data):
-        user = User.objects.create_user(**validate_data)
-        assign_role(user, "Student")
-        user.phone1 = validate_data.get('phone')
-        user.save()
+        user = User.objects.filter(email =validate_data.get('email').lower(), email_verified = 0).first()
+        if user is None:
+            user = User.objects.create_user(**validate_data)
+            assign_role(user, "Student")
+            user.phone1 = validate_data.get('phone')
+            user.save()
 
         digits = [i for i in range(0, 10)]
         random_str = ""
