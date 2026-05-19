@@ -15,7 +15,7 @@ from google.oauth2 import service_account
 from google.cloud.video.transcoder_v1 import TranscoderServiceClient
 import calendar
 import time
-from django.db.models import Sum, Avg, Count
+from django.db.models import Sum, Avg, Count, Q
 from mini_lms.utils import *
 from datetime import datetime,timezone, timedelta
 
@@ -1180,6 +1180,22 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     course_chapters = serializers.SerializerMethodField()
     enrolled_students = serializers.SerializerMethodField()
     course_includes = serializers.SerializerMethodField('get_course_includes')
+    course_review_counts = serializers.SerializerMethodField('get_course_review_counts')
+
+    def get_course_review_counts(self, obj):
+        return CourseReviewRating.objects.filter(
+            course_id=obj.id,
+            approved=1,
+            status=True 
+        ).aggregate(
+            total_reviews=Count('review'),
+            one_star_count=Count('review', filter=Q(rating__gte=0, rating__lte=1)),
+            two_star_count=Count('review', filter=Q(rating__gt=1, rating__lte=2)),
+            three_star_count=Count('review', filter=Q(rating__gt=2, rating__lte=3)),
+            four_star_count=Count('review', filter=Q(rating__gt=3, rating__lte=4)),
+            five_star_count=Count('review', filter=Q(rating__gt=4, rating__lte=5)),
+        )
+    
 
     def get_course_includes(self, obj):
         category = CourseIncludes.objects.filter(course_id=obj.id)
@@ -1222,7 +1238,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id",'name','description',"short_description","duration","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","status","created_at","instrcutor_info","sample_videos","avg_rating","total_reviews","created_by","level","related_course","course_chapters","language","subtitle_language","original_price","enrolled_students","course_includes"]
+        fields = ["id",'name','description',"short_description","duration","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","status","created_at","instrcutor_info","sample_videos","avg_rating","total_reviews","created_by","level","related_course","course_chapters","language","subtitle_language","original_price","enrolled_students","course_includes","course_review_counts"]
 
 
 
