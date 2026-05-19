@@ -79,7 +79,6 @@ class FaqTopicListingView(APIView):
 
 class FaqTopicListView(APIView):
     renderer_classes = [CMSRenderer]
-    permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         category = FAQTopic.objects.filter(status = True)
         serializer = FaqTopicListingSerializer(category, many=True)
