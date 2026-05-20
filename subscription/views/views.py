@@ -116,6 +116,9 @@ class WebhookResponseView(APIView):
             order_info = Order.objects.filter(razorpay_order_id = request.data['payload']['order']['entity']['id']).first()
 
             if order_info is not None:
+                subscription_payment = OrderSubscriptionPayments.objects.filter(order_id = order_info.id, isPaid = True).count()
+                if subscription_payment > 0:
+                    return success_response(message="Payment successfully received!", data={}, status_code=status.HTTP_200_OK)
 
                 payment = OrderSubscriptionPayments()
                 payment.order = order_info    

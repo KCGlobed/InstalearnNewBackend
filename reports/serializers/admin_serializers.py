@@ -151,3 +151,38 @@ class ContactListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactUs
         fields = ['id',"first_name","last_name",'email',"phone","message","created_at"]
+
+
+class CourseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ["id", "name"]
+
+class StudentPerformaceReportSerializer(serializers.ModelSerializer):
+    user_detail = StudentSerializer(source="user", read_only=True)
+    course_detail = CourseSerializer(source="course", read_only=True)
+    performance_report = serializers.SerializerMethodField('get_performance_report')
+
+    
+    def get_performance_report(self, obj):
+        user = obj.user
+        
+        no_of_videos_duration = obj.course.total_video_duration
+
+        watch_video_duration = UserLectureProgress.objects.filter(course_id = obj.course.id,user = user, video__status=True).aggregate(Sum('total_duration'))['total_duration__sum'] or 0
+
+        total_watch_video = UserLectureProgress.objects.filter(course_id = obj.course.id,user = user, video__status=True).count()
+
+        study_completed = 0
+        if watch_video_duration > 0 and no_of_videos_duration > 0:
+            study_completed =  watch_video_duration * 100 / no_of_videos_duration
+
+        return {
+            "watch_time":watch_video_duration,
+            "total_video_watched":total_watch_video,
+        }
+
+
+    class Meta:
+        model = UserCourses
+        fields = ["id",'user_detail',"course_detail","performance_report"]

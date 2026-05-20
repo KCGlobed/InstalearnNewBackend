@@ -30,4 +30,8 @@ urlpatterns = [
     path('get-contact-us-list/', GetContactUSView.as_view(), name="get-contact-us-list"),
     path('get-contact-us-csv-report/', CSVContactUsReportView.as_view(), name="get-contact-us-csv-report"),
     path('get-contact-us-pdf-report/', PDFContactUsReportView.as_view(), name="get-contact-us-pdf-report"),
+
+    path('get-student-performance-report/', GetStudentPerformanceReportView.as_view(), name="get-student-performance-report"),
+    path('get-student-performance-report-pdf/', GetStudentPerformanceReportPDFView.as_view(), name="get-student-performance-report-pdf"),
+    path('get-student-performance-report-excel/', GetStudentPerformanceReportExcelView.as_view(), name="get-student-performance-report-excel"),
 ]

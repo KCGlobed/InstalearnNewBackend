@@ -400,8 +400,8 @@ class CreateNoteView(APIView):
     def post(self, request, format=None):
         serializer = CreateNoteSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
-            serializer.save()
-            return success_response(message="Note created successfully", data={}, status_code=status.HTTP_200_OK)
+            user  = serializer.save()
+            return success_response(message="Note created successfully", data=GetUserNotesSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
 
 
@@ -417,7 +417,7 @@ class EditNoteView(APIView):
         serializer = EditNoteSerializer(course, data = request.data, partial=True)
         if serializer.is_valid(raise_exception = True):
             user  = serializer.save()
-            return success_response(message="Note Updated successfully", data={}, status_code=status.HTTP_200_OK)
+            return success_response(message="Note Updated successfully", data=GetUserNotesSerializer(user).data, status_code=status.HTTP_200_OK)
 
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
