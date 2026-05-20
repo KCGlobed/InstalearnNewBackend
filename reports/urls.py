@@ -34,4 +34,6 @@ urlpatterns = [
     path('get-student-performance-report/', GetStudentPerformanceReportView.as_view(), name="get-student-performance-report"),
     path('get-student-performance-report-pdf/', GetStudentPerformanceReportPDFView.as_view(), name="get-student-performance-report-pdf"),
     path('get-student-performance-report-excel/', GetStudentPerformanceReportExcelView.as_view(), name="get-student-performance-report-excel"),
+
+    
 ]

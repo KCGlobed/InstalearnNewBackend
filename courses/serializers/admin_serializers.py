@@ -566,7 +566,7 @@ class HomepageCategorySerializer(serializers.ModelSerializer):
     total_courses = serializers.SerializerMethodField('get_total_courses')
     
     def get_total_courses(self, obj):
-        return CourseCategories.objects.filter(category_id = obj.id).count()
+        return CourseCategories.objects.filter(category__parent_id = obj.id).count()
     
     class Meta:
         model = Categories
@@ -915,6 +915,11 @@ class CourseTagsInfoSerializer(serializers.ModelSerializer):
 class CourseSerializer(serializers.ModelSerializer):
     categories = serializers.SerializerMethodField('get_categories')
     tags = serializers.SerializerMethodField('get_tags')
+    enrolled_students = serializers.SerializerMethodField()
+
+    def get_enrolled_students(self, parent):
+        category = UserCourses.objects.filter(course_id=parent.id, paid = True).count()
+        return category
 
     def get_tags(self, obj):
         category = CourseTags.objects.filter(course_id = obj.id)
@@ -926,7 +931,7 @@ class CourseSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id","name","level","short_description","description","requirements","duration","categories","tags","status","price","discount","objectives_summary","feature_json","image","banner_image","created_at","language","subtitle_language","original_price"]
+        fields = ["id","name","level","short_description","description","requirements","duration","categories","tags","status","price","discount","objectives_summary","feature_json","image","banner_image","created_at","language","subtitle_language","original_price","enrolled_students"]
 
 
 class CourseSearchSerializer(serializers.ModelSerializer):
