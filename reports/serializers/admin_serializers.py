@@ -186,3 +186,56 @@ class StudentPerformaceReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserCourses
         fields = ["id",'user_detail',"course_detail","performance_report"]
+
+
+
+class StudentNoteListingSerializer(serializers.Serializer):
+    user = serializers.IntegerField(read_only=True)
+    course = serializers.IntegerField(read_only=True)
+    subject = serializers.IntegerField(read_only=True)
+    user__first_name = serializers.CharField(read_only=True)
+    user__last_name = serializers.CharField(read_only=True)
+    user__email = serializers.EmailField(read_only=True)
+    user__phone1 = serializers.EmailField(read_only=True)
+    user__category = serializers.EmailField(read_only=True)
+    user__reference_id = serializers.EmailField(read_only=True)
+    user__student_type = serializers.EmailField(read_only=True)
+    
+    # --- Course/Subject Names ---
+    course__name = serializers.CharField(read_only=True)
+
+    # --- The Count ---
+    notes_count = serializers.IntegerField()
+
+    class Meta:
+        model = Notes
+        fields = "__all__"
+
+
+
+class ChapterDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Chapters
+        fields = ["id",'name']
+
+class UserNoteDetailSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    chapter_lecture = serializers.SerializerMethodField()
+
+    def get_chapter_lecture(self, parent):
+        if parent.chapter_lecture is not None:
+            serializer = ChapterDetailSerializer(parent.chapter_lecture.chapter)
+            return serializer.data
+        return {}
+
+    class Meta:
+        model = Notes
+        fields = ['id',"chapter_lecture","duration","note_content","created_at"]
+
+
+class StudentLoginActivitySerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    
+    class Meta:
+        model = UserLoginActivity
+        fields = ["id","login_IP","device_id","country","device_type","created_at"]

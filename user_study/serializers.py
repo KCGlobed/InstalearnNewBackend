@@ -416,6 +416,7 @@ class WatchVideoSerializer(serializers.ModelSerializer) :
     def create(self, validate_data):
         
         category = ChapterLectures.objects.get(id=validate_data.get('lecture_id'))
+        print(category.chapter)
         course_chapter = CourseChapters.objects.get(course_id=validate_data.get('course_id'), chapter_id = category.chapter.id)
 
         watch_video_count = UserLectureProgress.objects.filter(video_id=category.video.id,user_id = self.context.get('user').id, course_chapters_id = course_chapter.id, course_id=validate_data.get('course_id'), chapter_lecture_id = category.id).count()

@@ -2685,3 +2685,425 @@ class GetStudentPerformanceReportExcelView(APIView):
             )
         finally:
             os.remove(pdf_path)
+
+
+
+class GetStudentNotesReportlistingView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "student_activity_report_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['user__first_name',"user__last_name","user__email"]
+    def get(self, request, uid=None):
+        
+        
+        topics = Notes.objects.all()
+        
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        category = request.query_params.get('category')
+        
+        course_name = request.query_params.get('course_name')
+        if course_name:
+            topics = topics.filter(course__name__icontains =course_name)
+
+        if category:
+            category = category.split(',')
+            topics = topics.filter(user__category__in = category)
+
+        student_type = request.query_params.get('student_type')
+        if student_type:
+            student_type = student_type.split(',')
+            topics = topics.filter(user__student_type__in =student_type)
+
+
+        reference_ids_param = request.query_params.get('reference_id')
+        if reference_ids_param:
+            search_terms = [
+                term.strip() for term in reference_ids_param.split(',') if term.strip()
+            ]
+            if search_terms:
+                q_objects = Q()
+                for term in search_terms:
+                    q_objects |= Q(**{'user__reference_id__icontains': term})
+                
+                topics = topics.filter(q_objects)
+
+
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                start_datetime_aware = timezone.make_aware(start_datetime, timezone.get_current_timezone())
+                topics = topics.filter(user__created_at__gte=start_datetime_aware)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                end_datetime_aware = timezone.make_aware(end_datetime, timezone.get_current_timezone())
+                topics = topics.filter(user__created_at__lte=end_datetime_aware)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        topics = search_filter.filter_queryset(request, topics, self)
+
+
+        topics = topics.values('user','user__first_name','user__last_name','user__email','user__category','user__phone1','user__reference_id', "user__student_type",'course','course__name').annotate(
+            notes_count=Count('id')
+        ).order_by('user', 'course')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(topics, request, view=self)
+        serializer = StudentNoteListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+
+class GetAdminNotesListingReportPDFView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "student_study_plan_report_pdf",
+                            [SuperAdmin]
+                        )]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['user__first_name',"user__last_name","user__email"]
+    def get(self, request):
+        
+        topics = Notes.objects.all()
+        
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        category = request.query_params.get('category')
+        
+        course_name = request.query_params.get('course_name')
+        if course_name:
+            topics = topics.filter(course__name__icontains =course_name)
+
+        if category:
+            category = category.split(',')
+            topics = topics.filter(user__category__in = category)
+
+        student_type = request.query_params.get('student_type')
+        if student_type:
+            student_type = student_type.split(',')
+            topics = topics.filter(user__student_type__in =student_type)
+
+
+        reference_ids_param = request.query_params.get('reference_id')
+        if reference_ids_param:
+            search_terms = [
+                term.strip() for term in reference_ids_param.split(',') if term.strip()
+            ]
+            if search_terms:
+                q_objects = Q()
+                for term in search_terms:
+                    q_objects |= Q(**{'user__reference_id__icontains': term})
+                
+                topics = topics.filter(q_objects)
+
+
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                start_datetime_aware = timezone.make_aware(start_datetime, timezone.get_current_timezone())
+                topics = topics.filter(user__created_at__gte=start_datetime_aware)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                end_datetime_aware = timezone.make_aware(end_datetime, timezone.get_current_timezone())
+                topics = topics.filter(user__created_at__lte=end_datetime_aware)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        topics = search_filter.filter_queryset(request, topics, self)
+
+
+        topics = topics.values('user','user__first_name','user__last_name','user__email','user__category','user__phone1','user__reference_id', "user__student_type",'course','course__name').annotate(
+            notes_count=Count('id')
+        ).order_by('user', 'course')
+
+        serializer = StudentNoteListingSerializer(topics, many=True)
+
+        data = {
+                    "user_data":serializer.data
+                }
+        
+
+        template = get_template('pdf/user_notes_listing_report.html')
+        html  = template.render(data)
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            html = html.encode('latin-1', 'replace').decode('latin-1')
+            pdf = pisa.CreatePDF(BytesIO(html.encode("ISO-8859-1")), dest=temp_file)
+
+            if pdf.err:
+                raise Exception("PDF generation error!")
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "notes_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+    
+
+
+class GetAdminNotesListingReportExcelView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "student_study_plan_report_excel",
+                            [SuperAdmin]
+                        )]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['user__first_name',"user__last_name","user__email"]
+    def get(self, request):
+        
+        topics = Notes.objects.all()
+        
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        category = request.query_params.get('category')
+        
+        course_name = request.query_params.get('course_name')
+        if course_name:
+            topics = topics.filter(course__name__icontains =course_name)
+
+        if category:
+            category = category.split(',')
+            topics = topics.filter(user__category__in = category)
+
+        student_type = request.query_params.get('student_type')
+        if student_type:
+            student_type = student_type.split(',')
+            topics = topics.filter(user__student_type__in =student_type)
+
+
+        reference_ids_param = request.query_params.get('reference_id')
+        if reference_ids_param:
+            search_terms = [
+                term.strip() for term in reference_ids_param.split(',') if term.strip()
+            ]
+            if search_terms:
+                q_objects = Q()
+                for term in search_terms:
+                    q_objects |= Q(**{'user__reference_id__icontains': term})
+                
+                topics = topics.filter(q_objects)
+
+
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                start_datetime_aware = timezone.make_aware(start_datetime, timezone.get_current_timezone())
+                topics = topics.filter(user__created_at__gte=start_datetime_aware)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                end_datetime_aware = timezone.make_aware(end_datetime, timezone.get_current_timezone())
+                topics = topics.filter(user__created_at__lte=end_datetime_aware)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        topics = search_filter.filter_queryset(request, topics, self)
+
+
+        topics = topics.values('user','user__first_name','user__last_name','user__email','user__category','user__phone1','user__reference_id', "user__student_type",'course','course__name').annotate(
+            notes_count=Count('id')
+        ).order_by('user', 'course')
+
+        serializer = StudentNoteListingSerializer(topics, many=True)
+
+        lis = []
+        
+        lis.append({
+                "name":"Notes Listing Report",
+                "last_name":"",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+
+        lis.append({
+                "name":"",
+                "last_name":"",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+        
+        lis.append({
+                "name":"",
+                "last_name":"",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+        
+        lis.append({
+                "name":"First Name",
+                "last_name":"Last Name",
+                "email":'Email',
+                "phone":'Phone',
+                "category":'Student Category',
+                "type":'Student Type',
+                "reference":'Reference ID',
+                "course":'Course Name',
+                "count":'No. of Notes'
+            })
+        
+        
+        for chapter_data in serializer.data:
+            lis.append({
+                "name":chapter_data['user__first_name'],
+                "last_name":chapter_data['user__last_name'],
+                "email":chapter_data['user__email'],
+                "phone":chapter_data['user__phone1'],
+                "category":chapter_data['user__category'],
+                "type":chapter_data['user__student_type'],
+                "reference":chapter_data['user__reference_id'],
+                "course":chapter_data['course__name'],
+                "count":chapter_data['notes_count']
+            })
+
+            
+            
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            df = pd.DataFrame.from_dict(lis)
+            df.to_excel(pdf_path, header=False, index=False)
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "notes_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+
+
+class GetAdminUserNoteReportView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "student_user_notes_report_pdf",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, uid, sid):
+        
+        user = User.objects.get(id = uid)
+        
+        user_notes = Notes.objects.filter(course_id=sid, user = user)
+        subject = Course.objects.filter(id=sid).first()
+        if subject is None:
+            raise ValidationError("Invalid Course ID")
+
+        serializer = UserNoteDetailSerializer(user_notes, many=True)
+
+
+        data = {
+                    "user_notes":serializer.data,
+                    'username':user.first_name +' '+user.last_name,
+                    'user_id':user.email,
+                    "course":subject.name
+                }
+        
+        return success_response(
+            message="Success",
+            data=data,
+            status_code=status.HTTP_200_OK
+        )
+    
+
+
+class GetStudentActivityReportView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "student_activity_report_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['user__first_name',"user__last_name","user__email"]
+    def get(self, request, uid=None):
+        
+        topics = UserLoginActivity.objects.filter(user_id = uid, user__role = User.Student)
+        
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                topics = topics.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                topics = topics.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        topics = search_filter.filter_queryset(request, topics, self)
+
+        if not topics.ordered:
+            topics = topics.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(topics, request, view=self)
+        serializer = StudentLoginActivitySerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
