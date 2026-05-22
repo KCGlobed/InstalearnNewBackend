@@ -2040,7 +2040,37 @@ class ApproveRejectCoursesReviewRatingSerializer(serializers.ModelSerializer) :
         info.approved = validate_data.get('approved', info.approved)
         info.save()
 
-        stats = CourseReviewRating.objects.filter(course_id=info.course_id,approved = 1).aggregate(
+        stats = CourseReviewRating.objects.filter(course_id=info.course_id,approved = 1, status = 1).aggregate(
+                avg_rating=Avg('rating'),
+                review_count=Count('id')
+            )
+        
+        Course.objects.filter(id=info.course_id).update(
+            avg_rating=stats['avg_rating'] or 0,
+            total_reviews=stats['review_count']
+        )
+
+        return info
+    
+
+
+class UpdateCoursesReviewRatingStatusSerializer(serializers.ModelSerializer) :
+    status = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = CourseReviewRating
+        fields = ['status']
+        
+
+    def validate(self, data):
+        return data
+
+    def update(self, info, validate_data):
+
+        info.status = validate_data.get('status', info.status)
+        info.save()
+
+        stats = CourseReviewRating.objects.filter(course_id=info.course_id,approved = 1, status = 1).aggregate(
                 avg_rating=Avg('rating'),
                 review_count=Count('id')
             )
