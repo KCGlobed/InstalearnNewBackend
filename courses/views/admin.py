@@ -3136,7 +3136,7 @@ class GetCoursesReviewRatingListingView(APIView):
     search_fields = ["course__name","user__first_name","user__last_name","approvad"]
     ordering_fields = ['created_at', 'id', 'status',"course__name","user__first_name","user__last_name","approvad"] 
     def get(self, request, format=None):
-        category = CourseReviewRating.objects.all().order_by("-id")
+        category = CourseReviewRating.objects.select_related('course',"user").all().order_by("-id")
         
         course_name = request.query_params.get('course')
         if course_name:

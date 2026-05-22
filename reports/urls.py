@@ -41,6 +41,6 @@ urlpatterns = [
     path('get-admin-notes-listing-report-excel/', GetAdminNotesListingReportExcelView.as_view(), name="get-admin-notes-listing-report-excel"),
 
     path('get-student-login-activity/<uid>', GetStudentActivityReportView.as_view(), name="get-student-login-activity"),
-    # path('get-student-login-activity-pdf-report/<uid>', GetStudentActivityPDFReportView.as_view(), name="get-student-login-activity-pdf-report"),
-    # path('get-student-login-activity-excel-report/<uid>', GetStudentActivityExcelReportView.as_view(), name="get-student-login-activity-excel-report"),
+    path('get-student-login-activity-pdf-report/<uid>', GetStudentActivityPDFReportView.as_view(), name="get-student-login-activity-pdf-report"),
+    path('get-student-login-activity-excel-report/<uid>', GetStudentActivityExcelReportView.as_view(), name="get-student-login-activity-excel-report"),
 ]

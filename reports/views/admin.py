@@ -2088,7 +2088,25 @@ class GetContactUSView(APIView):
     def get(self, request, format=None):
         
         plans = ContactUs.objects.all()
+
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            plans = plans.filter(first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            plans = plans.filter(last_name__icontains = last_name)
+
+
+        email = request.query_params.get('email')
+        if email:
+            plans = plans.filter(email__icontains = email)
+
         
+        phone = request.query_params.get('phone')
+        if phone:
+            plans = plans.filter(phone__icontains = phone)
+
         
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
@@ -2138,6 +2156,23 @@ class PDFContactUsReportView(APIView):
         
         plans = ContactUs.objects.all()
         
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            plans = plans.filter(first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            plans = plans.filter(last_name__icontains = last_name)
+
+
+        email = request.query_params.get('email')
+        if email:
+            plans = plans.filter(email__icontains = email)
+
+        
+        phone = request.query_params.get('phone')
+        if phone:
+            plans = plans.filter(phone__icontains = phone)
         
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
@@ -2221,6 +2256,23 @@ class CSVContactUsReportView(APIView):
         
         plans = ContactUs.objects.all()
         
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            plans = plans.filter(first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            plans = plans.filter(last_name__icontains = last_name)
+
+
+        email = request.query_params.get('email')
+        if email:
+            plans = plans.filter(email__icontains = email)
+
+        
+        phone = request.query_params.get('phone')
+        if phone:
+            plans = plans.filter(phone__icontains = phone)
         
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
@@ -2366,7 +2418,8 @@ class GetStudentPerformanceReportView(APIView):
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
-    search_fields = ['user__first_name','user__last_name',"user__email"]
+    search_fields = ['user__first_name','user__last_name',"user__email","course__name"]
+    ordering_fields = ['user__first_name','user__last_name',"user__email","course__name"]
     def get(self, request, format=None):
         
         topics = UserCourses.objects.only("id","user","course").select_related("user","course").filter(paid = True)
@@ -2378,6 +2431,19 @@ class GetStudentPerformanceReportView(APIView):
         course_name = request.query_params.get('course_name')
         if course_name:
             topics = topics.filter(course__name__icontains =course_name)
+
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            topics = topics.filter(user__first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            topics = topics.filter(user__last_name__icontains = last_name)
+
+
+        email = request.query_params.get('email')
+        if email:
+            topics = topics.filter(user__email__icontains = email)
 
         if category:
             category = category.split(',')
@@ -2439,11 +2505,25 @@ class GetStudentPerformanceReportPDFView(APIView):
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
-    search_fields = ['user__first_name','user__last_name',"user__email"]
+    search_fields = ['user__first_name','user__last_name',"user__email","course__name"]
+    ordering_fields = ['user__first_name','user__last_name',"user__email","course__name"]
     def get(self, request, format=None):
         
         topics = UserCourses.objects.only("id","user","course").select_related("user","course").filter(paid = True)
         
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            topics = topics.filter(user__first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            topics = topics.filter(user__last_name__icontains = last_name)
+
+
+        email = request.query_params.get('email')
+        if email:
+            topics = topics.filter(user__email__icontains = email)
+
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         category = request.query_params.get('category')
@@ -2543,11 +2623,25 @@ class GetStudentPerformanceReportExcelView(APIView):
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
-    search_fields = ['user__first_name','user__last_name',"user__email"]
+    search_fields = ['user__first_name','user__last_name',"user__email","course__name"]
+    ordering_fields = ['user__first_name','user__last_name',"user__email","course__name"]
     def get(self, request, format=None):
         
         topics = UserCourses.objects.only("id","user","course").select_related("user","course").filter(paid = True)
         
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            topics = topics.filter(user__first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            topics = topics.filter(user__last_name__icontains = last_name)
+
+
+        email = request.query_params.get('email')
+        if email:
+            topics = topics.filter(user__email__icontains = email)
+
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         category = request.query_params.get('category')
@@ -2697,12 +2791,26 @@ class GetStudentNotesReportlistingView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['user__first_name',"user__last_name","user__email"]
+    search_fields = ['user__first_name',"user__last_name","user__email","course__name"]
+    ordering_fields = ['user__first_name','user__last_name',"user__email","course__name"]
     def get(self, request, uid=None):
         
         
         topics = Notes.objects.all()
         
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            topics = topics.filter(user__first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            topics = topics.filter(user__last_name__icontains = last_name)
+
+
+        email = request.query_params.get('email')
+        if email:
+            topics = topics.filter(user__email__icontains = email)
+
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         category = request.query_params.get('category')
@@ -2773,11 +2881,25 @@ class GetAdminNotesListingReportPDFView(APIView):
                             [SuperAdmin]
                         )]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['user__first_name',"user__last_name","user__email"]
+    search_fields = ['user__first_name',"user__last_name","user__email","course__name"]
+    ordering_fields = ['user__first_name','user__last_name',"user__email","course__name"]
     def get(self, request):
         
         topics = Notes.objects.all()
         
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            topics = topics.filter(user__first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            topics = topics.filter(user__last_name__icontains = last_name)
+
+
+        email = request.query_params.get('email')
+        if email:
+            topics = topics.filter(user__email__icontains = email)
+
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         category = request.query_params.get('category')
@@ -2879,11 +3001,26 @@ class GetAdminNotesListingReportExcelView(APIView):
                             [SuperAdmin]
                         )]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['user__first_name',"user__last_name","user__email"]
+    search_fields = ['user__first_name',"user__last_name","user__email","course__name"]
+    ordering_fields = ['user__first_name','user__last_name',"user__email","course__name"]
     def get(self, request):
         
         topics = Notes.objects.all()
         
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            topics = topics.filter(user__first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            topics = topics.filter(user__last_name__icontains = last_name)
+
+
+        email = request.query_params.get('email')
+        if email:
+            topics = topics.filter(user__email__icontains = email)
+
+
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         category = request.query_params.get('category')
@@ -3076,10 +3213,24 @@ class GetStudentActivityReportView(APIView):
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['user__first_name',"user__last_name","user__email"]
+    ordering_fields = ['user__first_name','user__last_name',"user__email"]
     def get(self, request, uid=None):
         
         topics = UserLoginActivity.objects.filter(user_id = uid, user__role = User.Student)
         
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            topics = topics.filter(user__first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            topics = topics.filter(user__last_name__icontains = last_name)
+
+
+        email = request.query_params.get('email')
+        if email:
+            topics = topics.filter(user__email__icontains = email)
+
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
 
@@ -3107,3 +3258,260 @@ class GetStudentActivityReportView(APIView):
         page = paginator.paginate_queryset(topics, request, view=self)
         serializer = StudentLoginActivitySerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
+    
+
+
+class GetStudentActivityPDFReportView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "student_activity_pdf_report",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['user__first_name',"user__last_name","user__email"]
+    ordering_fields = ['user__first_name','user__last_name',"user__email"]
+    def get(self, request, uid=None):
+        
+        user = User.objects.filter(id = uid).first()
+        topics = UserLoginActivity.objects.filter(user_id = uid, user__role = User.Student)
+        
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            topics = topics.filter(user__first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            topics = topics.filter(user__last_name__icontains = last_name)
+
+
+        email = request.query_params.get('email')
+        if email:
+            topics = topics.filter(user__email__icontains = email)
+            
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                topics = topics.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                topics = topics.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        topics = search_filter.filter_queryset(request, topics, self)
+
+        if not topics.ordered:
+            topics = topics.order_by('-id')
+
+
+        serializer = StudentLoginActivitySerializer(topics, many=True)
+
+        data = {
+                    "user_data":serializer.data,
+                    "user":user
+                }
+        
+
+        template = get_template('pdf/user_login_activity_report.html')
+        html  = template.render(data)
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            html = html.encode('latin-1', 'replace').decode('latin-1')
+            pdf = pisa.CreatePDF(BytesIO(html.encode("ISO-8859-1")), dest=temp_file)
+
+            if pdf.err:
+                raise Exception("PDF generation error!")
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "student_login_activity_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+    
+
+
+class GetStudentActivityExcelReportView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "student_activity_excel_report",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['user__first_name',"user__last_name","user__email"]
+    ordering_fields = ['user__first_name','user__last_name',"user__email"]
+    def get(self, request, uid=None):
+        
+        user = User.objects.filter(id = uid).first()
+        topics = UserLoginActivity.objects.filter(user_id = uid, user__role = User.Student)
+        
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            topics = topics.filter(user__first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            topics = topics.filter(user__last_name__icontains = last_name)
+
+
+        email = request.query_params.get('email')
+        if email:
+            topics = topics.filter(user__email__icontains = email)
+            
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                topics = topics.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                topics = topics.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        topics = search_filter.filter_queryset(request, topics, self)
+
+        if not topics.ordered:
+            topics = topics.order_by('-id')
+
+
+        serializer = StudentLoginActivitySerializer(topics, many=True)
+
+        data = {
+                    "user_data":serializer.data,
+                    "user":user
+                }
+        
+        
+        lis = []
+        
+        lis.append({
+                "name":"Student Login Activty Report",
+                "last_name":"",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+
+        lis.append({
+                "name":"",
+                "last_name":"",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+        
+        lis.append({
+                "name":"Name",
+                "last_name":user.first_name +' '+user.last_name,
+                "email":'',
+                "phone":'Email',
+                "category":user.email,
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+        
+        lis.append({
+                "name":"",
+                "last_name":"",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+        
+        lis.append({
+                "name":"Login IP",
+                "last_name":"Device ID",
+                "email":'Country',
+                "phone":'Device Type',
+                "category":'Created At',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+        
+        
+        for chapter_data in serializer.data:
+            lis.append({
+                "name":chapter_data['login_IP'],
+                "last_name":chapter_data['device_id'],
+                "email":chapter_data['country'],
+                "phone":chapter_data['device_type'],
+                "category":chapter_data['created_at'],
+                "type":"",
+                "reference":"",
+                "course":"",
+                "count":""
+            })
+
+            
+            
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            df = pd.DataFrame.from_dict(lis)
+            df.to_excel(pdf_path, header=False, index=False)
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "student_login_activity_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
