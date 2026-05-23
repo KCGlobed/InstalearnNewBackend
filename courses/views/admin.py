@@ -3133,8 +3133,8 @@ class GetCoursesReviewRatingListingView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ["course__name","user__first_name","user__last_name","approvad"]
-    ordering_fields = ['created_at', 'id', 'status',"course__name","user__first_name","user__last_name","approvad"] 
+    search_fields = ["course__name","user__first_name","user__last_name","approved"]
+    ordering_fields = ['created_at', 'id', 'status',"course__name","user__first_name","user__last_name","approved"] 
     def get(self, request, format=None):
         category = CourseReviewRating.objects.select_related('course',"user").all().order_by("-id")
         
