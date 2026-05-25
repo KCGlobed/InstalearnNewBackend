@@ -1659,8 +1659,8 @@ class ActiveOrderListingView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['user__first_name', "user__last_name","user__email"]
-    ordering_fields = ['user__first_name', "user__last_name","user__email",'created_at', 'id'] 
+    search_fields = ['first_name', "last_name","email"]
+    ordering_fields = ['first_name', "last_name","email",'created_at', 'id'] 
     def get(self, request, format=None):
         
         plans = Order.objects.filter(subscription_status__in = [OrderStatus.Active , OrderStatus.Expired])
@@ -1752,16 +1752,25 @@ class ExportPDFActiveOrderListingView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['first_name', "last_name","email","plan__plan_name"]
+    search_fields = ['first_name', "last_name","email"]
     ordering_fields = ['first_name', "last_name","email",'created_at', 'id'] 
     def get(self, request, format=None):
         
         plans = Order.objects.filter(subscription_status__in = [OrderStatus.Active , OrderStatus.Expired])
         
-        course_id = request.query_params.get('course_id')
-        if course_id:
-            course_id = course_id.split(',')
-            plans = plans.filter(usercourses__course_id__in =course_id)
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            plans = plans.filter(first_name__icontains =first_name)
+
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            plans = plans.filter(last_name__icontains =last_name)
+
+        
+        email = request.query_params.get('email')
+        if email:
+            plans = plans.filter(email__icontains =email)
 
         category_id = request.query_params.get('category')
         if category_id:
@@ -1888,10 +1897,19 @@ class ExportExcelActiveOrderListingView(APIView):
         
         plans = Order.objects.filter(subscription_status__in = [OrderStatus.Active , OrderStatus.Expired])
         
-        course_id = request.query_params.get('course_id')
-        if course_id:
-            course_id = course_id.split(',')
-            plans = plans.filter(usercourses__course_id__in =course_id)
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            plans = plans.filter(first_name__icontains =first_name)
+
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            plans = plans.filter(last_name__icontains =last_name)
+
+        
+        email = request.query_params.get('email')
+        if email:
+            plans = plans.filter(email__icontains =email)
 
         category_id = request.query_params.get('category')
         if category_id:
