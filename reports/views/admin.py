@@ -1659,17 +1659,12 @@ class ActiveOrderListingView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['first_name', "last_name","email"]
-    ordering_fields = ['first_name', "last_name","email",'created_at', 'id'] 
+    search_fields = ['user__first_name', "user__last_name","user__email"]
+    ordering_fields = ['user__first_name', "user__last_name","user__email",'created_at', 'id'] 
     def get(self, request, format=None):
         
         plans = Order.objects.filter(subscription_status__in = [OrderStatus.Active , OrderStatus.Expired])
         
-        course_name = request.query_params.get('course_name')
-        if course_name:
-            plans = plans.filter(usercourses__course__name__icontains =course_name)
-
-
         first_name = request.query_params.get('first_name')
         if first_name:
             plans = plans.filter(user__first_name__icontains =first_name)
