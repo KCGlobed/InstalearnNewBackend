@@ -2968,10 +2968,10 @@ class GetCoursesAnnouncementsListingView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['title']
+    search_fields = ['title',"course__name"]
     ordering_fields = ['title', 'created_at', 'id', 'status',"course__name","instructor__text_1"] 
     def get(self, request, format=None):
-        category = CourseAnnouncements.objects.all()
+        category = CourseAnnouncements.objects.select_related('course').all()
         
         title = request.query_params.get('title')
         if title:

@@ -266,9 +266,6 @@ class GetAdminDashboardCountersView(APIView):
 
         user_counts = User.objects.aggregate(
             total_students=Count('id', filter=Q(role=User.Student)),
-            total_corporate_admin=Count('id', filter=Q(role=User.CorporateAdmin)),
-            total_atp_admins=Count('id', filter=Q(role=User.ATPAdmin)),
-            total_university_admins=Count('id', filter=Q(role=User.UniversityAdmin)),
             new_students_current_month=Count('id', filter=Q(
                 role=User.Student,
                 date_joined__year=current_year,
@@ -277,27 +274,22 @@ class GetAdminDashboardCountersView(APIView):
         )
 
         subscription_counts = Order.objects.aggregate(
-            total_active_subscriptions=Count('id', filter=Q(subscription_status=OrderStatus.Active)),
-
-            expiring_subscription_current_month=Count('id', filter=Q(
-                subscription_status=OrderStatus.Active,
-                end_date__year=current_year,
-                end_date__month=current_month
-            ))
+            total_active_orders=Count('id', filter=Q(subscription_status=OrderStatus.Active)),
         )
         
         total_duration = Videos.objects.filter(is_completed=True).aggregate(
             total_duration=Sum('video_duration')
         )['total_duration']
+
+        total_duration_watched = UserLectureProgress.objects.all().aggregate(
+            total_duration=Sum('total_duration')
+        )['total_duration']
         
         info = {
             "total_students": user_counts['total_students'],
-            "total_corporate_admin": user_counts['total_corporate_admin'],
-            "total_atp_admins": user_counts['total_atp_admins'],
-            "total_university_admins": user_counts['total_university_admins'],
+            "total_duration_watched": total_duration_watched['total_duration'],
             "total_duration": total_duration,
-            "total_active_subscriptions" : subscription_counts['total_active_subscriptions'],
-            "expiring_subscription_current_month" : subscription_counts['expiring_subscription_current_month'],
+            "total_active_orders" : subscription_counts['total_active_orders'],
             "new_students_current_month":user_counts['new_students_current_month']
         }
 
