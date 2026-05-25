@@ -102,7 +102,7 @@ class UserLoginView(APIView):
                 user.locked_until = None
                 user.save()
 
-                return success_response(message="Login Success", data={'token': token, 'user_role': serializer.data.get('role'), "user_id":user.id,"email":user.email,"first_name":user.first_name,"last_name":user.last_name,"phone":user.phone1}, status_code=status.HTTP_200_OK)
+                return success_response(message="Login Success", data={'token': token, 'user_role': serializer.data.get('role'), "user_id":user.id,"email":user.email,"first_name":user.first_name,"last_name":user.last_name,"phone":user.phone1,"image":user.image}, status_code=status.HTTP_200_OK)
             else:
                 return error_response(message="failed", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
         
@@ -122,7 +122,7 @@ class UserSocialLoginView(APIView):
                 if user.is_locked():
                     return error_response(message=f"Account locked. Please Contact to support.", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
                 
-                setting = Settings.objects.all().first()
+                setting = GeneralSettings.objects.all().first()
                 if setting.allow_device_restriction:
                     
                     if not check_devices_login(user, serializer.data.get('device_type'), serializer.data.get('device_id'), setting):
@@ -184,7 +184,7 @@ class UserSocialLoginView(APIView):
                 user.locked_until = None
                 user.save()
 
-                return success_response(message="Login Success", data={'token': token, 'user_role': get_user_role(user), "user_id":user.id,"email":user.email,"first_name":user.first_name,"last_name":user.last_name,"phone":user.phone1}, status_code=status.HTTP_200_OK)
+                return success_response(message="Login Success", data={'token': token, 'user_role': get_user_role(user), "user_id":user.id,"email":user.email,"first_name":user.first_name,"last_name":user.last_name,"phone":user.phone1,"image":user.image}, status_code=status.HTTP_200_OK)
             else:
                 return error_response(message="failed", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
         
@@ -215,7 +215,7 @@ class UserVerifyOTPView(APIView):
                 user=user,
                 token=token['access'],
             )
-            return success_response(message="Email Verified Successfully!", data={'token':token, 'user_role': get_user_role(user), "user_id":user.id,"email":user.email,"first_name":user.first_name,"last_name":user.last_name,"phone":user.phone1}, status_code=status.HTTP_200_OK)
+            return success_response(message="Email Verified Successfully!", data={'token':token, 'user_role': get_user_role(user), "user_id":user.id,"email":user.email,"first_name":user.first_name,"last_name":user.last_name,"phone":user.phone1,"image":user.image}, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
             
     
