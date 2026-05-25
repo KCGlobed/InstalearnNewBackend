@@ -827,8 +827,8 @@ class CreateRemindersView(APIView):
         
         serializer = CreateRemindersSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
-            serializer.save()
-            return success_response(message="Reminder Created Successfully!", data={}, status_code=status.HTTP_200_OK)
+            info = serializer.save()
+            return success_response(message="Reminder Created Successfully!", data=RemindersListingSerializer(info).data, status_code=status.HTTP_200_OK)
 
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
@@ -843,8 +843,8 @@ class UpdateRemindersView(APIView):
         
         serializer = UpdateReminderSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
-            serializer.save()
-            return success_response(message="Reminder Updated Successfully!", data={}, status_code=status.HTTP_200_OK)
+            info = serializer.save()
+            return success_response(message="Reminder Updated Successfully!", data=RemindersListingSerializer(info).data, status_code=status.HTTP_200_OK)
 
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
