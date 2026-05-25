@@ -1667,17 +1667,17 @@ class ActiveOrderListingView(APIView):
         
         first_name = request.query_params.get('first_name')
         if first_name:
-            plans = plans.filter(user__first_name__icontains =first_name)
+            plans = plans.filter(first_name__icontains =first_name)
 
 
         last_name = request.query_params.get('last_name')
         if last_name:
-            plans = plans.filter(user__last_name__icontains =last_name)
+            plans = plans.filter(last_name__icontains =last_name)
 
         
         email = request.query_params.get('email')
         if email:
-            plans = plans.filter(user__email__icontains =email)
+            plans = plans.filter(email__icontains =email)
 
         category_id = request.query_params.get('category')
         if category_id:
