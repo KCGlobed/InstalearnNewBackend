@@ -1665,10 +1665,24 @@ class ActiveOrderListingView(APIView):
         
         plans = Order.objects.filter(subscription_status__in = [OrderStatus.Active , OrderStatus.Expired])
         
-        course_id = request.query_params.get('course_id')
-        if course_id:
-            course_id = course_id.split(',')
-            plans = plans.filter(usercourses__course_id__in =course_id)
+        course_name = request.query_params.get('course_name')
+        if course_name:
+            plans = plans.filter(usercourses__course__name__icontains =course_name)
+
+
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            plans = plans.filter(user__first_name__icontains =first_name)
+
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            plans = plans.filter(user__last_name__icontains =last_name)
+
+        
+        email = request.query_params.get('email')
+        if email:
+            plans = plans.filter(user__email__icontains =email)
 
         category_id = request.query_params.get('category')
         if category_id:
