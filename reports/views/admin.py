@@ -1716,14 +1716,14 @@ class ActiveOrderListingView(APIView):
         if start_date:
             try:
                 start_datetime = datetime.fromisoformat(start_date)
-                plans = plans.filter(start_date__gte=start_datetime)
+                plans = plans.filter(created_at__gte=start_datetime)
             except ValueError:
                 raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
                 
         if end_date:
             try:
                 end_datetime = datetime.fromisoformat(end_date)
-                plans = plans.filter(end_date__lte=end_datetime)
+                plans = plans.filter(created_at__lte=end_datetime)
             except ValueError:
                 raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
 
@@ -1821,14 +1821,14 @@ class ExportPDFActiveOrderListingView(APIView):
         if start_date:
             try:
                 start_datetime = datetime.fromisoformat(start_date)
-                plans = plans.filter(start_date__gte=start_datetime)
+                plans = plans.filter(created_at__gte=start_datetime)
             except ValueError:
                 raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
                 
         if end_date:
             try:
                 end_datetime = datetime.fromisoformat(end_date)
-                plans = plans.filter(end_date__lte=end_datetime)
+                plans = plans.filter(created_at__lte=end_datetime)
             except ValueError:
                 raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
 
@@ -1961,14 +1961,14 @@ class ExportExcelActiveOrderListingView(APIView):
         if start_date:
             try:
                 start_datetime = datetime.fromisoformat(start_date)
-                plans = plans.filter(start_date__gte=start_datetime)
+                plans = plans.filter(created_at__gte=start_datetime)
             except ValueError:
                 raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
                 
         if end_date:
             try:
                 end_datetime = datetime.fromisoformat(end_date)
-                plans = plans.filter(end_date__lte=end_datetime)
+                plans = plans.filter(created_at__lte=end_datetime)
             except ValueError:
                 raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
 
