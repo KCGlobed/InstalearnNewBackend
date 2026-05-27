@@ -45,4 +45,6 @@ urlpatterns = [
     path('get-student-login-activity-excel-report/<uid>', GetStudentActivityExcelReportView.as_view(), name="get-student-login-activity-excel-report"),
 
     path('admin-dashboard-counters/', GetAdminDashboardCountersView.as_view(), name="admin-dashboard-counters"),
+    path('admin-dashboard-students-graph/<str:interval>', GetAdminDashboardStudentGraphsView.as_view(), name="admin-dashboard-students-graph"),
+    path('admin-dashboard-students-video-lecture-graph/<str:interval>', GetAdminDashboardStudentVideoLectureGraphsView.as_view(), name="admin-dashboard-students-video-lecture-graph"),
 ]

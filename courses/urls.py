@@ -122,13 +122,6 @@ urlpatterns = [
     path('get-course-list/', CourseListView.as_view(), name="get-course-list"),
     path('get-course-chapter-list/<cid>', CourseChapterListView.as_view(), name="get-course-chapter-list"),
     
-    path('get-topics-history/<int:tid>', GetTopicHistoryView.as_view(), name="get-history-topics"),
-    path('get-chapters-history/<int:tid>', GetChaptersHistoryView.as_view(), name="get-history-chapters"),
-    path('get-course-history/<int:tid>', GetCourseHistoryView.as_view(), name="get-history-course"),
-    path('get-ebook-history/<int:tid>', GetEbookHistoryView.as_view(), name="get-history-ebook"),
-    path('get-video-history/<int:tid>', GetVideoHistoryView.as_view(), name="get-history-video"),
-    
-
     path('get-courses-faqs/<int:cid>', GetCoursesFAQsListingView.as_view(), name="get-courses-faqs"),
     path('add-course-faq/', AddCourseFAQView.as_view(), name="add-courses-faq"),
     path('update-courses-faqs/<int:cid>', UpdateCourseFAQView.as_view(), name="update-courses-faqs"),

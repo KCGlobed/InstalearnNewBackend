@@ -124,7 +124,7 @@ class UpdateFaqTopicStatusView(APIView):
     renderer_classes = [CMSRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_faq_topic",
+                              "update_faq_topic_status",
                             [SuperAdmin]
                         )]
     def post(self, request,  cid , format=None):
@@ -262,7 +262,7 @@ class UpdateFaqStatusView(APIView):
     renderer_classes = [CMSRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_faq_topic",
+                              "update_faq_status",
                             [SuperAdmin]
                         )]
     def post(self, request,  cid , format=None):
@@ -281,7 +281,7 @@ class DeleteFaqView(APIView):
     renderer_classes = [CMSRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "delete_faq_topic",
+                              "delete_faq",
                             [SuperAdmin]
                         )]
     def delete(self, request, cid, format=None):
@@ -314,7 +314,7 @@ class UpdateSettingView(APIView):
     renderer_classes = [CMSRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "manage_setting",
+                              "update_setting",
                             [SuperAdmin]
                         )]
     def post(self, request, format=None):

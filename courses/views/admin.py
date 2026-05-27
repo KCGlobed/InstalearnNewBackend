@@ -33,7 +33,7 @@ class ChapterListingView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "chapter_listing_pdf_report",
+                              "chapter_listing",
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
@@ -93,7 +93,7 @@ class ExportChapterListingPDFView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "chapter_listing_excel_report",
+                              "chapter_listing_pdf_report",
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
@@ -185,7 +185,7 @@ class ExportChapterListingExcelView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "chapter_listing",
+                              "chapter_listing_excel_report",
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
@@ -305,10 +305,7 @@ class ExportChapterListingExcelView(APIView):
 
 class GetVideoListView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         chapter = Videos.objects.filter(status=True, is_uploaded = True, is_completed = True).order_by("-id")
         serializer = VideoListSerializer(chapter, many=True)
@@ -318,10 +315,7 @@ class GetVideoListView(APIView):
 
 class GetEbookListView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         chapter = ChapterBooks.objects.filter(status=True).order_by("-id")
         serializer = ChapterBooksSerializer(chapter, many=True)
@@ -331,10 +325,7 @@ class GetEbookListView(APIView):
 
 class ChapterListView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         chapter = Chapters.objects.filter(status=True).order_by("-id")
         chapter_type = request.query_params.get('chapter_type')
@@ -347,11 +338,7 @@ class ChapterListView(APIView):
 
 class ViewChapterView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_permission_or_roles(
-                              "chapter_listing",
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated,]
     def get(self, request,  cid , format=None):
         chapter = Chapters.objects.filter(id=cid).first()
         if chapter is None:
@@ -380,7 +367,7 @@ class AssignChapterLectureView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_chapter",
+                              "assign_chapter_lecture",
                             [SuperAdmin]
                         )]
     def post(self, request,  format=None):
@@ -416,7 +403,7 @@ class UpdateChapterStatusView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_chapter",
+                              "update_chapter_status",
                             [SuperAdmin]
                         )]
     def post(self, request,  cid , format=None):
@@ -453,7 +440,7 @@ class VideosListingView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "chapter_video_listing",
+                              "video_listing",
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
@@ -513,7 +500,7 @@ class ExportVideoListingPDFView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "chapter_video_listing_pdf_report",
+                              "video_listing_pdf_report",
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
@@ -603,7 +590,7 @@ class ExportVideoListingExcelView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "chapter_video_listing_excel_report",
+                              "video_listing_excel_report",
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
@@ -724,7 +711,7 @@ class ViewVideoDetailView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "chapter_video_listing",
+                              "view_video_detail",
                             [SuperAdmin]
                         )]
     def get(self, request,  cid , format=None):
@@ -740,7 +727,7 @@ class UploadVideoView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "create_chapter_video",
+                              "create_video",
                             [SuperAdmin]
                         )]
     def get(self, request, format=None):
@@ -799,7 +786,7 @@ class UploadVideoView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "create_chapter_video",
+                              "create_video",
                             [SuperAdmin]
                         )]
     def post(self, request, format=None):
@@ -814,7 +801,7 @@ class MarkVideoUploadCompleteView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_chapter_video",
+                              "create_video",
                             [SuperAdmin]
                         )]
     def post(self, request,  cid , format=None):
@@ -833,7 +820,7 @@ class UpdateVideoView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_chapter_video",
+                              "update_video",
                             [SuperAdmin]
                         )]
     def post(self, request,  cid , format=None):
@@ -853,7 +840,7 @@ class UpdateVideoStatusView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_chapter_video",
+                              "update_video_status",
                             [SuperAdmin]
                         )]
     def post(self, request,  cid , format=None):
@@ -873,7 +860,7 @@ class DeleteVideoView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "delete_chapter_video",
+                              "delete_video",
                             [SuperAdmin]
                         )]
     def delete(self, request, cid, format=None):
@@ -1715,7 +1702,7 @@ class UpdateTagsStatusView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_tag",
+                              "update_tag_status",
                             [SuperAdmin]
                         )]
     def post(self, request,  cid , format=None):
@@ -1734,7 +1721,7 @@ class DeleteTagsView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "delete_Tag",
+                              "delete_tag",
                             [SuperAdmin]
                         )]
     def delete(self, request, cid, format=None):
@@ -1784,7 +1771,7 @@ class CreateSubCategoryView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "create_category",
+                              "create_subcategory",
                             [SuperAdmin]
                         )]
     def post(self, request, format=None):
@@ -1799,7 +1786,7 @@ class EditSubCategoryView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_category",
+                              "update_subcategory",
                             [SuperAdmin]
                         )]
     def post(self, request,  cid , format=None):
@@ -1819,7 +1806,7 @@ class UpdateCategoryStatusView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_category",
+                              "update_category_status",
                             [SuperAdmin]
                         )]
     def post(self, request,  cid , format=None):
@@ -1910,7 +1897,7 @@ class ViewCourseDetailView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "course_listing",
+                              "view_course_detail",
                             [SuperAdmin]
                         )]
     def get(self, request,  cid , format=None):
@@ -1941,7 +1928,7 @@ class EditCourseView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_category",
+                              "update_course",
                             [SuperAdmin]
                         )]
     def post(self, request,  cid , format=None):
@@ -1960,7 +1947,7 @@ class UpdateCourseStatusView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_course",
+                              "update_course_status",
                             [SuperAdmin]
                         )]
     def post(self, request,  cid , format=None):
@@ -1993,10 +1980,7 @@ class DeleteCourseView(APIView):
 
 class CategoryListView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         subject = Categories.objects.filter(status=True, parent__isnull=True).order_by("-id")
         serializer = CategoryListSerializer(subject, many=True)
@@ -2005,10 +1989,7 @@ class CategoryListView(APIView):
 
 class SubCategoryListView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def get(self, request, cid=None):
         subject = Categories.objects.filter(status=True, parent_id = cid).order_by("-id")
         serializer = CategoryListSerializer(subject, many=True)
@@ -2017,10 +1998,7 @@ class SubCategoryListView(APIView):
 
 class SubCategoryListDetailView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def get(self, request, cid=None):
         subject = Categories.objects.filter(status=True, parent__isnull=False).order_by("-id")
         serializer = CategoryListSerializer(subject, many=True)
@@ -2029,10 +2007,7 @@ class SubCategoryListDetailView(APIView):
 
 class TagsListView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def get(self, request, cid=None):
         subject = Tags.objects.filter(status=True).order_by("-id")
         serializer = CourseTagsSerializer(subject, many=True)
@@ -2043,7 +2018,7 @@ class AssignChapterCourseView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_course",
+                              "update_course_chapter",
                             [SuperAdmin]
                         )]
     def post(self, request,  cid , format=None):
@@ -2321,7 +2296,7 @@ class ViewChapterBookView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "chapter_book_listing",
+                              "view_chapter_book",
                             [SuperAdmin]
                         )]
     def get(self, request,  cid , format=None):
@@ -2337,7 +2312,7 @@ class ViewBookSignedUrlView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "chapter_book_listing",
+                              "view_chapter_book",
                             [SuperAdmin]
                         )]
     def get(self, request,  cid , format=None):
@@ -2393,7 +2368,7 @@ class UpdateChapterBookStatusView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_chapter_book",
+                              "update_chapter_book_status",
                             [SuperAdmin]
                         )]
     def post(self, request,  cid , format=None):
@@ -2427,10 +2402,7 @@ class DeleteChapterBookView(APIView):
 
 class ParentCategoryListingView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         topic = Categories.objects.filter(parent__isnull=True).order_by("-id")
         serializer = CategoriesListSerializer(topic, many=True)
@@ -2453,15 +2425,9 @@ class CourseChapterListView(APIView):
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
 
-
-
 class GenerateUploadSignedUrlView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_permission_or_roles(
-                              "create_course",
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def post(self, request, format=None):
         serializer = GenerateUploadSignedUrlSerializer(data = request.data)
         if serializer.is_valid(raise_exception = True):
@@ -2471,125 +2437,11 @@ class GenerateUploadSignedUrlView(APIView):
     
 
 
-class GetTopicHistoryView(APIView):
-    renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
-    def get(self, request, tid=None):
-        
-        topics = Topics.objects.filter(id = tid).first()
-        if topics is None:
-            raise ValidationError("Invalid Topic ID")
-        
-        history_queryset = topics.history.all().order_by('-history_date')
-
-        serializer = TopicsHistorySerializer(history_queryset, many=True)
-        return success_response(
-                message="Success",
-                data=serializer.data,
-                status_code=status.HTTP_200_OK
-            )
-    
-
-
-class GetChaptersHistoryView(APIView):
-    renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
-    def get(self, request, tid=None):
-        
-        topics = Chapters.objects.filter(id = tid).first()
-        if topics is None:
-            raise ValidationError("Invalid Chapter ID")
-        
-        history_queryset = topics.history.all().order_by('-history_date')
-
-        serializer = ChaptersHistorySerializer(history_queryset, many=True)
-        return success_response(
-                message="Success",
-                data=serializer.data,
-                status_code=status.HTTP_200_OK
-            )
-    
-
-class GetCourseHistoryView(APIView):
-    renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
-    def get(self, request, tid=None):
-        
-        topics = Course.objects.filter(id = tid).first()
-        if topics is None:
-            raise ValidationError("Invalid Course ID")
-        
-        history_queryset = topics.history.all().order_by('-history_date')
-
-        serializer = CourseHistorySerializer(history_queryset, many=True)
-        return success_response(
-                message="Success",
-                data=serializer.data,
-                status_code=status.HTTP_200_OK
-            )
-    
-
-
-class GetEbookHistoryView(APIView):
-    renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
-    def get(self, request, tid=None):
-        
-        topics = ChapterBooks.objects.filter(id = tid).first()
-        if topics is None:
-            raise ValidationError("Invalid EBook ID")
-        
-        history_queryset = topics.history.all().order_by('-history_date')
-
-        serializer = EbooksHistorySerializer(history_queryset, many=True)
-        return success_response(
-                message="Success",
-                data=serializer.data,
-                status_code=status.HTTP_200_OK
-            )
-    
-
-class GetVideoHistoryView(APIView):
-    renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
-    def get(self, request, tid=None):
-        
-        topics = Videos.objects.filter(id = tid).first()
-        if topics is None:
-            raise ValidationError("Invalid Video ID")
-        
-        history_queryset = topics.history.all().order_by('-history_date')
-
-        serializer = VideoHistorySerializer(history_queryset, many=True)
-        return success_response(
-                message="Success",
-                data=serializer.data,
-                status_code=status.HTTP_200_OK
-            )
-    
-
-
-
-
 class GetCourseSampleVideoView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "get_sample_video",
                             [SuperAdmin]
                         )]
     def get(self, request, cid =None, format=None):
@@ -2602,7 +2454,8 @@ class GetCourseSampleVideoView(APIView):
 class DeleteCourseSampleVideoView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "delete_sample_video",
                             [SuperAdmin]
                         )]
     def delete(self, request, cid, format=None):
@@ -2618,7 +2471,8 @@ class DeleteCourseSampleVideoView(APIView):
 class UploadCourseSampleVideoView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_sample_video",
                             [SuperAdmin]
                         )]
     def post(self, request, format=None):
@@ -2632,10 +2486,7 @@ class UploadCourseSampleVideoView(APIView):
 
 class GetInstructorListView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def get(self, request, cid =None, format=None):
         category = InstructorProfile.objects.all().order_by("-id")
         serializer = InstructorInfoserializer(category, many=True)
@@ -2644,10 +2495,7 @@ class GetInstructorListView(APIView):
 
 class GetCourseListView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def get(self, request, cid =None, format=None):
         category = Course.objects.filter(status = True).order_by("-id")
         serializer = CourseInfoserializer(category, many=True)
@@ -2657,7 +2505,8 @@ class GetCourseListView(APIView):
 class GetCourseInstructorsView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "get_course_instructor",
                             [SuperAdmin]
                         )]
     def get(self, request, cid =None, format=None):
@@ -2670,7 +2519,8 @@ class GetCourseInstructorsView(APIView):
 class AddCourseInstructorsView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "assign_course_instructor",
                             [SuperAdmin]
                         )]
     def post(self, request, format=None):
@@ -2686,7 +2536,8 @@ class AddCourseInstructorsView(APIView):
 class DeleteCourseInstructorView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "delete_course_instructor",
                             [SuperAdmin]
                         )]
     def delete(self, request, cid, format=None):
@@ -2703,7 +2554,8 @@ class DeleteCourseInstructorView(APIView):
 class GetRelatedCoursesView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "get_related_course",
                             [SuperAdmin]
                         )]
     def get(self, request, cid =None, format=None):
@@ -2716,7 +2568,8 @@ class GetRelatedCoursesView(APIView):
 class AddRelatedCoursesView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "assign_related_course",
                             [SuperAdmin]
                         )]
     def post(self, request, format=None):
@@ -2732,7 +2585,8 @@ class AddRelatedCoursesView(APIView):
 class DeleteRelatedCourseView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "delete_related_course",
                             [SuperAdmin]
                         )]
     def delete(self, request, cid, format=None):
@@ -2749,10 +2603,7 @@ class DeleteRelatedCourseView(APIView):
 
 class GetCoursesFAQsListingView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     pagination_class = CustomPageNumberPagination
     def get(self, request, cid=None, format=None):
         
@@ -2768,10 +2619,7 @@ class GetCoursesFAQsListingView(APIView):
 
 class AddCourseFAQView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def post(self, request, format=None):
         
         serializer = CreateCourseFaqsSerializer(data = request.data, context={'user':request.user})
@@ -2783,10 +2631,7 @@ class AddCourseFAQView(APIView):
 
 class UpdateCourseFAQView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def post(self, request,  cid , format=None):
         
         course = CourseFaqs.objects.filter(id=cid).first()
@@ -2803,10 +2648,7 @@ class UpdateCourseFAQView(APIView):
 
 class DeleteCoursFAQeView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def delete(self, request, cid, format=None):
         
         try:
@@ -2820,10 +2662,7 @@ class DeleteCoursFAQeView(APIView):
 
 class UpdateFAQStatusView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def post(self, request, id=None, format=None):
         
         user_info = CourseFaqs.objects.filter(id = id).first()
@@ -2877,7 +2716,7 @@ class CreateTrailCourseView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "manage_trail_course",
+                              "create_trail_course",
                             [SuperAdmin]
                         )]
     def post(self, request, format=None):
@@ -2892,7 +2731,7 @@ class DeleteTrailCourseView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "manage_trail_course",
+                              "delete_trail_course",
                             [SuperAdmin]
                         )]
     def delete(self, request, cid, format=None):
@@ -2916,10 +2755,7 @@ class GetTrailCoursesView(APIView):
 
 class GetCourseIncludesView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def get(self, request, cid =None, format=None):
         category = CourseIncludes.objects.filter(course_id = cid).order_by("id")
         serializer = CourseIncludesListSerializer(category, many=True)
@@ -2929,10 +2765,7 @@ class GetCourseIncludesView(APIView):
 
 class DeleteCourseIncludesView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def delete(self, request, cid, format=None):
         try:
             course = CourseIncludes.objects.get(id = cid)
@@ -2945,10 +2778,7 @@ class DeleteCourseIncludesView(APIView):
 
 class AddCourseIncludesView(APIView):
     renderer_classes = [CourseRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_roles(
-                            [SuperAdmin]
-                        )]
+    permission_classes = [IsAuthenticated]
     def post(self, request, format=None):
         
         serializer = AddCoursesIncludesSerializer(data = request.data, context={'user':request.user})
@@ -3072,7 +2902,7 @@ class ViewCourseAnnouncementView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "get_course_announcements_listing",
+                              "view_course_announcements_listing",
                             [SuperAdmin]
                         )]
     def get(self, request,  cid , format=None):
@@ -3088,7 +2918,7 @@ class UpdateCourseAnnouncementStatusView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_course_announcements",
+                              "update_course_announcements_status",
                             [SuperAdmin]
                         )]
     def post(self, request, id=None, format=None):
@@ -3217,7 +3047,7 @@ class UpdateCoursesReviewRatingStatusView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "update_course_review_rating",
+                              "update_course_review_rating_status",
                             [SuperAdmin]
                         )]
     def post(self, request, id=None, format=None):

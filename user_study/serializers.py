@@ -819,13 +819,14 @@ class UpdateReminderSerializer(serializers.ModelSerializer) :
         course_info = Course.objects.filter(id = validate_data.get('course_id')).first()
         reminder = LearningReminders.objects.filter(id = validate_data.get('reminder_id')).first()
         reminder.title = validate_data.get('title')
+        reminder.course = course_info
         reminder.frequency = validate_data.get('frequency')
         reminder.time = validate_data.get('time')
         reminder.date = validate_data.get('date')
         reminder.days = validate_data.get('days')
         reminder.save()
 
-        return True
+        return reminder
     
 
 

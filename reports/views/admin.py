@@ -32,7 +32,8 @@ from mini_lms.permissions import RoleOrPermissionCheck
 from mini_lms.pagination import CustomPageNumberPagination
 from rest_framework import filters
 from dateutil.relativedelta import relativedelta
-from datetime import datetime,timezone, timedelta, timezone
+from datetime import datetime, timedelta
+from django.utils import timezone
 
 
 
@@ -287,37 +288,10 @@ class GetAdminDashboardCountersView(APIView):
         
         info = {
             "total_students": user_counts['total_students'],
-            "total_duration_watched": total_duration_watched['total_duration'],
+            "total_duration_watched": total_duration_watched,
             "total_duration": total_duration,
             "total_active_orders" : subscription_counts['total_active_orders'],
             "new_students_current_month":user_counts['new_students_current_month']
-        }
-
-        return success_response(message="", data=info, status_code=status.HTTP_200_OK)
-    
-
-class GetAdminDashboardSourceStudentsView(APIView):
-    renderer_classes = [ReportsRenderer]
-    permission_classes = [IsAuthenticated]
-    def get(self, request, format=None):
-
-        user_counts = User.objects.aggregate(
-            atp_students=Count('id', filter=Q(role=User.Student , category = "ATP")),
-            corporate_students=Count('id', filter=Q(role=User.Student , category = "CORPORATE")),
-            insitution_students=Count('id', filter=Q(role=User.Student , category = "INSTITUTION")),
-            gov_students=Count('id', filter=Q(role=User.Student , category = "GOV")),
-            direct_students=Count('id', filter=Q(role=User.Student , category = "DIRECT")),
-            others_students=Count('id', filter=Q(role=User.Student , category = "OTHERS")),
-        )
-        
-        
-        info = {
-            "atp_students": user_counts['atp_students'],
-            "corporate_students": user_counts['corporate_students'],
-            "insitution_students": user_counts['insitution_students'],
-            "gov_students": user_counts['gov_students'],
-            "direct_students": user_counts['direct_students'],
-            "others_students": user_counts['others_students'],
         }
 
         return success_response(message="", data=info, status_code=status.HTTP_200_OK)
@@ -392,6 +366,73 @@ class GetAdminDashboardStudentGraphsView(APIView):
                     'total_student_registered': User.objects.filter(
                                                 role=User.Student,
                                             date_joined=past_date).count()
+                }) 
+        
+        return success_response(message="", data=date_list, status_code=status.HTTP_200_OK)
+    
+
+
+class GetAdminDashboardStudentVideoLectureGraphsView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, interval=None):
+
+        if interval == "year":
+            current_year = timezone.now().year
+    
+            date_list = []
+            for i in range(5):
+                target_year = current_year - (4 - i) 
+                start_date = datetime(target_year, 1, 1)
+                end_date = datetime(target_year, 12, 31)
+                
+                date_list.append({
+                    'start_date': start_date.strftime("%Y-%m-%d"),
+                    "end_date":end_date.strftime("%Y-%m-%d"),
+                    'total_video_watched': UserLectureProgress.objects.filter( created_at__range=(start_date, end_date)).aggregate(total_duration=Sum('total_duration'))['total_duration']
+                })
+
+
+        elif interval == "month":
+            now = timezone.now().date()
+            current_month_start = now.replace(day=1)
+            
+            date_list = []
+            for i in range(12):
+                month_start = current_month_start - relativedelta(months=i)
+                
+                if i == 0:
+                    month_end = now
+                else:
+                    next_month_start = current_month_start - relativedelta(months=i-1)
+                    month_end = next_month_start - timedelta(days=1)
+                date_list.append({
+                    'start_date': month_start.strftime("%Y-%m-%d"),
+                    "end_date":month_end.strftime("%Y-%m-%d"),
+                    'total_video_watched': UserLectureProgress.objects.filter( created_at__range=(month_start, month_end)).aggregate(total_duration=Sum('total_duration'))['total_duration']
+                })
+
+        elif interval == "week":
+            now = datetime.now()
+            date_list = []
+            for week in range(4):
+                end_date = now - timedelta(weeks=week)
+                start_date = end_date - timedelta(days=6)
+
+                date_list.append({
+                    'start_date': start_date.strftime("%Y-%m-%d"),
+                    "end_date":end_date.strftime("%Y-%m-%d"),
+                    'total_video_watched': UserLectureProgress.objects.filter( created_at__range=(start_date, end_date)).aggregate(total_duration=Sum('total_duration'))['total_duration']
+                })
+        else:
+            today = timezone.now().date()
+            date_list = []
+            for i in range(7):
+                past_date = today - timedelta(days=i)
+                date_list.append({
+                    "start_date":past_date.strftime("%Y-%m-%d"),
+                    "end_date":None,
+                    'total_video_watched': UserLectureProgress.objects.filter( created_at__date=past_date).aggregate(total_duration=Sum('total_duration'))['total_duration']
                 }) 
         
         return success_response(message="", data=date_list, status_code=status.HTTP_200_OK)
