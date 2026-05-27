@@ -2205,7 +2205,7 @@ class PDFContactUsReportView(APIView):
     renderer_classes = [ReportsRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "contact_us_report",
+                              "contact_us_pdf_report",
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
@@ -2305,7 +2305,7 @@ class CSVContactUsReportView(APIView):
     renderer_classes = [ReportsRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "contact_us_report",
+                              "contact_us_excel_report",
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
@@ -2478,11 +2478,12 @@ class GetStudentPerformanceReportView(APIView):
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['user__first_name','user__last_name',"user__email","course__name","created_at"]
     ordering_fields = ['user__first_name','user__last_name',"user__email","course__name","created_at"]
     def get(self, request, format=None):
         
-        topics = UserCourses.objects.only("id","user","course").select_related("user","course").filter(paid = True)
+        topics = UserCourses.objects.select_related("user","course").filter(paid = True)
         
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
@@ -2548,7 +2549,11 @@ class GetStudentPerformanceReportView(APIView):
         search_filter = filters.SearchFilter()
         topics = search_filter.filter_queryset(request, topics, self)
 
-        topics = topics.order_by('-id')
+        ordering_filter = filters.OrderingFilter()
+        topics = ordering_filter.filter_queryset(request, topics, self)
+
+        if not topics.ordered:
+            topics = topics.order_by('-id')
 
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(topics, request, view=self)
@@ -2565,6 +2570,7 @@ class GetStudentPerformanceReportPDFView(APIView):
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['user__first_name','user__last_name',"user__email","course__name"]
     ordering_fields = ['user__first_name','user__last_name',"user__email","course__name"]
     def get(self, request, format=None):
@@ -2635,7 +2641,11 @@ class GetStudentPerformanceReportPDFView(APIView):
         search_filter = filters.SearchFilter()
         topics = search_filter.filter_queryset(request, topics, self)
 
-        topics = topics.order_by('-id')
+        ordering_filter = filters.OrderingFilter()
+        topics = ordering_filter.filter_queryset(request, topics, self)
+
+        if not topics.ordered:
+            topics = topics.order_by('-id')
 
         serializer = StudentPerformaceReportSerializer(topics, many=True)
     
@@ -2683,6 +2693,7 @@ class GetStudentPerformanceReportExcelView(APIView):
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['user__first_name','user__last_name',"user__email","course__name"]
     ordering_fields = ['user__first_name','user__last_name',"user__email","course__name"]
     def get(self, request, format=None):
@@ -2750,8 +2761,12 @@ class GetStudentPerformanceReportExcelView(APIView):
         
         search_filter = filters.SearchFilter()
         topics = search_filter.filter_queryset(request, topics, self)
-            
-        topics = topics.order_by('-id')
+
+        ordering_filter = filters.OrderingFilter()
+        topics = ordering_filter.filter_queryset(request, topics, self)
+
+        if not topics.ordered:
+            topics = topics.order_by('-id')
 
         serializer = StudentPerformaceReportSerializer(topics, many=True)
         
@@ -2846,7 +2861,7 @@ class GetStudentNotesReportlistingView(APIView):
     renderer_classes = [ReportsRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "student_activity_report_listing",
+                              "student_note_report_listing",
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
@@ -2856,7 +2871,7 @@ class GetStudentNotesReportlistingView(APIView):
     def get(self, request, uid=None):
         
         
-        topics = Notes.objects.all()
+        topics = Notes.objects.select_related("user","course").all()
         
         first_name = request.query_params.get('first_name')
         if first_name:
@@ -2921,10 +2936,16 @@ class GetStudentNotesReportlistingView(APIView):
         search_filter = filters.SearchFilter()
         topics = search_filter.filter_queryset(request, topics, self)
 
+        ordering_filter = filters.OrderingFilter()
+        topics = ordering_filter.filter_queryset(request, topics, self)
+
+        if not topics.ordered:
+            topics = topics.order_by('-id')
+
 
         topics = topics.values('user','user__first_name','user__last_name','user__email','user__category','user__phone1','user__reference_id', "user__student_type",'course','course__name').annotate(
             notes_count=Count('id')
-        ).order_by('user', 'course')
+        )
 
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(topics, request, view=self)
@@ -2937,7 +2958,7 @@ class GetAdminNotesListingReportPDFView(APIView):
     renderer_classes = [ReportsRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "student_study_plan_report_pdf",
+                              "student_note_report_pdf",
                             [SuperAdmin]
                         )]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -2945,7 +2966,7 @@ class GetAdminNotesListingReportPDFView(APIView):
     ordering_fields = ['user__first_name','user__last_name',"user__email","course__name"]
     def get(self, request):
         
-        topics = Notes.objects.all()
+        topics = Notes.objects.select_related("user","course").all()
         
         first_name = request.query_params.get('first_name')
         if first_name:
@@ -3010,10 +3031,16 @@ class GetAdminNotesListingReportPDFView(APIView):
         search_filter = filters.SearchFilter()
         topics = search_filter.filter_queryset(request, topics, self)
 
+        ordering_filter = filters.OrderingFilter()
+        topics = ordering_filter.filter_queryset(request, topics, self)
+
+        if not topics.ordered:
+            topics = topics.order_by('-id')
+
 
         topics = topics.values('user','user__first_name','user__last_name','user__email','user__category','user__phone1','user__reference_id', "user__student_type",'course','course__name').annotate(
             notes_count=Count('id')
-        ).order_by('user', 'course')
+        )
 
         serializer = StudentNoteListingSerializer(topics, many=True)
 
@@ -3057,7 +3084,7 @@ class GetAdminNotesListingReportExcelView(APIView):
     renderer_classes = [ReportsRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "student_study_plan_report_excel",
+                              "student_note_report_excel",
                             [SuperAdmin]
                         )]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -3065,7 +3092,7 @@ class GetAdminNotesListingReportExcelView(APIView):
     ordering_fields = ['user__first_name','user__last_name',"user__email","course__name"]
     def get(self, request):
         
-        topics = Notes.objects.all()
+        topics = Notes.objects.select_related("user","course").all()
         
         first_name = request.query_params.get('first_name')
         if first_name:
@@ -3131,10 +3158,16 @@ class GetAdminNotesListingReportExcelView(APIView):
         search_filter = filters.SearchFilter()
         topics = search_filter.filter_queryset(request, topics, self)
 
+        ordering_filter = filters.OrderingFilter()
+        topics = ordering_filter.filter_queryset(request, topics, self)
+
+        if not topics.ordered:
+            topics = topics.order_by('-id')
+
 
         topics = topics.values('user','user__first_name','user__last_name','user__email','user__category','user__phone1','user__reference_id', "user__student_type",'course','course__name').annotate(
             notes_count=Count('id')
-        ).order_by('user', 'course')
+        )
 
         serializer = StudentNoteListingSerializer(topics, many=True)
 
@@ -3233,7 +3266,7 @@ class GetAdminUserNoteReportView(APIView):
     renderer_classes = [ReportsRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "student_user_notes_report_pdf",
+                              "view_student_user_notes",
                             [SuperAdmin]
                         )]
     def get(self, request, uid, sid):
