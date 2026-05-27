@@ -2478,8 +2478,8 @@ class GetStudentPerformanceReportView(APIView):
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
-    search_fields = ['user__first_name','user__last_name',"user__email","course__name"]
-    ordering_fields = ['user__first_name','user__last_name',"user__email","course__name"]
+    search_fields = ['user__first_name','user__last_name',"user__email","course__name","created_at"]
+    ordering_fields = ['user__first_name','user__last_name',"user__email","course__name","created_at"]
     def get(self, request, format=None):
         
         topics = UserCourses.objects.only("id","user","course").select_related("user","course").filter(paid = True)
@@ -2532,7 +2532,7 @@ class GetStudentPerformanceReportView(APIView):
             try:
                 start_datetime = datetime.fromisoformat(start_date)
                 start_datetime_aware = timezone.make_aware(start_datetime, timezone.get_current_timezone())
-                topics = topics.filter(user__created_at__gte=start_datetime_aware)
+                topics = topics.filter(created_at__gte=start_datetime_aware)
             except ValueError:
                 raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
                 
@@ -2540,7 +2540,7 @@ class GetStudentPerformanceReportView(APIView):
             try:
                 end_datetime = datetime.fromisoformat(end_date)
                 end_datetime_aware = timezone.make_aware(end_datetime, timezone.get_current_timezone())
-                topics = topics.filter(user__created_at__lte=end_datetime_aware)
+                topics = topics.filter(created_at__lte=end_datetime_aware)
             except ValueError:
                 raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
             
