@@ -631,6 +631,11 @@ class HomepageCourseCategorySerializer(serializers.ModelSerializer):
 class HomepageCourseDetailSerializer(serializers.ModelSerializer):
     categories = serializers.SerializerMethodField('get_categories')
     created_by = serializers.SerializerMethodField('get_created_by')
+    enrolled_students = serializers.SerializerMethodField()
+
+    def get_enrolled_students(self, parent):
+        category = UserCourses.objects.filter(course_id=parent.id, paid = True).count()
+        return category
 
     def get_categories(self, obj):
         category = CourseCategories.objects.filter(course_id=obj.id)
@@ -642,7 +647,7 @@ class HomepageCourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id",'name',"price","discount","objectives_summary","image","categories","duration","level","created_by","avg_rating","language","subtitle_language","original_price"]
+        fields = ["id",'name',"price","discount","objectives_summary","image","categories","duration","level","created_by","avg_rating","language","subtitle_language","original_price","enrolled_students"]
 
 
 class HomepageTagWiseCoursesSerializer(serializers.ModelSerializer):
