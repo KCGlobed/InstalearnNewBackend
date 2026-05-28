@@ -32,6 +32,7 @@ urlpatterns = [
     
 
     path('manage-background-tasks/', ManageBackgroundTaskView.as_view(), name="manage-background-tasks"),
+    path('manage-learning-reminders/', ManageLearningRemindersView.as_view(), name="manage-learning-reminders"),
     
 
 ]

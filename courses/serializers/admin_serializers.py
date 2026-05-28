@@ -1867,6 +1867,7 @@ class AddRelatedCoursesSerializer(serializers.ModelSerializer) :
 
     def create(self , validate_data):
         category = validate_data.get('related_course_id').split(",")
+        FrequentlyBoughtCourse.objects.filter(course_id = validate_data.get('course_id')).delete()
         for cat in category:
             categ = FrequentlyBoughtCourse(
                 bought_course = Course.objects.get(id = cat),
@@ -1926,8 +1927,10 @@ class CreateCourseAnnouncementsSerializer(serializers.ModelSerializer) :
             instructor=instructor
         )
 
+        users = UserCourses.objects.filter(course = course,paid = True).values_list("user", flat=True)
         users_to_notify = UserNotificationSetting.objects.filter(
             announcements=True,
+            user_id__in = users
         )
 
         notification_list = []

@@ -401,3 +401,71 @@ class ManageBackgroundTaskView(APIView):
 
         
         return success_response(message="Success", data={}, status_code=status.HTTP_200_OK)
+    
+
+
+class ManageLearningRemindersView(APIView):
+    renderer_classes = [SubscriptionRenderer]
+    def get(self, request, format=None):
+        now = timezone.localtime(timezone.now())
+        current_time = now.time()
+        current_date = now.date()
+        current_day_slug = now.strftime('%a').lower()
+
+        base_reminders = LearningReminders.objects.filter(
+            time__hour=current_time.hour,
+            time__minute=current_time.minute
+        ).select_related('user', 'course')
+
+        print(current_time.hour)
+        print(current_time.minute)
+        print(base_reminders)
+
+        reminders_to_send = []
+
+        # 2. Filter down based on Frequency
+        for reminder in base_reminders:
+            if not reminder.user or not reminder.user.email:
+                continue
+
+            if reminder.frequency == Frequency.Daily:
+                reminders_to_send.append(reminder)
+
+            elif reminder.frequency == Frequency.Weekly:
+                if reminder.days:
+                    # Clean up spaces and convert to a list: "mon, tue" -> ['mon', 'tue']
+                    saved_days = [day.strip().lower() for day in reminder.days.split(',')]
+                    
+                    if current_day_slug in saved_days:
+                        reminders_to_send.append(reminder)
+
+            elif reminder.frequency == Frequency.Once:
+                if reminder.date == current_date:
+                    reminders_to_send.append(reminder)
+                    # Optional: Delete or deactivate OneTime reminders so they don't fire again
+                    # reminder.delete()
+
+        # 3. Send the emails
+        for reminder in reminders_to_send:
+            try:
+
+                subject = reminder.title or f"Reminder: Continue learning {reminder.course.name if reminder.course else ''}"
+                email_from = settings.EMAIL_HOST_USER
+                recipient_list = [reminder.user.email, ]
+                html_message = loader.render_to_string(
+                    'reminder_email.html',
+                    {
+                        'user_name': reminder.user.first_name + reminder.user.last_name,
+                        'course':reminder.course.name if reminder.course else '',
+                    }
+                )
+                email = EmailMessage(
+                    subject, html_message, email_from, recipient_list)
+                
+                email.content_subtype = "html"
+                email.send()
+
+            except Exception as e:
+                pass
+        
+        return success_response(message="Success", data={}, status_code=status.HTTP_200_OK)
