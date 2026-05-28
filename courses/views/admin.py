@@ -1855,11 +1855,11 @@ class CourseListingView(APIView):
         
         name = request.query_params.get('name')
         if name:
-            chapters = chapters.filter(name__icontains = name)
+            course = course.filter(name__icontains = name)
 
         active = request.query_params.get('status')
         if active:
-            chapters = chapters.filter(status=active)
+            course = course.filter(status=active)
 
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
@@ -1867,14 +1867,14 @@ class CourseListingView(APIView):
         if start_date:
             try:
                 start_datetime = datetime.fromisoformat(start_date)
-                chapters = chapters.filter(created_at__gte=start_datetime)
+                course = course.filter(created_at__gte=start_datetime)
             except ValueError:
                 raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
                 
         if end_date:
             try:
                 end_datetime = datetime.fromisoformat(end_date)
-                chapters = chapters.filter(created_at__lte=end_datetime)
+                course = course.filter(created_at__lte=end_datetime)
             except ValueError:
                 raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
             
