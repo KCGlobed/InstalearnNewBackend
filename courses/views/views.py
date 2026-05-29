@@ -233,11 +233,13 @@ class CategoryCourseView(APIView):
     search_fields = ['name']
     ordering_fields = ['name', 'created_at', 'id',"total_reviews","avg_rating"]
     def get(self, request, id=None):
-        queryset = Course.objects.filter(status=1)
-        cat_list = Categories.objects.filter(parent_id = id).values_list("id",flat =True)
+        queryset = Course.objects.filter(status=True)
+        cat_list = Categories.objects.filter(parent_id = id, status=True).values_list("id",flat =True)
         cat_matches = CourseCategories.objects.filter(
-            category_id__in=cat_list
+            category_id__in=cat_list,
+            category__status = True
         ).values_list('course', flat=True)
+        print(cat_matches)
         queryset = queryset.filter(id__in=cat_matches)
 
         search_filter = filters.SearchFilter()

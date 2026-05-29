@@ -566,7 +566,11 @@ class HomepageCategorySerializer(serializers.ModelSerializer):
     total_courses = serializers.SerializerMethodField('get_total_courses')
     
     def get_total_courses(self, obj):
-        return CourseCategories.objects.filter(category__parent_id = obj.id).count()
+        return CourseCategories.objects.filter(
+                    category__parent_id=obj.id, 
+                    category__status=True, 
+                    course__status=True
+                ).values('course_id').distinct().count()
     
     class Meta:
         model = Categories

@@ -47,4 +47,6 @@ urlpatterns = [
     path('admin-dashboard-counters/', GetAdminDashboardCountersView.as_view(), name="admin-dashboard-counters"),
     path('admin-dashboard-students-graph/<str:interval>', GetAdminDashboardStudentGraphsView.as_view(), name="admin-dashboard-students-graph"),
     path('admin-dashboard-students-video-lecture-graph/<str:interval>', GetAdminDashboardStudentVideoLectureGraphsView.as_view(), name="admin-dashboard-students-video-lecture-graph"),
+    path('admin-dashboard-students-order-graph/<str:interval>', GetAdminDashboardStudentOrderGraphsView.as_view(), name="admin-dashboard-students-order-graph"),
+    path('admin-dashboard-revenue-graph/<str:interval>', GetAdminDashboardRevenueGraphsView.as_view(), name="admin-dashboard-revenue-graph"),
 ]

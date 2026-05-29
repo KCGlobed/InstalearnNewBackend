@@ -438,6 +438,139 @@ class GetAdminDashboardStudentVideoLectureGraphsView(APIView):
         return success_response(message="", data=date_list, status_code=status.HTTP_200_OK)
     
 
+
+class GetAdminDashboardStudentOrderGraphsView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, interval=None):
+
+        if interval == "year":
+            current_year = timezone.now().year
+    
+            date_list = []
+            for i in range(5):
+                target_year = current_year - (4 - i) 
+                start_date = datetime(target_year, 1, 1)
+                end_date = datetime(target_year, 12, 31)
+                
+                date_list.append({
+                    'start_date': start_date.strftime("%Y-%m-%d"),
+                    "end_date":end_date.strftime("%Y-%m-%d"),
+                    'total_orders': Order.objects.filter(isPaid = True, created_at__range=(start_date, end_date)).count()
+                })
+
+
+        elif interval == "month":
+            now = timezone.now().date()
+            current_month_start = now.replace(day=1)
+            
+            date_list = []
+            for i in range(12):
+                month_start = current_month_start - relativedelta(months=i)
+                
+                if i == 0:
+                    month_end = now
+                else:
+                    next_month_start = current_month_start - relativedelta(months=i-1)
+                    month_end = next_month_start - timedelta(days=1)
+                date_list.append({
+                    'start_date': month_start.strftime("%Y-%m-%d"),
+                    "end_date":month_end.strftime("%Y-%m-%d"),
+                    'total_orders': Order.objects.filter(isPaid = True, created_at__range=(month_start, month_end)).count()
+                })
+
+        elif interval == "week":
+            now = datetime.now()
+            date_list = []
+            for week in range(4):
+                end_date = now - timedelta(weeks=week)
+                start_date = end_date - timedelta(days=6)
+
+                date_list.append({
+                    'start_date': start_date.strftime("%Y-%m-%d"),
+                    "end_date":end_date.strftime("%Y-%m-%d"),
+                    'total_orders': Order.objects.filter(isPaid = True, created_at__range=(start_date, end_date)).count()
+                })
+        else:
+            today = timezone.now().date()
+            date_list = []
+            for i in range(7):
+                past_date = today - timedelta(days=i)
+                date_list.append({
+                    "start_date":past_date.strftime("%Y-%m-%d"),
+                    "end_date":None,
+                    'total_orders': Order.objects.filter(isPaid = True, created_at__date=past_date).count()
+                }) 
+        
+        return success_response(message="", data=date_list, status_code=status.HTTP_200_OK)
+    
+
+class GetAdminDashboardRevenueGraphsView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, interval=None):
+
+        if interval == "year":
+            current_year = timezone.now().year
+    
+            date_list = []
+            for i in range(5):
+                target_year = current_year - (4 - i) 
+                start_date = datetime(target_year, 1, 1)
+                end_date = datetime(target_year, 12, 31)
+                
+                date_list.append({
+                    'start_date': start_date.strftime("%Y-%m-%d"),
+                    "end_date":end_date.strftime("%Y-%m-%d"),
+                    'total_amount': Order.objects.filter(isPaid=True, created_at__range=(start_date, end_date)).aggregate(total_amount=Sum('total_amount'))['total_amount']
+                })
+
+
+        elif interval == "month":
+            now = timezone.now().date()
+            current_month_start = now.replace(day=1)
+            
+            date_list = []
+            for i in range(12):
+                month_start = current_month_start - relativedelta(months=i)
+                
+                if i == 0:
+                    month_end = now
+                else:
+                    next_month_start = current_month_start - relativedelta(months=i-1)
+                    month_end = next_month_start - timedelta(days=1)
+                date_list.append({
+                    'start_date': month_start.strftime("%Y-%m-%d"),
+                    "end_date":month_end.strftime("%Y-%m-%d"),
+                    'total_amount': Order.objects.filter(isPaid=True, created_at__range=(month_start, month_end)).aggregate(total_amount=Sum('total_amount'))['total_amount']
+                })
+
+        elif interval == "week":
+            now = datetime.now()
+            date_list = []
+            for week in range(4):
+                end_date = now - timedelta(weeks=week)
+                start_date = end_date - timedelta(days=6)
+
+                date_list.append({
+                    'start_date': start_date.strftime("%Y-%m-%d"),
+                    "end_date":end_date.strftime("%Y-%m-%d"),
+                    'total_amount': Order.objects.filter(isPaid=True, created_at__range=(start_date, end_date)).aggregate(total_amount=Sum('total_amount'))['total_amount']
+                })
+        else:
+            today = timezone.now().date()
+            date_list = []
+            for i in range(7):
+                past_date = today - timedelta(days=i)
+                date_list.append({
+                    "start_date":past_date.strftime("%Y-%m-%d"),
+                    "end_date":None,
+                    'total_amount': Order.objects.filter(isPaid=True, created_at__date=past_date).aggregate(total_amount=Sum('total_amount'))['total_amount']
+                }) 
+        
+        return success_response(message="", data=date_list, status_code=status.HTTP_200_OK)
+    
+
 class GetVideoReportView(APIView):
     renderer_classes = [ReportsRenderer]
     permission_classes = [IsAuthenticated, 
