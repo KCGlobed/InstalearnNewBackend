@@ -358,7 +358,7 @@ class ManageBackgroundTaskView(APIView):
         print(caption_video)
         if caption_video is not None:
             
-            MODEL_DIR = os.path.join(settings.BASE_DIR, 'whisper_models')
+            MODEL_DIR = os.path.join(settings.BASE_DIR, 'media')
             os.makedirs(MODEL_DIR, exist_ok=True)
 
             for video in caption_video:
