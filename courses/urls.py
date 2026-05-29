@@ -110,6 +110,7 @@ urlpatterns = [
     path('add-related-courses/', AddRelatedCoursesView.as_view(), name="add-related-courses"),
     path('delete-related-course/<int:cid>', DeleteRelatedCourseView.as_view(), name="delete-related-course"),
 
+    path('get-category-subcategory-list/', CategoryWithSubcategoryListView.as_view(), name="subcategory-list"),
     path('get-subcategory-list/<int:cid>', SubCategoryListView.as_view(), name="subcategory-list"),
     
     path('generate-upload-signed-url/', GenerateUploadSignedUrlView.as_view(), name="generate-upload-signed-url"),

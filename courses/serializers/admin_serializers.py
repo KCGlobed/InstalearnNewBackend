@@ -888,6 +888,17 @@ class ChangeCategoryStatusSerializer(serializers.ModelSerializer) :
         return category
     
 
+class CategoryWithSubcategoryListSerializer(serializers.ModelSerializer):
+    subcategory = serializers.SerializerMethodField('get_subcategory')
+    
+    def get_subcategory(self, obj):
+        category = Categories.objects.filter(parent_id=obj.id)
+        return CategoryListSerializer(category, many=True).data
+    
+    class Meta:
+        model = Categories
+        fields = ["id","name","subcategory"]
+
 
 class CourseInfoSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")

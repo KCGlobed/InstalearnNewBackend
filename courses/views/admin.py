@@ -1987,6 +1987,15 @@ class CategoryListView(APIView):
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
 
+class CategoryWithSubcategoryListView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        subject = Categories.objects.filter(status=True, parent__isnull = True).order_by("-id")
+        serializer = CategoryWithSubcategoryListSerializer(subject, many=True)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
 class SubCategoryListView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated]
