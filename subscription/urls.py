@@ -16,6 +16,7 @@ urlpatterns = [
     path('register-for-trail/', RegisterTrailUserView.as_view(), name="register-for-trail"),
 
     
+    path('offline-course-access/', OfflineCourseAccessView.as_view(), name="offline-course-access"),
     path('add-to-cart/', AddtoCartView.as_view(), name="add-to-cart"),
     path('remove-to-cart/<cid>', RemoveCartView.as_view(), name="remove-to-cart"),
     path('view-cart/', ViewCartView.as_view(), name="view-cart"),

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from subscription.models import *
 from courses.models import *
+from cms.models import *
 from users.models import *
 from django.conf import settings
 from django.core.mail import send_mail
@@ -238,7 +239,7 @@ class RegisterForTrailSerializer(serializers.ModelSerializer) :
             trail_user.user =  user
             trail_user.save()
 
-            trail_setting = Settings.objects.all().first()
+            trail_setting = GeneralSettings.objects.all().first()
 
 
             url = settings.BASE_URL+"/login"
@@ -308,3 +309,110 @@ class RegisterForTrailSerializer(serializers.ModelSerializer) :
 
 
         return trail_user
+    
+
+
+class OfflineSubscriptionSerializer(serializers.ModelSerializer) :
+    first_name = serializers.CharField(max_length = 255, required=True)
+    last_name = serializers.CharField(max_length = 255, required=True)
+    email = serializers.EmailField(max_length = 255, required=True)
+    phone = serializers.CharField(max_length = 255, required=True)
+    course_id = serializers.ListField(required=True)
+    
+    class Meta:
+        model = Order
+        fields = ['first_name',"last_name","email","phone",'course_id']
+        
+    def validate(self, data):
+    
+        return data
+
+
+    def create(self , validate_data):
+
+        user_info = User.objects.filter(email = validate_data.get('email').lower()).first()
+        new_subscription = False
+        if user_info is None:
+            new_subscription = True
+            password = generate_random_password(8)
+
+            info = { "first_name": validate_data.get('first_name'),"last_name": validate_data.get('last_name'), 'email': validate_data.get('email').lower(), 'password': password}
+
+            user_info = User.objects.create_user(**info)
+            assign_role(user_info, "Student")
+
+            user_info.role = User.Student
+            user_info.email_verified = 1
+            user_info.category = validate_data.get('category')
+            user_info.is_active = True
+            user_info.save()
+            
+            url = settings.BASE_URL+"/login"
+
+            subject = 'Thank you for registering!'
+
+            message = f''
+            email_from = settings.EMAIL_HOST_USER
+            recipient_list = [user_info.email, ]
+            html_message = loader.render_to_string(
+                'new_user_email.html',
+                {
+                    'name': user_info.first_name +' '+ user_info.last_name,
+                    'verification_link': url,
+                    "email": user_info.email,
+                    "password": password,
+
+                }
+            )
+
+            send_mail( subject, message, email_from, recipient_list,html_message=html_message )
+
+        current_year = datetime.now().year
+        count = Order.objects.all().count()
+        order_id = f"{current_year}-{str(count + 1).zfill(4)}"  
+
+        end_date = date.today() + timedelta(days=365)
+        
+        cart_items = Course.objects.filter(id__in=validate_data.get('course_id'))
+        total_amount = 0
+        for item in cart_items:
+            total_amount += item.price
+
+        tax = math.ceil(total_amount * 0.18)
+        total_cost = total_amount
+
+        discounted_amount = 0
+        final_amount = math.ceil(total_cost)
+
+        order_total_amount = final_amount + tax
+
+        order = Order(
+            orderID = order_id,
+            user = user_info,
+            first_name = validate_data.get('first_name'),
+            last_name = validate_data.get('last_name'),
+            email = validate_data.get('email'),
+            phone = validate_data.get('phone'),
+            amount = total_amount,
+            gst_amount = tax,
+            total_amount = order_total_amount,
+            payment_method = PaymentMethod.Offline,
+            start_date = date.today(),
+            next_due = end_date,
+            end_date = end_date,
+            subscription_status = OrderStatus.Active,
+            isPaid = True
+        )
+        order.save()
+
+        for cart_course in cart_items:
+            cart_order = UserCourses(
+                order = order,
+                course = cart_course,
+                user = user_info,
+                paid=True
+
+            )
+            cart_order.save()
+
+        return order

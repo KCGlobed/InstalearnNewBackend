@@ -634,3 +634,19 @@ class RegisterTrailUserView(APIView):
             user  = serializer.save()
             return success_response(message="Registration Done! Account detail is shared on email", data={"id":user.id}, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class OfflineCourseAccessView(APIView):
+    renderer_classes = [SubscriptionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "offline_course_access",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = OfflineSubscriptionSerializer(data = request.data, partial=True)
+        if serializer.is_valid(raise_exception = True):
+            user= serializer.save()
+            return success_response(message="Course Access Created Successfully", data=[], status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)

@@ -133,12 +133,12 @@ class SearchDropdownView(APIView):
         }
 
         if name:
-            # Note: order_by() returns a new QuerySet, so you must re-assign it
             categories = Categories.objects.filter(
-                name__icontains=name, 
                 status=1,
-                parent__isnull = True
-            ).order_by("name")
+                parent__isnull=True
+            ).filter(
+                Q(name__icontains=name) | Q(categories__name__icontains=name)
+            ).distinct().order_by("name")
             
             courses = Course.objects.filter(
                 name__icontains=name, 
