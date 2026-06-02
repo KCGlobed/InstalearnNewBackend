@@ -18,6 +18,302 @@ import os
 from google.cloud import storage
 
 
+class BlogsListingView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "blogs_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title']
+    ordering_fields = ['title', 'created_at', 'id', 'status', 'feature_status'] 
+    def get(self, request, format=None):
+        category = Blog.objects.all()
+        
+        title = request.query_params.get('title')
+        if title:
+            category = category.filter(title__icontains=title)
+
+        description = request.query_params.get('description')
+        if description:
+            category = category.filter(description__icontains=description)
+        
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
+
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                category = category.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                category = category.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        category = search_filter.filter_queryset(request, category, self)
+
+        ordering_filter = filters.OrderingFilter()
+        category = ordering_filter.filter_queryset(request, category, self)
+
+        if not category.ordered:
+            category = category.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(category, request, view=self)
+        serializer = BlogsListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+class ViewBlogInfoView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "view_blog",
+                            [SuperAdmin]
+                        )]
+    def get(self, request,  cid , format=None):
+        category = Blog.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Category ID!")
+        serializer = BlogInfoSerializer(category)
+        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+
+class CreateBlogView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_blog",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = CreateBlogSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Blog Created Successfully", data=BlogInfoSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class EditBlogView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_blog",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = Blog.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Blog ID!")
+        
+        serializer = EditBlogSerializer(category, data = request.data, partial=True, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user= serializer.save()
+            return success_response(message="Blog Category Updated Successfully", data=BlogInfoSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdateBlogStatusView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_blog_status",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = Blog.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Blog ID!")
+        
+        serializer = ChangeBlogStatusSerializer(category, data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Blog Status Updated Successfully", data=BlogInfoSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class UpdateBlogFeatureStatusView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_blog_status",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = Blog.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Blog ID!")
+        
+        serializer = ChangeBlogFeatureStatusSerializer(category, data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Blog Status Updated Successfully", data=BlogInfoSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class DeleteBlogView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "delete_blog",
+                            [SuperAdmin]
+                        )]
+    def delete(self, request, cid, format=None):
+        try:
+            course = Blog.objects.get(id = cid)
+            course.delete()
+            return success_response(message="Blog Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
+        except Blog.DoesNotExist:
+            return error_response(message="Blog not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+       
+
+
+class BlogCategoryListingView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "blog_category_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title']
+    ordering_fields = ['title', 'created_at', 'id', 'status'] 
+    def get(self, request, format=None):
+        category = BlogCategories.objects.all()
+        
+        title = request.query_params.get('title')
+        if title:
+            category = category.filter(title__icontains=title)
+
+        description = request.query_params.get('description')
+        if description:
+            category = category.filter(description__icontains=description)
+        
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
+
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                category = category.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                category = category.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        category = search_filter.filter_queryset(request, category, self)
+
+        ordering_filter = filters.OrderingFilter()
+        category = ordering_filter.filter_queryset(request, category, self)
+
+        if not category.ordered:
+            category = category.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(category, request, view=self)
+        serializer = BlogCategoriesListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+class CreateBlogCategoryView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_blog_category",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = CreateBlogCategorySerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Blog Category Created Successfully", data=BlogCategoriesListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class EditBlogCategoryView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_blog_category",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = BlogCategories.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Category ID!")
+        
+        serializer = EditBlogCategorySerializer(category, data = request.data, partial=True)
+        if serializer.is_valid(raise_exception = True):
+            user= serializer.save()
+            return success_response(message="Blog Category Updated Successfully", data=BlogCategoriesListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class UpdateBlogCategoryStatusView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_blog_category_status",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = BlogCategories.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Category ID!")
+        
+        serializer = ChangeBlogCategoryStatusSerializer(category, data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Blog Category Status Updated Successfully", data=BlogCategoriesListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class DeleteBlogCategoryView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "delete_blog_category",
+                            [SuperAdmin]
+                        )]
+    def delete(self, request, cid, format=None):
+        try:
+            course = BlogCategories.objects.get(id = cid)
+            course.delete()
+            return success_response(message="Blog Category Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
+        except BlogCategories.DoesNotExist:
+            return error_response(message="Blog Category not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+        
+
+
+
+
 class FaqTopicListingView(APIView):
     renderer_classes = [CMSRenderer]
     permission_classes = [IsAuthenticated, 
