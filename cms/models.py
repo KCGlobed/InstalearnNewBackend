@@ -18,9 +18,15 @@ class PartnerImages(SoftDeleteModel):
         verbose_name_plural = 'Partner Images'
 
 
+class TestimonialsType(models.IntegerChoices):
+    Placement = 1, 'Placement'
+    Institutions = 2, 'Institutions'
+    Corporate = 3, 'Corporate'
+    Student = 4, 'Student'
+
 
 class Testimonials(SoftDeleteModel):
-    testimonials_type = models.CharField(max_length=255, null=True, blank=True)
+    testimonials_type = models.IntegerField(choices=TestimonialsType.choices,default=TestimonialsType.Student)
     name = models.CharField(max_length=255, null=True, blank=True)
     qualification = models.CharField(max_length=255, null=True, blank=True)
     college = models.CharField(max_length=255, null=True, blank=True)

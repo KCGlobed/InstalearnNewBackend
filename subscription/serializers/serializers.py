@@ -52,7 +52,7 @@ class AddtoCartSerializer(serializers.ModelSerializer) :
 class CourseInfoListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
-        fields = ["id",'name',"image","price","discount"]
+        fields = ["id",'name',"image","price","discount","total_reviews","avg_rating","total_video_duration"]
 
 
 class CartSerializer(serializers.ModelSerializer):
