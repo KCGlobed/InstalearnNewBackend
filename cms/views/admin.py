@@ -27,22 +27,22 @@ class BlogsListingView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['title']
-    ordering_fields = ['title', 'created_at', 'id', 'status', 'feature_status'] 
+    search_fields = ['title',"category__title"]
+    ordering_fields = ['title', 'created_at', 'id', 'status', 'feature_status',"category__title"] 
     def get(self, request, format=None):
-        category = Blog.objects.all()
+        blog_list = Blog.objects.select_related("category").all()
         
         title = request.query_params.get('title')
         if title:
-            category = category.filter(title__icontains=title)
+            blog_list = blog_list.filter(title__icontains=title)
 
-        description = request.query_params.get('description')
-        if description:
-            category = category.filter(description__icontains=description)
+        category = request.query_params.get('category')
+        if category:
+            blog_list = blog_list.filter(category__title__icontains=category)
         
         active = request.query_params.get('status')
         if active:
-            category = category.filter(status=active)
+            blog_list = blog_list.filter(status=active)
 
 
         start_date = request.query_params.get('start_date')
@@ -51,28 +51,28 @@ class BlogsListingView(APIView):
         if start_date:
             try:
                 start_datetime = datetime.fromisoformat(start_date)
-                category = category.filter(created_at__gte=start_datetime)
+                blog_list = blog_list.filter(created_at__gte=start_datetime)
             except ValueError:
                 raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
                 
         if end_date:
             try:
                 end_datetime = datetime.fromisoformat(end_date)
-                category = category.filter(created_at__lte=end_datetime)
+                blog_list = blog_list.filter(created_at__lte=end_datetime)
             except ValueError:
                 raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
             
         search_filter = filters.SearchFilter()
-        category = search_filter.filter_queryset(request, category, self)
+        blog_list = search_filter.filter_queryset(request, blog_list, self)
 
         ordering_filter = filters.OrderingFilter()
-        category = ordering_filter.filter_queryset(request, category, self)
+        blog_list = ordering_filter.filter_queryset(request, blog_list, self)
 
-        if not category.ordered:
-            category = category.order_by('-id')
+        if not blog_list.ordered:
+            blog_list = blog_list.order_by('-id')
 
         paginator = self.pagination_class()
-        page = paginator.paginate_queryset(category, request, view=self)
+        page = paginator.paginate_queryset(blog_list, request, view=self)
         serializer = BlogsListingSerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
     
@@ -312,7 +312,184 @@ class DeleteBlogCategoryView(APIView):
         
 
 
+class BlogsCommentListingView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "blogs_comment_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['first_name','last_name',"email","blog__title"]
+    ordering_fields = ['first_name','last_name',"email","blog__title",'created_at', 'id', 'status'] 
+    def get(self, request, format=None):
+        category = BlogComment.objects.select_related("blog").all()
+        
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            category = category.filter(first_name__icontains=first_name)
 
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            category = category.filter(last_name__icontains=last_name)
+
+        email = request.query_params.get('email')
+        if email:
+            category = category.filter(email__icontains=email)
+
+        blog_title = request.query_params.get('blog_title')
+        if blog_title:
+            category = category.filter(blog__title__icontains=blog_title)
+        
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                category = category.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                category = category.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        category = search_filter.filter_queryset(request, category, self)
+
+        ordering_filter = filters.OrderingFilter()
+        category = ordering_filter.filter_queryset(request, category, self)
+
+        if not category.ordered:
+            category = category.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(category, request, view=self)
+        serializer = BlogsCommentSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+class UpdateBlogCommentStatusView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_blog_comment_status",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = BlogComment.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Blog Comment ID!")
+        
+        serializer = ChangeBlogFeatureStatusSerializer(category, data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Blog Comment Status Updated Successfully", data=BlogsCommentSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+class CMSPagesListingView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "blogs_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title',"page_type"]
+    ordering_fields = ['title', 'created_at', 'id', 'status',"page_type"] 
+    def get(self, request, format=None):
+        blog_list = CMSPages.objects.all()
+        
+        title = request.query_params.get('title')
+        if title:
+            blog_list = blog_list.filter(title__icontains=title)
+
+        page_type = request.query_params.get('page_type')
+        if page_type:
+            blog_list = blog_list.filter(page_type__icontains=page_type)
+        
+        active = request.query_params.get('status')
+        if active:
+            blog_list = blog_list.filter(status=active)
+
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                blog_list = blog_list.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                blog_list = blog_list.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        blog_list = search_filter.filter_queryset(request, blog_list, self)
+
+        ordering_filter = filters.OrderingFilter()
+        blog_list = ordering_filter.filter_queryset(request, blog_list, self)
+
+        if not blog_list.ordered:
+            blog_list = blog_list.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(blog_list, request, view=self)
+        serializer = CMSPagesListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+
+class CreateUpdateCMSPageView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_blog_category",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = CreateUpdateCMSPageSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="CMS Pages Updated Successfully", data=CMSPagesListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class UpdateCMSPageStatusView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_blog_category_status",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = CMSPages.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Page ID!")
+        
+        serializer = ChangeCMSPageStatusSerializer(category, data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Page Status Updated Successfully", data=CMSPagesListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
 
 class FaqTopicListingView(APIView):
     renderer_classes = [CMSRenderer]

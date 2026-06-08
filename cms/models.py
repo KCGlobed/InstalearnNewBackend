@@ -167,7 +167,8 @@ class Blog(models.Model):
 
 class BlogComment(models.Model):
     blog = models.ForeignKey('Blog', null=True, blank=True, on_delete=models.CASCADE)
-    name = models.CharField(max_length=255, null=True, blank=True)
+    first_name = models.CharField(max_length=255, null=True, blank=True)
+    last_name = models.CharField(max_length=255, null=True, blank=True)
     email = models.CharField(max_length=255, null=True, blank=True)
     comment = models.TextField(null=True, blank=True)
     status = models.IntegerField(default=0)
@@ -180,3 +181,31 @@ class BlogComment(models.Model):
 
     def __str__(self):
         return '%s' % self.id
+    
+
+
+class CMSPages(models.Model):
+    
+    SOCIAL_LOGIN_CHOICES = (
+        ('privacy_policy', 'privacy_policy'),
+        ('about_us', 'about_us'),
+        ('terms_conditions', 'terms_conditions')
+    )
+
+    title = models.CharField(max_length=255, null=True, blank=True)
+    page_type = models.CharField(max_length=20, choices=SOCIAL_LOGIN_CHOICES, default='privacy_policy')
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    meta_title = models.CharField(max_length=255, blank=True, null=True)
+    meta_description = models.TextField(blank=True, null=True)
+    meta_keys = models.TextField(null=True, blank=True)
+    status = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'CMS Pages'
+        verbose_name_plural = 'CMS Pages'
+
+    def __str__(self):
+        return self.title

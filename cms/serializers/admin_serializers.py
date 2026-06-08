@@ -26,6 +26,41 @@ class BlogInfoSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class BlogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Blog
+        fields = ["id","title"]
+
+class BlogsCommentSerializer(serializers.ModelSerializer):
+    blog_info = BlogSerializer(source='blog', read_only=True)
+    
+    class Meta:
+        model = BlogComment
+        fields = "__all__"
+
+
+class CMSPagesListingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CMSPages
+        fields = "__all__"
+
+
+class ChangeBlogCommentStatusSerializer(serializers.ModelSerializer) :
+    status = serializers.BooleanField(required=True)
+    class Meta:
+        model = BlogComment
+        fields = ['status']
+        
+    def validate(self, data):
+        return data
+
+    def update(self , category, validate_data):
+        category.status = validate_data.get('status', category.status)
+        category.save()
+
+        return category
+    
+
 class CreateBlogSerializer(serializers.ModelSerializer) :
     category_id = serializers.IntegerField(required=True)
     title = serializers.CharField(max_length = 255,required=True)
@@ -155,6 +190,62 @@ class ChangeBlogFeatureStatusSerializer(serializers.ModelSerializer) :
 
     def update(self , category, validate_data):
         category.feature_status = validate_data.get('status', category.feature_status)
+        category.save()
+
+        return category
+    
+
+class CreateUpdateCMSPageSerializer(serializers.ModelSerializer) :
+    title = serializers.CharField(max_length = 255, required=True)
+    description = serializers.CharField(required=False, allow_blank=True)
+    page_type = serializers.CharField(max_length = 255, required=True)
+    meta_title = serializers.CharField(max_length = 255, required=True)
+    meta_description = serializers.CharField(required=False, allow_blank=True)
+    meta_keys = serializers.CharField(required=False, allow_blank=True)
+    
+    class Meta:
+        model = CMSPages
+        fields = ['title',"description","page_type","meta_title","meta_description","meta_keys"]
+        
+    def validate(self, data):
+        return data
+
+    def create(self , validate_data):
+        cms_page = CMSPages.objects.filter(page_type = validate_data.get('page_type')).first()
+        if cms_page is not None:
+            cms_page.title = validate_data.get('title', cms_page.title)
+            cms_page.description = validate_data.get('description', cms_page.description)
+            cms_page.page_type = validate_data.get('page_type', cms_page.page_type)
+            cms_page.meta_title = validate_data.get('meta_title', cms_page.meta_title)
+            cms_page.meta_description = validate_data.get('meta_description', cms_page.meta_description)
+            cms_page.meta_keys = validate_data.get('meta_keys', cms_page.meta_keys)
+            cms_page.save()
+        else:
+            cms_page = CMSPages(
+                title = validate_data.get('title'),
+                description = validate_data.get('description'),
+                page_type = validate_data.get('page_type'),
+                meta_title = validate_data.get('meta_title'),
+                meta_description = validate_data.get('meta_description'),
+                meta_keys = validate_data.get('meta_keys'),
+                status = True
+            )
+            cms_page.save()
+
+        return cms_page
+    
+
+class ChangeCMSPageStatusSerializer(serializers.ModelSerializer) :
+    status = serializers.BooleanField(required=True)
+    class Meta:
+        model = CMSPages
+        fields = ['status']
+        
+    def validate(self, data):
+        return data
+
+    def update(self , category, validate_data):
+        category.status = validate_data.get('status', category.status)
         category.save()
 
         return category

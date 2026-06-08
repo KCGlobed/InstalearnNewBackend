@@ -18,6 +18,14 @@ urlpatterns = [
     path('update-blog-category-status/<int:cid>', UpdateBlogCategoryStatusView.as_view(), name="update-blog-category-status"),
     path('delete-blog-category/<int:cid>', DeleteBlogCategoryView.as_view(), name="delete-blog-category"),
 
+    
+    path('get-blogs-comments-listing/', BlogsCommentListingView.as_view(), name="get-blogs-comments-listing"),
+    path('update-blog-comment-status/<int:cid>', UpdateBlogCommentStatusView.as_view(), name="update-blog-comment-status"),
+
+
+    path('get-cms-pages-listing/', CMSPagesListingView.as_view(), name="get-cms-pages-listing"), 
+    path('create-update-cms-page/', CreateUpdateCMSPageView.as_view(), name="create-update-cms-page"),
+    path('update-cms-page-status/<int:cid>', UpdateCMSPageStatusView.as_view(), name="update-cms-page-status"),
 
     path('get-faq-topic-listing/', FaqTopicListingView.as_view(), name="get-faq-topic-listing"), 
     path('create-faq-topic/', CreateFaqTopicView.as_view(), name="create-faq-topic"),
@@ -40,4 +48,14 @@ urlpatterns = [
     path('get-homepage-faq-list/<int:cid>', FaqsListView.as_view(), name="get-homepage-faq-list"), 
 
     path('contact-us/', ContactUsView.as_view(), name="contact-us"),
+
+    path('get-blog-categories/', BlogCategoriesView.as_view(), name="get-blog-categories"), 
+    path('get-category-wise-blogs/<int:cid>', BlogCategoryWiseView.as_view(), name="get-category-wise-blogs"),
+    path('get-all-blogs/', BlogListingView.as_view(), name="get-all-blogs"), 
+    path('view-blog-detail/<str:slug>', ViewBlogDetailView.as_view(), name="view-blog-detail"),
+    path('get-featured-blogs/', GetFeaturedBlogListingView.as_view(), name="get-featured-blogs"), 
+    path('view-blog-comments/<int:id>', ViewBlogCommentsView.as_view(), name="view-blog-comment"),
+    path('add-blog-comment/', AddBlogCommentView.as_view(), name="add-blog-comment"),
+    path('view-cms-page/<str:page_type>', ViewCMSPageView.as_view(), name="view-cms-page"),
+
 ]   

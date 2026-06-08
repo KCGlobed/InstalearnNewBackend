@@ -1725,8 +1725,10 @@ class AddCoursesIncludesSerializer(serializers.ModelSerializer) :
 class CourseInstructorsListSerializer(serializers.ModelSerializer) :
     instructor_info = serializers.SerializerMethodField()
     def get_instructor_info(self, parent):
-        info = InstructorProfile.objects.get(id = parent.instructor.id)
-        return InstructorInfoserializer(info).data
+        if parent.instructor is not None:
+            info = InstructorProfile.objects.get(id = parent.instructor.id)
+            return InstructorInfoserializer(info).data
+        return {}
     
     class Meta:
         model = CourseInstructors
