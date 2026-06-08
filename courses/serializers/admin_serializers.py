@@ -1263,7 +1263,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id",'name','description',"short_description","duration","requirements","price","discount","feature_json","image","banner_image","categories","objectives_summary","tags","status","created_at","instrcutor_info","sample_videos","avg_rating","total_reviews","created_by","level","related_course","course_chapters","language","subtitle_language","original_price","enrolled_students","course_includes","course_review_counts"]
+        fields = ["id",'name','description',"short_description","duration","requirements","price","discount","feature_json","image","banner_image","total_reviews","avg_rating","total_video_duration","categories","objectives_summary","tags","status","created_at","instrcutor_info","sample_videos","avg_rating","total_reviews","created_by","level","related_course","course_chapters","language","subtitle_language","original_price","enrolled_students","course_includes","course_review_counts"]
 
 
 

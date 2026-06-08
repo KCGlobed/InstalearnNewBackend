@@ -103,6 +103,18 @@ class GetPlansListingView(APIView):
         return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
 
 
+class GetRelatedCoursesListView(APIView):
+    renderer_classes = [CourseRenderer]
+    def get(self, request, id=None, format=None):
+        
+        course_id = request.query_params.get('course_id')
+        if course_id:
+            course_id_list = course_id.split(",")
+            info = FrequentlyBoughtCourse.objects.filter(course_id__in = course_id_list)
+            serializer = FrequentlyBoughtCourseSerializer(info, many=True)
+            return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+        return success_response(message="success", data={}, status_code=status.HTTP_200_OK)
+    
 
 class GetCourseDetailView(APIView):
     renderer_classes = [CourseRenderer]
