@@ -45,6 +45,12 @@ class CMSPagesListingSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class TestimonialsListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Testimonials
+        fields = "__all__"
+
+
 class ChangeBlogCommentStatusSerializer(serializers.ModelSerializer) :
     status = serializers.BooleanField(required=True)
     class Meta:
@@ -527,3 +533,84 @@ class UpdateSettingSerializer(serializers.ModelSerializer):
         setting.save()
 
         return setting
+    
+
+
+class TestimonialsListingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Testimonials
+        fields = "__all__"
+
+
+class CreateTestimonialsSerializer(serializers.ModelSerializer) :
+    name = serializers.CharField(max_length = 255, required=True)
+    testimonials_type = serializers.IntegerField(required=True)
+    qualification = serializers.CharField(max_length = 255, required=True)
+    college = serializers.CharField(max_length = 255, required=True)
+    content = serializers.CharField(required=True)
+    image = serializers.FileField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
+    
+    class Meta:
+        model = Testimonials
+        fields = ['name',"testimonials_type","image","qualification","college","content"]
+        
+    def validate(self, data):
+        return data
+
+    def create(self , validate_data):
+        category = Testimonials(
+            name = validate_data.get('name'),
+            testimonials_type = validate_data.get('testimonials_type'),
+            qualification = validate_data.get('qualification'),
+            college = validate_data.get('college'),
+            content = validate_data.get('content'),
+            image = validate_data.get('image'),
+            status = True
+        )
+        category.save()
+
+        return category
+    
+
+class EditTestimonialsSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(max_length = 255, required=True)
+    testimonials_type = serializers.IntegerField(required=True)
+    qualification = serializers.CharField(max_length = 255, required=True)
+    college = serializers.CharField(max_length = 255, required=True)
+    content = serializers.CharField(required=True)
+    image = serializers.FileField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
+    
+    class Meta:
+        model = Testimonials
+        fields = ['name',"testimonials_type","image","qualification","college","content"]
+        
+    def validate(self, data):
+        return data
+
+
+    def update(self , category, validate_data):
+        category.name = validate_data.get('name', category.name)
+        category.qualification = validate_data.get('qualification', category.qualification)
+        category.college = validate_data.get('college', category.college)
+        category.content = validate_data.get('content', category.content)
+        category.testimonials_type = validate_data.get('testimonials_type', category.testimonials_type)
+        category.image = validate_data.get('image', category.image)
+        category.save()
+
+        return category
+    
+
+class ChangeTestimonialsStatusSerializer(serializers.ModelSerializer) :
+    status = serializers.BooleanField(required=True)
+    class Meta:
+        model = Testimonials
+        fields = ['status']
+        
+    def validate(self, data):
+        return data
+
+    def update(self , category, validate_data):
+        category.status = validate_data.get('status', category.status)
+        category.save()
+
+        return category

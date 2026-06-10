@@ -18,6 +18,7 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 import tempfile
 import re
+from rest_framework.permissions import IsAuthenticated
 import calendar
 import time
 import json
@@ -472,3 +473,12 @@ class ManageLearningRemindersView(APIView):
                 pass
         
         return success_response(message="Success", data={}, status_code=status.HTTP_200_OK)
+    
+
+class GetPurchaseHistoryView(APIView):
+    renderer_classes = [SubscriptionRenderer]
+    permission_classes = [IsAuthenticated]
+    def get(self, request,format=None):
+        course = Order.objects.filter(user = request.user)
+        serializer = UserOrderListingSerializer(course, many=True)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)

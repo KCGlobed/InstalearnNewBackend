@@ -19,6 +19,13 @@ urlpatterns = [
     path('delete-blog-category/<int:cid>', DeleteBlogCategoryView.as_view(), name="delete-blog-category"),
 
     
+    path('get-testimonials-listing/', TestimonialsListingView.as_view(), name="get-testimonials-listing"), 
+    path('create-testimonials/', CreateTestimonialsView.as_view(), name="create-testimonials"),
+    path('edit-testimonials/<int:cid>', EditTestimonialsView.as_view(), name="edit-testimonials"),
+    path('update-testimonials-status/<int:cid>', UpdateTestimonialsStatusView.as_view(), name="update-testimonials-status"),
+    path('delete-testimonials/<int:cid>', DeleteTestimonialsView.as_view(), name="delete-testimonials"),
+
+
     path('get-blogs-comments-listing/', BlogsCommentListingView.as_view(), name="get-blogs-comments-listing"),
     path('update-blog-comment-status/<int:cid>', UpdateBlogCommentStatusView.as_view(), name="update-blog-comment-status"),
 
@@ -57,5 +64,7 @@ urlpatterns = [
     path('view-blog-comments/<int:id>', ViewBlogCommentsView.as_view(), name="view-blog-comment"),
     path('add-blog-comment/', AddBlogCommentView.as_view(), name="add-blog-comment"),
     path('view-cms-page/<str:page_type>', ViewCMSPageView.as_view(), name="view-cms-page"),
+    
+    path('get-user-testimonials/<int:testimonials_type>', ViewTestimonialsListView.as_view(), name="get-user-testimonials"),
 
 ]   

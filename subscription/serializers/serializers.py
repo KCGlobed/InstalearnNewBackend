@@ -606,3 +606,24 @@ class TrailRegistrationSerializer(serializers.ModelSerializer) :
 
         return trail_user
     
+
+
+class CourseListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ["id",'name']
+
+
+class UserOrderListingSerializer(serializers.ModelSerializer):
+    ordered_courses = serializers.SerializerMethodField('get_ordered_courses')
+    order_date = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+
+    def get_ordered_courses(self, obj):
+        category = Course.objects.filter(usercourses__user_id=obj.user.id).distinct()
+        return CourseListSerializer(category, many=True).data
+
+    
+    class Meta:
+        model = Order
+        fields = ["id","first_name","last_name","email","phone","total_amount","gst_amount","amount","razorpay_order_id","payment_method","subscription_status","created_at","ordered_courses","order_date","isPaid"]

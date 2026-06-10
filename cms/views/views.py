@@ -139,3 +139,11 @@ class ViewCMSPageView(APIView):
         category = CMSPages.objects.filter(page_type = page_type, status =True).first()
         serializer = CMSPagesListingSerializer(category)
         return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class ViewTestimonialsListView(APIView):
+    renderer_classes = [CMSRenderer]
+    def get(self, request, testimonials_type=None):
+        category = Testimonials.objects.filter(testimonials_type = testimonials_type, status =True).first()
+        serializer = TestimonialsListSerializer(category)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)

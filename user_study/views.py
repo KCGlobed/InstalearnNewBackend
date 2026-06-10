@@ -528,45 +528,47 @@ class GetCourseCertificateView(APIView):
         if video_duration_progress < 95:
             return Response({"status":"failed","message":"You can't eligible for certificate","data":[]}, status=status.HTTP_400_BAD_REQUEST)
         
+        import html
+
         get_certificate = UserCertificates.objects.filter(user_id = request.user.id, course_id = id).first()
         if get_certificate is None:
-            destination = settings.MEDIA_ROOT+ 'mini_lms/certificate/'
+            destination = os.path.join(settings.MEDIA_ROOT, 'mini_lms', 'certificate')
             if not os.path.exists(destination):
                 os.makedirs(destination)
-            input_file = "reports/templates/certificate/2477188_343489-PAOJU9-140.svg"  # Path to your SVG file
-            output_file = destination + str(request.user.id)+"_certificate.svg"  # Path to save the updated SVG file
 
-            text_to_find = "student_name"
-            new_text = request.user.first_name+" "+request.user.last_name
-            from datetime import date
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
 
-            text_to_find1 = "certificate_date"
-            new_text1 = str(date.today())
+            input_file = "user_study/templates/certificate/dummy_certificate_template.svg"
+            output_file = os.path.join(destination, f"{timestamp}_certificate.svg")
 
+            # 2. Prepare the dynamic text (escaped to prevent breaking the SVG XML)
+            new_name = html.escape(f"{request.user.first_name} {request.user.last_name}")
+            new_date = html.escape(str(datetime.today().date()))
+            course_name = html.escape(course.name)
 
+            # 3. Read the SVG template content as a regular string
             with open(input_file, "r", encoding="utf-8") as file:
                 svg_content = file.read()
 
-            soup = BeautifulSoup(svg_content, "xml")
+            # 4. Replace the text placeholders directly
+            svg_content = svg_content.replace("{{name}}", new_name)
+            svg_content = svg_content.replace("{{course_name}}", course_name)
+            svg_content = svg_content.replace("{{date}}", new_date)
 
-            for text_element in soup.find_all("text"):
-                if text_element.string == text_to_find:
-                    text_element.string = new_text
-                
-                if text_element.string == text_to_find1:
-                    text_element.string = new_text1
-
+            # 5. Save the updated SVG content to the destination path
             with open(output_file, "w", encoding="utf-8") as file:
-                file.write(str(soup))
+                file.write(svg_content)
 
+            # 6. Upload to Google Cloud Storage (Keeping your exact original logic)
             bucket = client.get_bucket(settings.GS_BUCKET_NAME)
             blob = bucket.blob(output_file)
             blob.upload_from_filename(output_file)
 
+            # 7. Save metadata into the database
             chap = UserCertificates(
-                user = request.user,
-                course = course,
-                certificate_url = blob.public_url
+                user=request.user,
+                course=course,
+                certificate_url=blob.public_url
             )
             chap.save()
             return Response({"status":"success",'message':'',"data":blob.public_url}, status = status.HTTP_200_OK)

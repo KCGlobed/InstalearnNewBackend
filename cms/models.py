@@ -7,7 +7,7 @@ from simple_history.models import HistoricalRecords
 from django.utils.text import slugify
 
 
-class PartnerImages(SoftDeleteModel):
+class PartnerImages(models.Model):
     title = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     image = models.FileField(upload_to="landing/", null=True, blank=True)
@@ -25,15 +25,14 @@ class TestimonialsType(models.IntegerChoices):
     Student = 4, 'Student'
 
 
-class Testimonials(SoftDeleteModel):
+class Testimonials(models.Model):
     testimonials_type = models.IntegerField(choices=TestimonialsType.choices,default=TestimonialsType.Student)
     name = models.CharField(max_length=255, null=True, blank=True)
     qualification = models.CharField(max_length=255, null=True, blank=True)
     college = models.CharField(max_length=255, null=True, blank=True)
     content = models.TextField(null=True, blank=True)
     image = models.FileField(upload_to="landing/", null=True, blank=True)
-    featured = models.IntegerField(default=0)
-    visible = models.IntegerField(default=1)
+    status = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
