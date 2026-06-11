@@ -538,7 +538,10 @@ class GetCourseCertificateView(APIView):
 
             # 2. Prepare the dynamic text (escaped to prevent breaking the SVG XML)
             new_name = html.escape(f"{request.user.first_name} {request.user.last_name}")
-            certificate_id = html.escape(f"{datetime.now().strftime("%y")}-{UserCertificates.objects.all().count()}")
+            current_year = datetime.now().strftime("%y")
+            cert_count = UserCertificates.objects.count() + 1
+
+            certificate_id = html.escape(f"{current_year}-{cert_count:04d}")
             new_date = html.escape(str(datetime.today().date()))
             course_name = html.escape(course.name)
 
