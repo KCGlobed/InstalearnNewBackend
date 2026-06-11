@@ -538,6 +538,7 @@ class GetCourseCertificateView(APIView):
 
             # 2. Prepare the dynamic text (escaped to prevent breaking the SVG XML)
             new_name = html.escape(f"{request.user.first_name} {request.user.last_name}")
+            certificate_id = html.escape(f"{datetime.now().strftime("%y")}-{UserCertificates.objects.all().count()}")
             new_date = html.escape(str(datetime.today().date()))
             course_name = html.escape(course.name)
 
@@ -549,6 +550,7 @@ class GetCourseCertificateView(APIView):
             svg_content = svg_content.replace("{{name}}", new_name)
             svg_content = svg_content.replace("{{course_name}}", course_name)
             svg_content = svg_content.replace("{{date}}", new_date)
+            svg_content = svg_content.replace("{{certificate_id}}", certificate_id)
 
             # 5 & 6. Create temp file, write content, and upload to GCS
             # delete=False ensures the file stays intact until we explicitly delete it after upload
