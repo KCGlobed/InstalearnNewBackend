@@ -7,7 +7,7 @@
   <text x="600" y="310" text-anchor="middle" font-size="56" font-family="Georgia" font-weight="bold">{{name}}</text>
   <line x1="300" y1="330" x2="900" y2="330" stroke="#d1d5db" stroke-width="2"/>
   <text x="600" y="400" text-anchor="middle" font-size="24">For successfully completing the course</text>
-  <text x="600" y="470" text-anchor="middle" font-size="38" font-family="Georgia" font-weight="bold" fill="#2563eb">{{course_name}}</text>
+  <text x="600" y="470" text-anchor="middle" font-size="22" font-family="Georgia" font-weight="bold" fill="#2563eb">{{course_name}}</text>
   <text x="600" y="540" text-anchor="middle" font-size="20">Awarded on {{date}}</text>
   <line x1="180" y1="680" x2="380" y2="680" stroke="#374151" stroke-width="2"/>
   <text x="280" y="710" text-anchor="middle" font-size="18">Instructor Signature</text>

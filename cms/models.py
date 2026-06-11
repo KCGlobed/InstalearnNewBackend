@@ -214,3 +214,104 @@ class CMSPages(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class HelpSupportTopics(models.Model):
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
+    title = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    image = models.ImageField(upload_to="mini_lms/support_images/", null=True, blank=True)
+    status = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Help & Support Topics'
+        verbose_name_plural = 'Help & Support Topics'
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            original_slug = slugify(self.title)
+            queryset = HelpSupportTopics.objects.all()
+            next_num = 1
+            slug = original_slug
+            
+            # Loop until a unique slug is found
+            while queryset.filter(slug=slug).exists():
+                slug = f"{original_slug}-{next_num}"
+                next_num += 1
+                
+            self.slug = slug
+            
+        super().save(*args, **kwargs)
+        
+    def __str__(self):
+        return '%s' % self.title
+
+
+
+class HelpSupportSubTopics(models.Model):
+    main_topic = models.ForeignKey('HelpSupportTopics', null=True, blank=True, on_delete=models.CASCADE)
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
+    title = models.CharField(max_length=255, null=True, blank=True)
+    status = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Help Support Sub Topics'
+        verbose_name_plural = 'Help Support Sub Topics'
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            original_slug = slugify(self.title)
+            queryset = HelpSupportSubTopics.objects.all()
+            next_num = 1
+            slug = original_slug
+            
+            # Loop until a unique slug is found
+            while queryset.filter(slug=slug).exists():
+                slug = f"{original_slug}-{next_num}"
+                next_num += 1
+                
+            self.slug = slug
+            
+        super().save(*args, **kwargs)
+        
+    def __str__(self):
+        return '%s' % self.title
+    
+
+
+class HelpSupportArticle(models.Model):
+    main_topic = models.ForeignKey('HelpSupportTopics', null=True, blank=True, on_delete=models.CASCADE)
+    sub_topic = models.ForeignKey('HelpSupportSubTopics', null=True, blank=True, on_delete=models.CASCADE)
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
+    title = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    status = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Help Support Article'
+        verbose_name_plural = 'Help Support Article'
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            original_slug = slugify(self.title)
+            queryset = HelpSupportArticle.objects.all()
+            next_num = 1
+            slug = original_slug
+            
+            # Loop until a unique slug is found
+            while queryset.filter(slug=slug).exists():
+                slug = f"{original_slug}-{next_num}"
+                next_num += 1
+                
+            self.slug = slug
+            
+        super().save(*args, **kwargs)
+        
+    def __str__(self):
+        return '%s' % self.title

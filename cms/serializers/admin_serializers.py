@@ -614,3 +614,77 @@ class ChangeTestimonialsStatusSerializer(serializers.ModelSerializer) :
         category.save()
 
         return category
+    
+
+
+class HelpSupportTopicListingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HelpSupportTopics
+        fields = "__all__"
+
+
+class CreateHelpSupportTopicSerializer(serializers.ModelSerializer) :
+    title = serializers.CharField(max_length = 255, required=True)
+    description = serializers.CharField(required=False, allow_blank=True)
+    image = serializers.FileField(required=True,validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
+    
+    class Meta:
+        model = HelpSupportTopics
+        fields = ['title',"description","image"]
+        
+    def validate(self, data):
+        name_count = HelpSupportTopics.objects.filter(title = data.get('title')).count()
+        if name_count > 0:
+            raise serializers.ValidationError("Title Already Exists!")
+
+        return data
+
+    def create(self , validate_data):
+        topic = HelpSupportTopics(
+            title = validate_data.get('title'),
+            description = validate_data.get('description'),
+            image = validate_data.get('image'),
+            status = True
+        )
+        topic.save()
+
+        return topic
+    
+
+
+class EditHelpSupportTopicSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(max_length = 255, required=True)
+    description = serializers.CharField(required=False, allow_blank=True)
+    image = serializers.FileField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
+
+    class Meta:
+        model = HelpSupportTopics
+        fields = ['title',"description","image"]
+        
+    def validate(self, data):
+        return data
+
+
+    def update(self , category, validate_data):
+        category.title = validate_data.get('title', category.title)
+        category.description = validate_data.get('description', category.description)
+        category.image = validate_data.get('image', category.image)
+        category.save()
+
+        return category
+    
+
+class ChangeHelpSupportTopicStatusSerializer(serializers.ModelSerializer) :
+    status = serializers.BooleanField(required=True)
+    class Meta:
+        model = HelpSupportTopics
+        fields = ['status']
+        
+    def validate(self, data):
+        return data
+
+    def update(self , category, validate_data):
+        category.status = validate_data.get('status', category.status)
+        category.save()
+
+        return category
