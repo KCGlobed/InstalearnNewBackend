@@ -532,14 +532,9 @@ class GetCourseCertificateView(APIView):
 
         get_certificate = UserCertificates.objects.filter(user_id = request.user.id, course_id = id).first()
         if get_certificate is None:
-            destination = os.path.join(settings.MEDIA_ROOT, 'mini_lms', 'certificate')
-            if not os.path.exists(destination):
-                os.makedirs(destination)
-
             timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
-
             input_file = "user_study/templates/certificate/dummy_certificate_template.svg"
-            output_file = os.path.join(destination, f"{timestamp}_certificate.svg")
+            filename = f"mini_lms/certificate/{timestamp}_certificate.svg" # Clean cloud path for GCS
 
             # 2. Prepare the dynamic text (escaped to prevent breaking the SVG XML)
             new_name = html.escape(f"{request.user.first_name} {request.user.last_name}")
@@ -555,14 +550,23 @@ class GetCourseCertificateView(APIView):
             svg_content = svg_content.replace("{{course_name}}", course_name)
             svg_content = svg_content.replace("{{date}}", new_date)
 
-            # 5. Save the updated SVG content to the destination path
-            with open(output_file, "w", encoding="utf-8") as file:
-                file.write(svg_content)
+            # 5 & 6. Create temp file, write content, and upload to GCS
+            # delete=False ensures the file stays intact until we explicitly delete it after upload
+            with tempfile.NamedTemporaryFile(suffix='.svg', delete=False) as temp_svg:
+                try:
+                    # Write the updated content to the temp file
+                    temp_svg.write(svg_content.encode('utf-8'))
+                    temp_svg.close()  # Close the file handle so GCS can safely read it
 
-            # 6. Upload to Google Cloud Storage (Keeping your exact original logic)
-            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
-            blob = bucket.blob(output_file)
-            blob.upload_from_filename(output_file)
+                    # Upload to Google Cloud Storage
+                    bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+                    blob = bucket.blob(filename)  # Use the clean relative cloud path here
+                    blob.upload_from_filename(temp_svg.name)
+                    
+                finally:
+                    # Step 7. Ensure the local temp file is deleted no matter what happens during upload
+                    if os.path.exists(temp_svg.name):
+                        os.remove(temp_svg.name)
 
             # 7. Save metadata into the database
             chap = UserCertificates(
