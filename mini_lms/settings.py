@@ -229,7 +229,7 @@ ADMIN_BASE_URL = "http://localhost:3000"
 ADMIN_EMAIL="harish.kumar@kcglobed.com"
 
 # Google credentials from Google Cloud Console
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '187256667857-h90u4bc75ep3c7vlgihsludue2vimuco.apps.googleusercourses.com'
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '610747130982-p8h1omr7oh9uo531kgofoagp6obe3o18.apps.googleusercontent.com'
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'YOUR_GOOGLE_CLIENT_SECRET'
 
 # Facebook credentials from Facebook for Developers

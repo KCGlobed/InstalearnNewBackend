@@ -57,14 +57,14 @@ class UserLoginSerializer(serializers.ModelSerializer):
 
 
 class UserSocialLoginSerializer(serializers.ModelSerializer) :
-    name = serializers.CharField(max_length = 255, required=True)
+    name = serializers.CharField(max_length = 255, write_only=True, source='first_name')
     email = serializers.CharField(max_length = 255, required=True)
     social_id = serializers.CharField(max_length = 255, required=True)
     social_type = serializers.CharField(max_length = 255, required=True)
-    token = serializers.CharField(required=True)
+    token = serializers.CharField(required=True, write_only=True)
     role = serializers.CharField(max_length = 255,required=True)
-    device_type = serializers.CharField(max_length = 255, required=True)
-    device_id = serializers.CharField(max_length = 255, required=True)
+    device_type = serializers.CharField(max_length = 255, required=True, write_only=True)
+    device_id = serializers.CharField(max_length = 255, required=True, write_only=True)
 
     class Meta:
         model = User
