@@ -525,7 +525,7 @@ class GetCourseCertificateView(APIView):
             if course.total_video_duration > 0:
                 video_duration_progress =  math.ceil(total_duration_video_watched * 100 / course.total_video_duration)
 
-        if video_duration_progress < 95:
+        if video_duration_progress < 50:
             return Response({"status":"failed","message":"You can't eligible for certificate","data":[]}, status=status.HTTP_400_BAD_REQUEST)
         
         import html
