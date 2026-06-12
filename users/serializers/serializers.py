@@ -72,10 +72,10 @@ class UserSocialLoginSerializer(serializers.ModelSerializer) :
 
     def validate(self, data):
         token = data.get("token")
-        # if data.get("social_type") == "Google":
-        #     google_login_token_check(token)
-        # else:
-        #     facebook_login_token_check(token)
+        if data.get("social_type") == "Google":
+            google_login_token_check(token)
+        else:
+            facebook_login_token_check(token)
 
         return data
     
