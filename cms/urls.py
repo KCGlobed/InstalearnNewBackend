@@ -58,6 +58,16 @@ urlpatterns = [
     path('delete-help-support-topic/<int:cid>', DeleteHelpSupportTopicView.as_view(), name="delete-help-support-topic"),
 
 
+    path('get-help-support-topic-list/', HelpSupportTopicListView.as_view(), name="get-help-support-topic-list"), 
+    path('get-help-support-subtopic-listing/', HelpSupportSubTopicListingView.as_view(), name="get-help-support-subtopic-listing"), 
+    path('create-help-support-subtopic/', CreateHelpSupportSubTopicView.as_view(), name="create-help-support-subtopic"),
+    path('edit-help-support-subtopic/<int:cid>', EditHelpSupportSubTopicView.as_view(), name="edit-help-support-subtopic"),
+    path('update-help-support-subtopic-status/<int:cid>', UpdateHelpSupportSubTopicStatusView.as_view(), name="update-help-support-subtopic-status"),
+    path('delete-help-support-subtopic/<int:cid>', DeleteHelpSupportSubTopicView.as_view(), name="delete-help-support-subtopic"),
+
+    path('get-help-support-subtopic-list/<int:cid>', HelpSupportSubTopicListView.as_view(), name="get-help-support-subtopic-list"), 
+
+
     #Landing Page APIs
     path('get-homepage-faq-topic-list/', FaqTopicListView.as_view(), name="get-homepage-faq-topic-list"),
     path('get-homepage-faq-list/<int:cid>', FaqsListView.as_view(), name="get-homepage-faq-list"), 

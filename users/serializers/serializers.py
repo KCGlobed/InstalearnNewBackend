@@ -57,14 +57,14 @@ class UserLoginSerializer(serializers.ModelSerializer):
 
 
 class UserSocialLoginSerializer(serializers.ModelSerializer) :
-    name = serializers.CharField(max_length = 255, write_only=True, source='first_name')
+    name = serializers.CharField(max_length = 255, required=True, source='first_name')
     email = serializers.CharField(max_length = 255, required=True)
     social_id = serializers.CharField(max_length = 255, required=True)
     social_type = serializers.CharField(max_length = 255, required=True)
-    token = serializers.CharField(required=True, write_only=True)
+    token = serializers.CharField(write_only=True)
     role = serializers.CharField(max_length = 255,required=True)
-    device_type = serializers.CharField(max_length = 255, required=True, write_only=True)
-    device_id = serializers.CharField(max_length = 255, required=True, write_only=True)
+    device_type = serializers.CharField(max_length = 255, write_only=True)
+    device_id = serializers.CharField(max_length = 255, write_only=True)
 
     class Meta:
         model = User
@@ -72,17 +72,17 @@ class UserSocialLoginSerializer(serializers.ModelSerializer) :
 
     def validate(self, data):
         token = data.get("token")
-        if data.get("social_type") == "Google":
-            google_login_token_check(token)
-        else:
-            facebook_login_token_check(token)
+        # if data.get("social_type") == "Google":
+        #     google_login_token_check(token)
+        # else:
+        #     facebook_login_token_check(token)
 
         return data
     
     def create(self , validate_data):
         usercount = User.objects.filter(email = validate_data.get('email').lower()).count()
         if usercount == 0:
-            data = {"email":validate_data.get('email').lower(), "name":validate_data.get('name'),"social_id":validate_data.get('social_id'),"social_type":validate_data.get('social_type')}
+            data = {"email":validate_data.get('email').lower(), "name":validate_data.get('first_name'),"social_id":validate_data.get('social_id'),"social_type":validate_data.get('social_type')}
             user = User.objects.create_social_user(**data)
             assign_role(user, globals()[validate_data.get('role')])
             user.email_verified = 1

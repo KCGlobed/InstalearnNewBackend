@@ -688,3 +688,73 @@ class ChangeHelpSupportTopicStatusSerializer(serializers.ModelSerializer) :
         category.save()
 
         return category
+    
+
+
+class HelpSupportSubTopicListingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HelpSupportSubTopics
+        fields = "__all__"
+
+
+class CreateHelpSupportSubTopicSerializer(serializers.ModelSerializer) :
+    title = serializers.CharField(max_length = 255, required=True)
+    main_topic = serializers.IntegerField(required=True)
+    
+    class Meta:
+        model = HelpSupportSubTopics
+        fields = ['title',"main_topic"]
+        
+    def validate(self, data):
+        name_count = HelpSupportSubTopics.objects.filter(title = data.get('title')).count()
+        if name_count > 0:
+            raise serializers.ValidationError("Title Already Exists!")
+
+        return data
+
+    def create(self , validate_data):
+        topic = HelpSupportSubTopics(
+            title = validate_data.get('title'),
+            main_topic = HelpSupportTopics.objects.filter(id = validate_data.get('main_topic')).first(),
+            status = True
+        )
+        topic.save()
+
+        return topic
+    
+
+
+class EditHelpSupportSubTopicserializer(serializers.ModelSerializer):
+    title = serializers.CharField(max_length = 255, required=True)
+    main_topic = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = HelpSupportSubTopics
+        fields = ['title',"main_topic"]
+        
+    def validate(self, data):
+        return data
+
+
+    def update(self , category, validate_data):
+        category.title = validate_data.get('title', category.title)
+        category.main_topic = HelpSupportTopics.objects.filter(id = validate_data.get('main_topic')).first()
+        category.save()
+
+        return category
+    
+
+class ChangeHelpSupportSubTopicstatusSerializer(serializers.ModelSerializer) :
+    status = serializers.BooleanField(required=True)
+    class Meta:
+        model = HelpSupportSubTopics
+        fields = ['status']
+        
+    def validate(self, data):
+        return data
+
+    def update(self , category, validate_data):
+        category.status = validate_data.get('status', category.status)
+        category.save()
+
+        return category

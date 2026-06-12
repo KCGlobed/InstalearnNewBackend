@@ -259,6 +259,11 @@ def google_login_token_check(token):
         if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
             raise ValidationError('Wrong issuer.')
         return True
+    except ValueError as e:
+        # id_token.verify_oauth2_token throws ValueError for expired or malformed tokens
+        raise ValidationError(f'Token validation failed: {str(e)}')
+    except Exception as e:
+        raise ValidationError(f'An unexpected error occurred: {str(e)}')
     except ValidationError as e:
         raise ValidationError('error :'+ str(e))
     

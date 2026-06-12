@@ -26,10 +26,23 @@ class UserManager(BaseUserManager):
     def create_social_user(self, email, name, social_id, social_type):
         if not email:
             raise ValueError('Users must have an email address')
+        
+        full_name = name.strip()
+        
+        first_name = ""
+        last_name = ""
+        
+        if full_name:
+            # split(' ', 1) splits only at the first space found
+            name_parts = full_name.split(' ', 1)
+            first_name = name_parts[0]
+            if len(name_parts) > 1:
+                last_name = name_parts[1]
+
         user = self.model(
             email=self.normalize_email(email.lower()),
-            first_name=name,
-            last_name='',
+            first_name=first_name,
+            last_name=last_name,
         )
         user.social_id = social_id
         user.social_type = social_type
