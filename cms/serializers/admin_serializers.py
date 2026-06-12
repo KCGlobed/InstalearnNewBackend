@@ -692,6 +692,12 @@ class ChangeHelpSupportTopicStatusSerializer(serializers.ModelSerializer) :
 
 
 class HelpSupportSubTopicListingSerializer(serializers.ModelSerializer):
+    main_topic = serializers.SerializerMethodField()
+    
+    def get_main_topic(self, parent):
+        info = HelpSupportTopics.objects.get(id = parent.main_topic.id)
+        return HelpSupportTopicListingSerializer(info).data
+    
     class Meta:
         model = HelpSupportSubTopics
         fields = "__all__"
@@ -748,6 +754,95 @@ class ChangeHelpSupportSubTopicstatusSerializer(serializers.ModelSerializer) :
     status = serializers.BooleanField(required=True)
     class Meta:
         model = HelpSupportSubTopics
+        fields = ['status']
+        
+    def validate(self, data):
+        return data
+
+    def update(self , category, validate_data):
+        category.status = validate_data.get('status', category.status)
+        category.save()
+
+        return category
+    
+
+
+
+class HelpSupportArticleListingSerializer(serializers.ModelSerializer):
+    main_topic = serializers.SerializerMethodField()
+    
+    def get_main_topic(self, parent):
+        info = HelpSupportSubTopics.objects.get(id = parent.sub_topic.id)
+        return HelpSupportSubTopicListingSerializer(info).data
+    
+    class Meta:
+        model = HelpSupportArticle
+        fields = "__all__"
+
+
+class CreateHelpSupportArticleSerializer(serializers.ModelSerializer) :
+    title = serializers.CharField(max_length = 255, required=True)
+    main_topic = serializers.IntegerField(required=True)
+    sub_topic = serializers.IntegerField(required=True)
+    description = serializers.CharField(required=False, allow_blank=True)
+    image = serializers.FileField(required=True,validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
+    
+    class Meta:
+        model = HelpSupportArticle
+        fields = ['title',"main_topic","sub_topic","description","image"]
+        
+    def validate(self, data):
+        name_count = HelpSupportArticle.objects.filter(title = data.get('title')).count()
+        if name_count > 0:
+            raise serializers.ValidationError("Title Already Exists!")
+
+        return data
+
+    def create(self , validate_data):
+        topic = HelpSupportArticle(
+            title = validate_data.get('title'),
+            description = validate_data.get('description'),
+            image = validate_data.get('image'),
+            main_topic = HelpSupportTopics.objects.filter(id = validate_data.get('main_topic')).first(),
+            sub_topic = HelpSupportSubTopics.objects.filter(id = validate_data.get('sub_topic')).first(),
+            status = True
+        )
+        topic.save()
+
+        return topic
+    
+
+
+class EditHelpSupportArticleserializer(serializers.ModelSerializer):
+    title = serializers.CharField(max_length = 255, required=True)
+    main_topic = serializers.IntegerField(required=True)
+    sub_topic = serializers.IntegerField(required=True)
+    description = serializers.CharField(required=False, allow_blank=True)
+    image = serializers.FileField(required=True,validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
+
+    class Meta:
+        model = HelpSupportArticle
+        fields = ['title',"main_topic","sub_topic","description","image"]
+        
+    def validate(self, data):
+        return data
+
+
+    def update(self , category, validate_data):
+        category.title = validate_data.get('title', category.title)
+        category.description = validate_data.get('description', category.description)
+        category.image = validate_data.get('image', category.image)
+        category.main_topic = HelpSupportTopics.objects.filter(id = validate_data.get('main_topic')).first()
+        category.sub_topic = HelpSupportSubTopics.objects.filter(id = validate_data.get('sub_topic')).first()
+        category.save()
+
+        return category
+    
+
+class ChangeHelpSupportArticlestatusSerializer(serializers.ModelSerializer) :
+    status = serializers.BooleanField(required=True)
+    class Meta:
+        model = HelpSupportArticle
         fields = ['status']
         
     def validate(self, data):

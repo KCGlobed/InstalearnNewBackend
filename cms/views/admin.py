@@ -1148,7 +1148,7 @@ class CreateHelpSupportSubTopicView(APIView):
         serializer = CreateHelpSupportSubTopicSerializer(data = request.data)
         if serializer.is_valid(raise_exception = True):
             user  = serializer.save()
-            return success_response(message="Help & Support Topic Created Successfully", data=HelpSupportSubTopicListingView(user).data, status_code=status.HTTP_200_OK)
+            return success_response(message="Help & Support Topic Created Successfully", data=HelpSupportSubTopicListingSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
@@ -1168,7 +1168,7 @@ class EditHelpSupportSubTopicView(APIView):
         serializer = EditHelpSupportSubTopicserializer(category, data = request.data, partial=True)
         if serializer.is_valid(raise_exception = True):
             user= serializer.save()
-            return success_response(message="Help & Support Sub Topic Updated Successfully", data=HelpSupportSubTopicListingView(user).data, status_code=status.HTTP_200_OK)
+            return success_response(message="Help & Support Sub Topic Updated Successfully", data=HelpSupportSubTopicListingSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
@@ -1187,7 +1187,7 @@ class UpdateHelpSupportSubTopicStatusView(APIView):
         serializer = ChangeHelpSupportSubTopicstatusSerializer(category, data = request.data)
         if serializer.is_valid(raise_exception = True):
             user  = serializer.save()
-            return success_response(message="Help & Support Sub Topic Status Updated Successfully", data=HelpSupportSubTopicListingView(user).data, status_code=status.HTTP_200_OK)
+            return success_response(message="Help & Support Sub Topic Status Updated Successfully", data=HelpSupportSubTopicListingSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
@@ -1205,3 +1205,137 @@ class DeleteHelpSupportSubTopicView(APIView):
             return success_response(message="Help & Support Sub Topic Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
         except HelpSupportSubTopics.DoesNotExist:
             return error_response(message="Help & Support Sub Topic not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+        
+
+
+class HelpSupportArticleListingView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "help_support_article_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title']
+    ordering_fields = ['title', 'created_at', 'id', 'status'] 
+    def get(self, request, format=None):
+        category = HelpSupportArticle.objects.all()
+        
+        title = request.query_params.get('title')
+        if title:
+            category = category.filter(title__icontains=title)
+
+        sub_topic = request.query_params.get('sub_topic')
+        if sub_topic:
+            category = category.filter(sub_topic__title__icontains=main_topic)
+
+        main_topic = request.query_params.get('main_topic')
+        if main_topic:
+            category = category.filter(main_topic__title__icontains=main_topic)
+        
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
+
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                category = category.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                category = category.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        category = search_filter.filter_queryset(request, category, self)
+
+        ordering_filter = filters.OrderingFilter()
+        category = ordering_filter.filter_queryset(request, category, self)
+
+        if not category.ordered:
+            category = category.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(category, request, view=self)
+        serializer = HelpSupportArticleListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+class CreateHelpSupportArticleView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_help_support_article",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = CreateHelpSupportArticleSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Help & Support Topic Created Successfully", data=HelpSupportArticleListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class EditHelpSupportArticleView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_help_support_article",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = HelpSupportSubTopics.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Help & Support Sub Topic ID!")
+        
+        serializer = EditHelpSupportArticleserializer(category, data = request.data, partial=True)
+        if serializer.is_valid(raise_exception = True):
+            user= serializer.save()
+            return success_response(message="Help & Support Sub Topic Updated Successfully", data=HelpSupportArticleListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class UpdateHelpSupportArticleStatusView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_help_support_article_status",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = HelpSupportSubTopics.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Help & Support Sub Topic ID!")
+        
+        serializer = ChangeHelpSupportArticlestatusSerializer(category, data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Help & Support Sub Topic Status Updated Successfully", data=HelpSupportArticleListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class DeleteHelpSupportArticleView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "delete_help_support_article",
+                            [SuperAdmin]
+                        )]
+    def delete(self, request, cid, format=None):
+        try:
+            course = HelpSupportArticle.objects.get(id = cid)
+            course.delete()
+            return success_response(message="Help & Support Article Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
+        except HelpSupportArticle.DoesNotExist:
+            return error_response(message="Help & Support Article not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)
