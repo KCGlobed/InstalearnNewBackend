@@ -36,6 +36,12 @@ class CourseProgressSerializer(serializers.ModelSerializer):
 
 class OrderCoursesSerializer(serializers.ModelSerializer):
     progress = serializers.SerializerMethodField('get_progress')
+    course_started = serializers.SerializerMethodField('get_course_started')
+
+    def get_course_started(self, obj):
+        user_course =  UserCourses.objects.filter(user= self.context.get('user'), course_id = obj.id).first()
+        return user_course.is_started
+    
     def get_progress(self, obj):
         total_duration_video_watched = UserLectureProgress.objects.filter(course_id = obj.id, user = self.context.get('user')).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
         video_duration_progress = 0
@@ -48,7 +54,7 @@ class OrderCoursesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ['id',"name","short_description","image","avg_rating","total_reviews","updated_at","progress"]
+        fields = ['id',"name","short_description","image","avg_rating","total_reviews","updated_at","progress","course_started"]
 
 
 class FrequentlyBoughtCourseSerializer(serializers.ModelSerializer):
@@ -337,6 +343,31 @@ class GetUserNotesSerializer(serializers.ModelSerializer):
         model = Notes
         fields = "__all__"
 
+
+class MarkCourseStartedSerializer(serializers.ModelSerializer) :
+    course_id = serializers.IntegerField(required=True)
+    
+    class Meta:
+        model = UserCourses
+        fields = ['course_id']
+        
+        
+    def validate(self, data):
+
+        course = data.get('course_id')
+        course_count = Course.objects.filter(id=course).count()
+        if course_count == 0:
+            raise serializers.ValidationError("Course does not exists")
+        return data
+
+    def create(self , validate_data):
+
+        user_courses = UserCourses.objects.filter(
+            user=self.context.get('user'), 
+            course_id=validate_data.get('course_id')
+        )
+        user_courses.update(is_started=True)
+        return True
 
 
 class CreateNoteSerializer(serializers.ModelSerializer) :

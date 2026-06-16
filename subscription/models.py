@@ -142,6 +142,7 @@ class UserCourses(models.Model):
     progress_percentage = models.FloatField(null=True, blank=True, default=0.0)
     completed = models.BooleanField(default=False)
     paid = models.BooleanField(default=False)
+    is_started = models.BooleanField(default=False)
     expired_at = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)

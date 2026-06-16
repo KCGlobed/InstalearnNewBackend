@@ -36,6 +36,20 @@ class PurchasedCoursesView(APIView):
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
 
+class MarkCourseStartedView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def post(self, request, format=None):
+        serializer = MarkCourseStartedSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Course Started successfully", data={}, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
 class GetCourseProgressView(APIView):
     renderer_classes = [UserStudyRenderer]
     permission_classes = [IsAuthenticated, 

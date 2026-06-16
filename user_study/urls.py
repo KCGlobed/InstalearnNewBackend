@@ -3,6 +3,7 @@ from user_study.views import *
 
 urlpatterns = [
     path('purchased-courses/', PurchasedCoursesView.as_view(), name="purchased-courses"),
+    path('mark-course-started/', MarkCourseStartedView.as_view(), name="mark-course-started"),
     path('get-course-progress/<int:id>', GetCourseProgressView.as_view(), name="get-course-progress"),
     path('dashboard-chapters/<int:id>', DashboardCourseChaptersView.as_view(), name="dashboard-chapters"),
     path('chapter-lectures/<int:id>', DashboardChapterLecturesView.as_view(), name="chapter-lectures"),
