@@ -136,6 +136,9 @@ urlpatterns = [
     path('homepage-tag-wise-courses/<int:id>', GetHomepageTagWiseCoursesListing.as_view(), name="homepage-tag-wise-courses/"),
     path('homepage-recent-courses/', GetHomepageRecentCoursesListing.as_view(), name="homepage-recent-courses/"),
 
+    path('footer-top-category-list/', GetFooterTopCategoryListing.as_view(), name="footer-top-category-list"),
+    path('footer-top-courses-list/', GetFooterTopCoursesListing.as_view(), name="footer-top-course-list"),
+
     path('category/listing/', GetCourseCategory.as_view(), name="category-listing"),
     path('sub-category/listing/<int:id>', GetSubCourseCategory.as_view(), name="subcategory-listing"),
     path('course-listing/<int:id>', GetCourseListingCategoryWise.as_view(), name="course-listing"),

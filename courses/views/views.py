@@ -20,6 +20,33 @@ from django.db.models import Count, Case, When, IntegerField
 
 
 
+class GetFooterTopCoursesListing(APIView):
+    renderer_classes = [CourseRenderer]
+    def get(self, request, format=None):
+        category = Course.objects.filter(
+                        status=True # <-- Filters only active courses first
+                    ).annotate(
+                        total_purchases=Count('usercourses') # Use 'usercourse' here if you don't have a related_name
+                    ).order_by('-total_purchases')[:6]
+        
+        serializer = CoursesFooterListSerializer(category, many=True)
+        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
+class GetFooterTopCategoryListing(APIView):
+    renderer_classes = [CourseRenderer]
+    def get(self, request, format=None):
+        category = Categories.objects.filter(
+                            parent__isnull=True,
+                            status = True
+                        ).annotate(
+                            total_courses=Count('categories__coursecategories')
+                        ).order_by('-total_courses')[:6]
+        
+        serializer = HomepageCategorySerializer(category, many=True)
+        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
 class GetHomepageCategoryListing(APIView):
     renderer_classes = [CourseRenderer]
     def get(self, request, format=None):

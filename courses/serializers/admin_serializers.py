@@ -615,6 +615,12 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ["id","name","parent","description","status","created_at","bg_code","text_code","icon"]
 
 
+class CoursesFooterListSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    class Meta:
+        model = Course
+        fields = ["id","name","created_at"]
+
 
 class CourseInstructorSerializer(serializers.ModelSerializer):
     class Meta:
