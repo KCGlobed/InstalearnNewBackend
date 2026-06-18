@@ -178,8 +178,6 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
             )
             cart_order.save()
 
-        cart_count.delete()
-
         setting = GeneralSettings.objects.all().first()
         if total_amount > 0 :
             if setting.payment_type == 1:
@@ -207,9 +205,11 @@ class CompletePaymentSerializer(serializers.ModelSerializer) :
     razorpay_payment_id = serializers.CharField(required=True,write_only = True)
     razorpay_order_id = serializers.CharField(required=True,write_only = True)
     razorpay_signature = serializers.CharField(required=True,write_only = True)
+    device_id = serializers.CharField(max_length = 255, write_only=True,required=True)
+
     class Meta:
         model = Order
-        fields = ['razorpay_payment_id','razorpay_order_id','razorpay_signature']
+        fields = ['razorpay_payment_id','razorpay_order_id','razorpay_signature',"device_id"]
         
     def validate(self, data):
         return data
@@ -258,6 +258,9 @@ class CompletePaymentSerializer(serializers.ModelSerializer) :
         for ord in ordered_course:
             ord.paid = 1
             ord.save()
+
+        cart_count = Cart.objects.filter(device_id=validate_data.get('device_id'))
+        cart_count.delete()
 
         return order
     
