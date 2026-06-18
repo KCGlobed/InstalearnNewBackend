@@ -616,6 +616,11 @@ class ChangeTestimonialsStatusSerializer(serializers.ModelSerializer) :
         return category
     
 
+class HelpSupportTopicListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HelpSupportTopics
+        fields = ['id',"title"]
+
 
 class HelpSupportTopicListingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -625,7 +630,7 @@ class HelpSupportTopicListingSerializer(serializers.ModelSerializer):
 
 class CreateHelpSupportTopicSerializer(serializers.ModelSerializer) :
     title = serializers.CharField(max_length = 255, required=True)
-    description = serializers.CharField(required=False, allow_blank=True)
+    description = serializers.CharField(required=True)
     image = serializers.FileField(required=True,validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
     
     class Meta:
@@ -690,13 +695,17 @@ class ChangeHelpSupportTopicStatusSerializer(serializers.ModelSerializer) :
         return category
     
 
+class HelpSupportSubTopicListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HelpSupportSubTopics
+        fields = ['id',"title"]
 
 class HelpSupportSubTopicListingSerializer(serializers.ModelSerializer):
     main_topic = serializers.SerializerMethodField()
     
     def get_main_topic(self, parent):
         info = HelpSupportTopics.objects.get(id = parent.main_topic.id)
-        return HelpSupportTopicListingSerializer(info).data
+        return HelpSupportTopicListSerializer(info).data
     
     class Meta:
         model = HelpSupportSubTopics
@@ -770,14 +779,19 @@ class ChangeHelpSupportSubTopicstatusSerializer(serializers.ModelSerializer) :
 
 class HelpSupportArticleListingSerializer(serializers.ModelSerializer):
     main_topic = serializers.SerializerMethodField()
+    sub_topic = serializers.SerializerMethodField()
     
     def get_main_topic(self, parent):
+        info = HelpSupportTopics.objects.get(id = parent.sub_topic.id)
+        return HelpSupportTopicListSerializer(info).data
+    
+    def get_sub_topic(self, parent):
         info = HelpSupportSubTopics.objects.get(id = parent.sub_topic.id)
-        return HelpSupportSubTopicListingSerializer(info).data
+        return HelpSupportSubTopicListSerializer(info).data
     
     class Meta:
         model = HelpSupportArticle
-        fields = "__all__"
+        fields = ['id',"slug","title","description","status","main_topic","sub_topic","created_at"]
 
 
 class CreateHelpSupportArticleSerializer(serializers.ModelSerializer) :
@@ -785,11 +799,10 @@ class CreateHelpSupportArticleSerializer(serializers.ModelSerializer) :
     main_topic = serializers.IntegerField(required=True)
     sub_topic = serializers.IntegerField(required=True)
     description = serializers.CharField(required=False, allow_blank=True)
-    image = serializers.FileField(required=True,validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
     
     class Meta:
         model = HelpSupportArticle
-        fields = ['title',"main_topic","sub_topic","description","image"]
+        fields = ['title',"main_topic","sub_topic","description"]
         
     def validate(self, data):
         name_count = HelpSupportArticle.objects.filter(title = data.get('title')).count()
@@ -802,7 +815,6 @@ class CreateHelpSupportArticleSerializer(serializers.ModelSerializer) :
         topic = HelpSupportArticle(
             title = validate_data.get('title'),
             description = validate_data.get('description'),
-            image = validate_data.get('image'),
             main_topic = HelpSupportTopics.objects.filter(id = validate_data.get('main_topic')).first(),
             sub_topic = HelpSupportSubTopics.objects.filter(id = validate_data.get('sub_topic')).first(),
             status = True
@@ -818,11 +830,10 @@ class EditHelpSupportArticleserializer(serializers.ModelSerializer):
     main_topic = serializers.IntegerField(required=True)
     sub_topic = serializers.IntegerField(required=True)
     description = serializers.CharField(required=False, allow_blank=True)
-    image = serializers.FileField(required=True,validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
 
     class Meta:
         model = HelpSupportArticle
-        fields = ['title',"main_topic","sub_topic","description","image"]
+        fields = ['title',"main_topic","sub_topic","description"]
         
     def validate(self, data):
         return data
@@ -831,7 +842,6 @@ class EditHelpSupportArticleserializer(serializers.ModelSerializer):
     def update(self , category, validate_data):
         category.title = validate_data.get('title', category.title)
         category.description = validate_data.get('description', category.description)
-        category.image = validate_data.get('image', category.image)
         category.main_topic = HelpSupportTopics.objects.filter(id = validate_data.get('main_topic')).first()
         category.sub_topic = HelpSupportSubTopics.objects.filter(id = validate_data.get('sub_topic')).first()
         category.save()

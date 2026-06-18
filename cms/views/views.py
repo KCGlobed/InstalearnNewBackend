@@ -147,3 +147,34 @@ class ViewTestimonialsListView(APIView):
         category = Testimonials.objects.filter(testimonials_type = testimonials_type, status =True).first()
         serializer = TestimonialsListSerializer(category)
         return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class HelpSupportTopicView(APIView):
+    renderer_classes = [CMSRenderer]
+    def get(self, request):
+        category = HelpSupportTopics.objects.filter(status =True)
+        serializer = HelpSupportTopicsSerializer(category, many =True)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class HelpSupportSubTopicView(APIView):
+    renderer_classes = [CMSRenderer]
+    def get(self, request, slug=None):
+        category = HelpSupportSubTopics.objects.filter(status =True, main_topic__slug = slug)
+        serializer = HelpSupportSubTopicsSerializer(category, many =True)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class HelpSupportArticlesView(APIView):
+    renderer_classes = [CMSRenderer]
+    def get(self, request, slug=None):
+        category = HelpSupportArticle.objects.filter(status =True, sub_topic__slug = slug)
+        serializer = HelpSupportArticleInfoSerializer(category, many =True)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+class HelpSupportArticleDetailView(APIView):
+    renderer_classes = [CMSRenderer]
+    def get(self, request, slug=None):
+        category = HelpSupportArticle.objects.filter(status =True, slug = slug).first()
+        serializer = HelpSupportArticleDetailSerializer(category)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)

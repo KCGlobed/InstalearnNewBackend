@@ -1065,7 +1065,7 @@ class HelpSupportTopicListView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, cid=None):
         setting = HelpSupportTopics.objects.all()
-        serializer = HelpSupportTopicListingSerializer(setting, many=True)
+        serializer = HelpSupportTopicListSerializer(setting, many=True)
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
     
 
@@ -1282,7 +1282,7 @@ class CreateHelpSupportArticleView(APIView):
         serializer = CreateHelpSupportArticleSerializer(data = request.data)
         if serializer.is_valid(raise_exception = True):
             user  = serializer.save()
-            return success_response(message="Help & Support Topic Created Successfully", data=HelpSupportArticleListingSerializer(user).data, status_code=status.HTTP_200_OK)
+            return success_response(message="Help & Support Article Created Successfully", data=HelpSupportArticleListingSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 

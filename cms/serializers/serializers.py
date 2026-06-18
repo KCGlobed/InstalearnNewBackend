@@ -141,3 +141,34 @@ class AddBlogCommentSerializer(serializers.ModelSerializer) :
         email.send()
 
         return course_category
+    
+
+class HelpSupportTopicsSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    class Meta:
+        model = HelpSupportTopics
+        fields = ['id',"title","slug","description","image","created_at"]
+
+
+class HelpSupportArticleDetailSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    class Meta:
+        model = HelpSupportArticle
+        fields = ['id',"title","slug","description","created_at"]
+
+
+class HelpSupportArticleInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HelpSupportArticle
+        fields = ['id',"title","slug"]
+
+class HelpSupportSubTopicsSerializer(serializers.ModelSerializer):
+    articles = serializers.SerializerMethodField()
+    
+    def get_articles(self, parent):
+        info = HelpSupportArticle.objects.filter(sub_topic_id = parent.id)
+        return HelpSupportArticleInfoSerializer(info, many=True).data
+    
+    class Meta:
+        model = HelpSupportSubTopics
+        fields = ['id',"title","slug","articles"]

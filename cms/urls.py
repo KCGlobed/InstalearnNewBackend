@@ -74,8 +74,6 @@ urlpatterns = [
     path('update-help-support-article-status/<int:cid>', UpdateHelpSupportArticleStatusView.as_view(), name="update-help-support-article-status"),
     path('delete-help-support-article/<int:cid>', DeleteHelpSupportArticleView.as_view(), name="delete-help-support-article"),
 
-
-
     #Landing Page APIs
     path('get-homepage-faq-topic-list/', FaqTopicListView.as_view(), name="get-homepage-faq-topic-list"),
     path('get-homepage-faq-list/<int:cid>', FaqsListView.as_view(), name="get-homepage-faq-list"), 
@@ -92,5 +90,10 @@ urlpatterns = [
     path('view-cms-page/<str:page_type>', ViewCMSPageView.as_view(), name="view-cms-page"),
     
     path('get-user-testimonials/<int:testimonials_type>', ViewTestimonialsListView.as_view(), name="get-user-testimonials"),
+
+    path('get-help-support-topics/', HelpSupportTopicView.as_view(), name="get-help-support-topic"), 
+    path('get-help-support-subtopics/<str:slug>', HelpSupportSubTopicView.as_view(), name="get-help-support-subtopic"),
+    path('get-help-support-articles/<str:slug>', HelpSupportArticlesView.as_view(), name="get-help-support-articles"), 
+    path('get-help-support-article-detail/<str:slug>', HelpSupportArticleDetailView.as_view(), name="get-help-support-detail"), 
 
 ]   

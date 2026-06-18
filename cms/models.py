@@ -230,6 +230,11 @@ class HelpSupportTopics(models.Model):
         verbose_name_plural = 'Help & Support Topics'
     
     def save(self, *args, **kwargs):
+        if self.pk:
+            old_title = HelpSupportTopics.objects.get(pk=self.pk).title
+            if self.title != old_title:
+                self.slug = None
+                
         if not self.slug:
             original_slug = slugify(self.title)
             queryset = HelpSupportTopics.objects.all()
@@ -263,6 +268,11 @@ class HelpSupportSubTopics(models.Model):
         verbose_name_plural = 'Help Support Sub Topics'
 
     def save(self, *args, **kwargs):
+        if self.pk:
+            old_title = HelpSupportSubTopics.objects.get(pk=self.pk).title
+            if self.title != old_title:
+                self.slug = None
+
         if not self.slug:
             original_slug = slugify(self.title)
             queryset = HelpSupportSubTopics.objects.all()
@@ -298,6 +308,11 @@ class HelpSupportArticle(models.Model):
         verbose_name_plural = 'Help Support Article'
 
     def save(self, *args, **kwargs):
+        if self.pk:
+            old_title = HelpSupportArticle.objects.get(pk=self.pk).title
+            if self.title != old_title:
+                self.slug = None
+
         if not self.slug:
             original_slug = slugify(self.title)
             queryset = HelpSupportArticle.objects.all()
