@@ -2267,6 +2267,339 @@ class ExportExcelActiveOrderListingView(APIView):
 
 
 
+class GetJobApplicationsListingView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "job_applications_report",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['full_name', "last_name","email","mobile"]
+    ordering_fields = ['full_name', "last_name","email","mobile",'created_at', 'id'] 
+    def get(self, request, format=None):
+        
+        plans = JobApplications.objects.all()
+
+        full_name = request.query_params.get('full_name')
+        if full_name:
+            plans = plans.filter(full_name__icontains = full_name)
+
+        email = request.query_params.get('email')
+        if email:
+            plans = plans.filter(email__icontains = email)
+
+        
+        mobile = request.query_params.get('mobile')
+        if mobile:
+            plans = plans.filter(mobile__icontains = mobile)
+
+        
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                plans = plans.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                plans = plans.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+
+
+        search_filter = filters.SearchFilter()
+        plans = search_filter.filter_queryset(request, plans, self)
+
+        ordering_filter = filters.OrderingFilter()
+        plans = ordering_filter.filter_queryset(request, plans, self)
+
+        if not plans.ordered:
+            plans = plans.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(plans, request, view=self)
+        serializer = JobApplicationsListSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+
+class PDFContactUsReportView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "job_application_pdf_report",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['full_name', "last_name","email","mobile"]
+    ordering_fields = ['full_name', "last_name","email","mobile",'created_at', 'id'] 
+    def get(self, request, format=None):
+        
+        plans = JobApplications.objects.all()
+
+        full_name = request.query_params.get('full_name')
+        if full_name:
+            plans = plans.filter(full_name__icontains = full_name)
+
+        email = request.query_params.get('email')
+        if email:
+            plans = plans.filter(email__icontains = email)
+
+        
+        mobile = request.query_params.get('mobile')
+        if mobile:
+            plans = plans.filter(mobile__icontains = mobile)
+
+        
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                plans = plans.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                plans = plans.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+
+
+        search_filter = filters.SearchFilter()
+        plans = search_filter.filter_queryset(request, plans, self)
+
+        ordering_filter = filters.OrderingFilter()
+        plans = ordering_filter.filter_queryset(request, plans, self)
+
+        if not plans.ordered:
+            plans = plans.order_by('-id')
+
+        serializer = JobApplicationsListSerializer(plans, many=True)
+        
+        data = {
+            "info":serializer.data
+        }
+
+
+        template = get_template('pdf/job_application_report.html')
+        html  = template.render(data)
+        # Use tempfile to create a temporary PDF file
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            html = html.encode('latin-1', 'replace').decode('latin-1')
+            pdf = pisa.CreatePDF(BytesIO(html.encode("ISO-8859-1")), dest=temp_file)
+
+            if pdf.err:
+                raise Exception("PDF generation error!")
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            report_name = "job_application_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            # Ensure the temporary file is deleted from the server's disk
+            os.remove(pdf_path)
+
+
+
+class PDFJobApplicationsReportView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "job_application_excel_report",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['full_name', "last_name","email","mobile"]
+    ordering_fields = ['full_name', "last_name","email","mobile",'created_at', 'id'] 
+    def get(self, request, format=None):
+        
+        plans = JobApplications.objects.all()
+
+        full_name = request.query_params.get('full_name')
+        if full_name:
+            plans = plans.filter(full_name__icontains = full_name)
+
+        email = request.query_params.get('email')
+        if email:
+            plans = plans.filter(email__icontains = email)
+
+        
+        mobile = request.query_params.get('mobile')
+        if mobile:
+            plans = plans.filter(mobile__icontains = mobile)
+
+        
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                plans = plans.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                plans = plans.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+
+
+        search_filter = filters.SearchFilter()
+        plans = search_filter.filter_queryset(request, plans, self)
+
+        ordering_filter = filters.OrderingFilter()
+        plans = ordering_filter.filter_queryset(request, plans, self)
+
+        if not plans.ordered:
+            plans = plans.order_by('-id')
+        
+        serializer = JobApplicationsListSerializer(plans, many=True)
+        
+        lis = []
+        
+        lis.append({
+                "first_name":"Job Applications Report",
+                "last_name":'',
+                "email":'',
+                "phone":'',
+                "ordered_courses":'',
+                "total_amount":'',
+                "start_date":'',
+                "end_date":'',
+                "subscription_type":'',
+                "subscription_status":'',
+                "created_at":'',
+                "linkedin":"",
+                "notice":""
+            })
+        
+        lis.append({
+                "first_name":"",
+                "last_name":'',
+                "email":'',
+                "phone":'',
+                "ordered_courses":'',
+                "total_amount":'',
+                "start_date":'',
+                "end_date":'',
+                "subscription_type":'',
+                "subscription_status":'',
+                "created_at":'',
+                "linkedin":"",
+                "notice":"",
+                "updated_at":""
+            })
+        
+        lis.append({
+                "first_name":"",
+                "last_name":'',
+                "email":'',
+                "phone":'',
+                "ordered_courses":'',
+                "total_amount":'',
+                "start_date":'',
+                "end_date":'',
+                "subscription_type":'',
+                "subscription_status":'',
+                "created_at":'',
+                "linkedin":"",
+                "notice":"",
+                "updated_at":""
+            })
+        
+        lis.append({
+                "first_name":"Full Name",
+                "last_name":'Email ID',
+                "email":'Mobile Number',
+                "phone":'State/UT',
+                "ordered_courses":'Current City',
+                "total_amount":'Highest Qualification',
+                "start_date":'Current Employment Status',
+                "end_date":'Total Years of Experience',
+                "subscription_type":'Area of Interest / Role Applying For',
+                "subscription_status":'Other Area of Interest',
+                "created_at":'Summary',
+                "linkedin":"LinkedIn Profile / Portfolio Link ",
+                "notice":"Notice Period",
+                "updated_at":"Created At"
+            })
+        for order in serializer.data:
+
+            
+            lis.append({
+                "first_name":order['full_name'],
+                "last_name":order['email'],
+                "email":order['mobile'],
+                "phone":order['state'],
+                "ordered_courses":order['city'],
+                "total_amount":order['highest_qualification'],
+                "start_date":order['current_employment_status'],
+                "end_date":order['total_years_of_experience'],
+                "subscription_type": order['role_applying_for'],
+                "subscription_status":order['other_role_specification'],
+                "created_at":order['summary'],
+                "linkedin":order['linkedin_portfolio'],
+                "notice":order['notice_period'],
+                "updated_at":order['created_at']
+            })
+
+        
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            df = pd.DataFrame.from_dict(lis)
+            df.to_excel(pdf_path, header=False, index=False)
+        
+        try:
+            # GCS file naming logic
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            report_name = "job_application_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
+
+            # Upload the temporary file to GCS
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            # Ensure the temporary file is deleted
+            os.remove(pdf_path)
+
+
+
 class GetContactUSView(APIView):
     renderer_classes = [ReportsRenderer]
     permission_classes = [IsAuthenticated, 

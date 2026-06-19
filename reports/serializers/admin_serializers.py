@@ -145,6 +145,14 @@ class OrderDetailAdminSerializer(serializers.ModelSerializer):
         fields = ["id","first_name","last_name","email","phone","total_amount","start_date","next_due","end_date","subscription_type","subscription_status","created_at","ordered_courses","trail_mode"]
 
 
+class JobApplicationsListSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(read_only=True, format="%Y-%m-%d")
+    
+    class Meta:
+        model = JobApplications
+        fields = "__all__"
+
+
 class ContactListSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(read_only=True, format="%Y-%m-%d")
     
