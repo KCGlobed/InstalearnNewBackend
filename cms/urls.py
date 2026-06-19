@@ -94,6 +94,7 @@ urlpatterns = [
     path('get-help-support-topics/', HelpSupportTopicView.as_view(), name="get-help-support-topic"), 
     path('get-help-support-subtopics/<str:slug>', HelpSupportSubTopicView.as_view(), name="get-help-support-subtopic"),
     path('get-help-support-articles/<str:slug>', HelpSupportArticlesView.as_view(), name="get-help-support-articles"), 
-    path('get-help-support-article-detail/<str:slug>', HelpSupportArticleDetailView.as_view(), name="get-help-support-detail"), 
+    path('get-help-support-article-detail/<str:slug>', HelpSupportArticleDetailView.as_view(), name="get-help-support-detail"),
+    path('submit-application-form/', SubmitApplicationFormView.as_view(), name="submit-application-form"), 
 
 ]   

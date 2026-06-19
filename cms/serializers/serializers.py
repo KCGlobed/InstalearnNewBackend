@@ -172,3 +172,52 @@ class HelpSupportSubTopicsSerializer(serializers.ModelSerializer):
     class Meta:
         model = HelpSupportSubTopics
         fields = ['id',"title","slug","articles"]
+
+
+class SubmitApplicationFormSerializer(serializers.ModelSerializer) :
+    full_name = serializers.CharField(max_length = 255, required=True)
+    mobile = serializers.CharField(max_length = 255, required=True)
+    email = serializers.CharField(max_length = 255, required=True)
+    state = serializers.CharField(max_length = 255, required=True)
+    city = serializers.CharField(max_length = 255, required=True)
+    highest_qualification = serializers.CharField(max_length = 255, required=True)
+    current_employment_status = serializers.CharField(max_length = 255, required=True)
+    total_years_of_experience = serializers.CharField(max_length = 255, required=True)
+    role_applying_for = serializers.CharField(max_length = 255, required=True)
+    other_role_specification = serializers.CharField(required=False, allow_blank=True)
+    linkedin_portfolio = serializers.CharField(max_length = 255, required=True)
+    notice_period = serializers.CharField(max_length = 255, required=True)
+    summary = serializers.CharField(required=False, allow_blank=True)
+    resume = serializers.FileField(required=False,allow_null=True, validators=[FileExtensionValidator( ['pdf','doc','docx'])])
+    
+    class Meta:
+        model = JobApplications
+        fields = ['full_name','mobile','email','state','city',"highest_qualification","current_employment_status","total_years_of_experience","role_applying_for","other_role_specification","linkedin_portfolio","notice_period","summary","resume"]
+        
+    def validate(self, data):
+
+        return data
+
+
+    def create(self , validate_data):
+        
+        course_category = JobApplications(
+            full_name = validate_data.get('full_name'),
+            mobile = validate_data.get('mobile'),
+            email = validate_data.get('email'),
+            state = validate_data.get('state'),
+            city = validate_data.get('city'),
+            highest_qualification = validate_data.get('highest_qualification'),
+            current_employment_status = validate_data.get('current_employment_status'),
+            total_years_of_experience = validate_data.get('total_years_of_experience'),
+            role_applying_for = validate_data.get('role_applying_for'),
+            other_role_specification = validate_data.get('other_role_specification'),
+            linkedin_portfolio = validate_data.get('linkedin_portfolio'),
+            notice_period = validate_data.get('notice_period'),
+            summary = validate_data.get('summary'),
+            resume = validate_data.get('resume'),
+        )
+        course_category.save()
+
+        return course_category
+    
