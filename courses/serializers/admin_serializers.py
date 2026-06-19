@@ -642,6 +642,11 @@ class HomepageCourseDetailSerializer(serializers.ModelSerializer):
     categories = serializers.SerializerMethodField('get_categories')
     created_by = serializers.SerializerMethodField('get_created_by')
     enrolled_students = serializers.SerializerMethodField()
+    instrcutor_info = serializers.SerializerMethodField()
+
+    def get_instrcutor_info(self, obj):
+        category = CourseInstructors.objects.filter(course_id=obj.id)
+        return CourseInstructorsListSerializer(category, many=True).data
 
     def get_enrolled_students(self, parent):
         category = UserCourses.objects.filter(course_id=parent.id, paid = True).count()
@@ -657,7 +662,7 @@ class HomepageCourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id",'name',"price","discount","objectives_summary","image","categories","duration","level","created_by","avg_rating","language","subtitle_language","original_price","enrolled_students"]
+        fields = ["id",'name',"price","discount","objectives_summary","image","categories","duration","level","created_by","avg_rating","language","subtitle_language","original_price","enrolled_students","instrcutor_info"]
 
 
 class HomepageTagWiseCoursesSerializer(serializers.ModelSerializer):
@@ -968,6 +973,11 @@ class CourseSerializer(serializers.ModelSerializer):
 class CourseSearchSerializer(serializers.ModelSerializer):
     categories = serializers.SerializerMethodField('get_categories')
     tags = serializers.SerializerMethodField('get_tags')
+    instrcutor_info = serializers.SerializerMethodField()
+
+    def get_instrcutor_info(self, obj):
+        category = CourseInstructors.objects.filter(course_id=obj.id)
+        return CourseInstructorsListSerializer(category, many=True).data
 
     def get_tags(self, obj):
         category = CourseTags.objects.filter(course_id = obj.id)
@@ -979,7 +989,7 @@ class CourseSearchSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id","name","level","duration","categories","tags","status","price","discount","objectives_summary","image","created_at","language","subtitle_language","original_price","total_reviews","avg_rating"]
+        fields = ["id","name","level","duration","categories","tags","status","price","discount","objectives_summary","image","created_at","language","subtitle_language","original_price","total_reviews","avg_rating","instrcutor_info"]
 
 
 class CourseChapterSerializer(serializers.ModelSerializer):
