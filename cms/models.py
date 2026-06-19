@@ -330,3 +330,60 @@ class HelpSupportArticle(models.Model):
         
     def __str__(self):
         return '%s' % self.title
+
+
+
+class JobApplications(models.Model):
+    # Choice Lists based on the form's radio buttons
+    EMPLOYMENT_STATUS_CHOICES = [
+        ('student', 'Student'),
+        ('fresher', 'Fresher'),
+        ('self_employed', 'Self-Employed'),
+        ('working_professional', 'Working Professional'),
+    ]
+
+    EXPERIENCE_CHOICES = [
+        ('0-1', '0-1 Year'),
+        ('1-3', '1-3 Years'),
+        ('3-5', '3-5 Years'),
+        ('5+', '5+ Years'),
+    ]
+
+    ROLE_CHOICES = [
+        ('academic', 'Academic / Training'),
+        ('sales_marketing', 'Sales & Marketing'),
+        ('operations', 'Operations'),
+        ('tech_it', 'Technology / IT'),
+        ('content_design', 'Content / Design'),
+        ('other', 'Other (Please specify)'),
+    ]
+
+    NOTICE_PERIOD_CHOICES = [
+        ('immediate', 'Immediate'),
+        ('15_days', '15 Days'),
+        ('30_days', '30 Days'),
+        ('more_than_30', 'More than 30 Days'),
+    ]
+    full_name = models.CharField(max_length=255,null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
+    mobile = models.CharField(max_length=20,null=True, blank=True)
+    state = models.CharField(max_length=100,null=True, blank=True)
+    city = models.CharField(max_length=100)
+    highest_qualification = models.CharField(max_length=255, null=True, blank=True)
+    current_employment_status = models.CharField(max_length=30, choices=EMPLOYMENT_STATUS_CHOICES,default='student')
+    total_years_of_experience = models.CharField(max_length=10, choices=EXPERIENCE_CHOICES,default='0-1')
+    role_applying_for = models.CharField(max_length=30, choices=ROLE_CHOICES,default='academic')
+    other_role_specification = models.CharField(max_length=255, blank=True, null=True)
+    summary = models.TextField(blank=True, null=True)
+    resume = models.FileField(upload_to="resume/", null=True, blank=True)
+    linkedin_portfolio = models.URLField(max_length=500, blank=True, null=True)
+    notice_period = models.CharField(max_length=20, choices=NOTICE_PERIOD_CHOICES,default='immediate')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Job Applications'
+        verbose_name_plural = 'Job Applications'
+
+    def __str__(self):
+        return f"{self.full_name}"

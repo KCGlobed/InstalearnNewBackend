@@ -75,7 +75,7 @@ class SearchCourseSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ['id',"name","image","course_instructor"]
+        fields = ['id',"name","short_description","image","course_instructor"]
 
 
     

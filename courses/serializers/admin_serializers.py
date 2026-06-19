@@ -662,7 +662,7 @@ class HomepageCourseDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id",'name',"price","discount","objectives_summary","image","categories","duration","level","created_by","avg_rating","language","subtitle_language","original_price","enrolled_students","instrcutor_info"]
+        fields = ["id",'name',"short_description","price","discount","objectives_summary","image","categories","duration","level","created_by","avg_rating","language","subtitle_language","original_price","enrolled_students","instrcutor_info"]
 
 
 class HomepageTagWiseCoursesSerializer(serializers.ModelSerializer):
@@ -989,7 +989,7 @@ class CourseSearchSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Course
-        fields = ["id","name","level","duration","categories","tags","status","price","discount","objectives_summary","image","created_at","language","subtitle_language","original_price","total_reviews","avg_rating","instrcutor_info"]
+        fields = ["id","name","short_description","level","duration","categories","tags","status","price","discount","objectives_summary","image","created_at","language","subtitle_language","original_price","total_reviews","avg_rating","instrcutor_info"]
 
 
 class CourseChapterSerializer(serializers.ModelSerializer):
