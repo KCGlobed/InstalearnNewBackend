@@ -2330,7 +2330,7 @@ class GetJobApplicationsListingView(APIView):
     
 
 
-class PDFContactUsReportView(APIView):
+class PDFJobApplicationsReportView(APIView):
     renderer_classes = [ReportsRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
@@ -2425,7 +2425,7 @@ class PDFContactUsReportView(APIView):
 
 
 
-class PDFJobApplicationsReportView(APIView):
+class CSVJobApplicationsReportView(APIView):
     renderer_classes = [ReportsRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
