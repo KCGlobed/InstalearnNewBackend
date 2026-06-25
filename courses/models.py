@@ -416,6 +416,7 @@ class Coupon(models.Model):
     max_usages = models.PositiveIntegerField(default=1, help_text="Total times this coupon can be used globally.")
     usages_count = models.PositiveIntegerField(default=0, help_text="Current global usage count.")
     max_per_user = models.PositiveIntegerField(default=1, help_text="Max times a single user can redeem this code.")
+    minimum_cart_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Minimum total cart value required to use this coupon.")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

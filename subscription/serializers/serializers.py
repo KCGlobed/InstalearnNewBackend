@@ -16,6 +16,7 @@ import random, string
 import razorpay
 from django.db import transaction
 from django.db.models import F
+from decimal import Decimal
 
 class AddtoCartSerializer(serializers.ModelSerializer) :
     course_id = serializers.IntegerField(required=True)
@@ -110,6 +111,12 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
             if coupon.usages_count >= coupon.max_usages:
                 raise serializers.ValidationError({"coupon_code": "This coupon has reached its maximum usage limit."})
 
+            total_cart_price = sum(item.course.price for item in cart_items if hasattr(item, 'course'))
+            if Decimal(total_cart_price) < coupon.minimum_cart_value:
+                raise serializers.ValidationError({
+                    "coupon_code": f"This coupon requires a minimum cart total of ${coupon.minimum_cart_value}."
+                })
+            
             data['coupon_obj'] = coupon
 
         return data
@@ -159,12 +166,12 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
         order_id = f"{current_year}-{str(count + 1).zfill(4)}"  
         
         cart_items = Cart.objects.filter(device_id=validate_data.get('device_id'))
-        coupon = Coupon.objects.get(code__iexact=validate_data.get('coupon_code').strip())
         
         total_original_price = sum(item.course.price for item in cart_items)
         total_discount = 0.00
 
-        if coupon:
+        if validate_data.get('coupon_code'):
+            coupon = Coupon.objects.get(code__iexact=validate_data.get('coupon_code').strip())
             if coupon.discount_type == 'percentage':
                 total_discount = (float(coupon.discount_value) / 100) * total_original_price
             else:
@@ -174,7 +181,7 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
         
         final_total = total_original_price - total_discount
 
-        tax = math.ceil(total_original_price * 0.18)
+        tax = math.ceil(final_total * 0.18)
         final_amount = math.ceil(final_total)
 
         order_total_amount = final_amount + tax
@@ -693,6 +700,13 @@ class ValidateDeviceCouponSerializer(serializers.Serializer):
         if not cart_items.exists():
             raise serializers.ValidationError({"device_id": "No items found in the cart for this device."})
 
+        total_cart_price = sum(item.course.price for item in cart_items if hasattr(item, 'course'))
+
+        if Decimal(total_cart_price) < coupon.minimum_cart_value:
+            raise serializers.ValidationError({
+                "coupon_code": f"This coupon requires a minimum cart total of ${coupon.minimum_cart_value}."
+            })
+    
         # Pass both variables forward to the view
         data['coupon_obj'] = coupon
         data['cart_items'] = cart_items

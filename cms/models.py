@@ -387,3 +387,22 @@ class JobApplications(models.Model):
 
     def __str__(self):
         return f"{self.full_name}"
+
+
+
+class PromotionalBannerCampaign(models.Model):
+    title = models.CharField(max_length=100, help_text="Internal name, e.g., Summer Sale 2026")
+    display_text = models.CharField(max_length=255, help_text="e.g., Summer Sale is On!")
+    coupons = models.ForeignKey('courses.Coupon', null=True, blank=True, on_delete=models.CASCADE)
+    start_time = models.DateTimeField(default=timezone.now)
+    end_time = models.DateTimeField(help_text="The exact date/time when the countdown hits zero")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Promotional Banner Campaign'
+        verbose_name_plural = 'Promotional Banner Campaign'
+
+    def __str__(self):
+        return f"{self.title}"

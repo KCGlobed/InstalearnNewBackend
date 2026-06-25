@@ -598,7 +598,7 @@ class CouponsListingSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     class Meta:
         model = Coupon
-        fields = ["id","code","discount_type","discount_value","valid_from","valid_to","max_usages","usages_count","status","created_at"]
+        fields = ["id","code","discount_type","discount_value","valid_from","valid_to","max_usages","usages_count","minimum_cart_value","status","created_at"]
 
 
 class ParentCategorySerializer(serializers.ModelSerializer):
@@ -2142,10 +2142,11 @@ class CreateCouponsSerializer(serializers.ModelSerializer) :
     discount_value = serializers.DecimalField(max_digits=10, decimal_places=2, required=True)
     valid_to = serializers.DateTimeField(required=True)
     max_usages = serializers.IntegerField(required=True)
+    minimum_cart_value = serializers.DecimalField(max_digits=10, decimal_places=2, required=True)
 
     class Meta:
         model = Coupon
-        fields = ['code', 'discount_type', 'discount_value', 'valid_to', 'max_usages']
+        fields = ['code', 'discount_type', 'discount_value', 'valid_to', 'max_usages',"minimum_cart_value"]
 
     def validate(self, data):
         if 'code' in data:
@@ -2166,6 +2167,7 @@ class CreateCouponsSerializer(serializers.ModelSerializer) :
             discount_value=validated_data.get('discount_value'),
             valid_to=validated_data.get('valid_to'),
             max_usages=validated_data.get('max_usages'),
+            minimum_cart_value=validated_data.get('minimum_cart_value'),
         )
         coupon.save()
         return coupon
@@ -2177,10 +2179,11 @@ class EditCouponsSerializer(serializers.ModelSerializer):
     discount_value = serializers.DecimalField(max_digits=10, decimal_places=2, required=True)
     valid_to = serializers.DateTimeField(required=True)
     max_usages = serializers.IntegerField(required=True)
+    minimum_cart_value = serializers.DecimalField(max_digits=10, decimal_places=2, required=True)
 
     class Meta:
         model = Coupon
-        fields = ['code', 'discount_type', 'discount_value', 'valid_to', 'max_usages']
+        fields = ['code', 'discount_type', 'discount_value', 'valid_to', 'max_usages',"minimum_cart_value"]
 
     def validate(self, data):
         if 'code' in data:
@@ -2193,6 +2196,7 @@ class EditCouponsSerializer(serializers.ModelSerializer):
         category.discount_value = validate_data.get('discount_value', category.discount_value)
         category.valid_to = validate_data.get('valid_to', category.valid_to)
         category.max_usages = validate_data.get('max_usages', category.max_usages)
+        category.minimum_cart_value = validate_data.get('minimum_cart_value', category.minimum_cart_value)
         category.save()
 
         return category
