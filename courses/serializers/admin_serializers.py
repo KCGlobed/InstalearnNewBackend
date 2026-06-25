@@ -594,6 +594,13 @@ class TagsListingSerializer(serializers.ModelSerializer):
         fields = ["id","name","status","created_at"]
 
 
+class CouponsListingSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    class Meta:
+        model = Coupon
+        fields = ["id","code","discount_type","discount_value","valid_from","valid_to","max_usages","usages_count","status","created_at"]
+
+
 class ParentCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Categories
@@ -2124,5 +2131,88 @@ class UpdateCoursesReviewRatingStatusSerializer(serializers.ModelSerializer) :
             avg_rating=stats['avg_rating'] or 0,
             total_reviews=stats['review_count']
         )
+
+        return info
+    
+
+
+class CreateCouponsSerializer(serializers.ModelSerializer) :
+    code = serializers.CharField(max_length=50, required=True)
+    discount_type = serializers.CharField(max_length=20, required=True)
+    discount_value = serializers.DecimalField(max_digits=10, decimal_places=2, required=True)
+    valid_to = serializers.DateTimeField(required=True)
+    max_usages = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = Coupon
+        fields = ['code', 'discount_type', 'discount_value', 'valid_to', 'max_usages']
+
+    def validate(self, data):
+        if 'code' in data:
+            data['code'] = data['code'].upper()
+
+            if Coupon.objects.filter(code=data['code']).exists():
+                raise serializers.ValidationError({
+                    "code": f"A coupon with the code '{data['code']}' already exists."
+                })
+            
+        return data
+
+    def create(self, validated_data):
+        
+        coupon = Coupon(
+            code=validated_data.get('code'),
+            discount_type=validated_data.get('discount_type'),
+            discount_value=validated_data.get('discount_value'),
+            valid_to=validated_data.get('valid_to'),
+            max_usages=validated_data.get('max_usages'),
+        )
+        coupon.save()
+        return coupon
+    
+
+class EditCouponsSerializer(serializers.ModelSerializer):
+    code = serializers.CharField(max_length=50, required=True)
+    discount_type = serializers.CharField(max_length=20, required=True)
+    discount_value = serializers.DecimalField(max_digits=10, decimal_places=2, required=True)
+    valid_to = serializers.DateTimeField(required=True)
+    max_usages = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = Coupon
+        fields = ['code', 'discount_type', 'discount_value', 'valid_to', 'max_usages']
+
+    def validate(self, data):
+        if 'code' in data:
+            data['code'] = data['code'].upper()
+        return data
+    
+    def update(self , category, validate_data):
+        category.code = validate_data.get('code', category.code)
+        category.discount_type = validate_data.get('discount_type', category.discount_type)
+        category.discount_value = validate_data.get('discount_value', category.discount_value)
+        category.valid_to = validate_data.get('valid_to', category.valid_to)
+        category.max_usages = validate_data.get('max_usages', category.max_usages)
+        category.save()
+
+        return category
+    
+
+
+class ChangeCouponStatusSerializer(serializers.ModelSerializer) :
+    status = serializers.BooleanField(required=True)
+
+    class Meta:
+        model = Coupon
+        fields = ['status']
+        
+
+    def validate(self, data):
+        return data
+
+    def update(self, info, validate_data):
+
+        info.status = validate_data.get('status', info.status)
+        info.save()
 
         return info

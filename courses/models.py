@@ -398,3 +398,31 @@ class AnnouncementComments(models.Model):
 
     def __str__(self):
         return '%s' % self.id
+    
+
+
+class Coupon(models.Model):
+    DISCOUNT_CHOICES = (
+        ('percentage', 'Percentage (%)'),
+        ('fixed', 'Fixed Amount'),
+    )
+
+    code = models.CharField(max_length=50, unique=True, db_index=True)
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_CHOICES, default='percentage')
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2, help_text="e.g., 10.00 for 10% or $10")
+    valid_from = models.DateTimeField(default=timezone.now)
+    valid_to = models.DateTimeField()
+    status = models.BooleanField(default=True)
+    max_usages = models.PositiveIntegerField(default=1, help_text="Total times this coupon can be used globally.")
+    usages_count = models.PositiveIntegerField(default=0, help_text="Current global usage count.")
+    max_per_user = models.PositiveIntegerField(default=1, help_text="Max times a single user can redeem this code.")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.code} ({self.discount_value} {self.get_discount_type_display()})"
+
+    @property
+    def is_valid(self):
+        now = timezone.now()
+        return self.active and self.valid_from <= now <= self.valid_to and self.usages_count < self.max_usages

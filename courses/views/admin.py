@@ -3071,3 +3071,129 @@ class UpdateCoursesReviewRatingStatusView(APIView):
             return success_response(message="Review Status Updated successfully", data={}, status_code=status.HTTP_200_OK)
             
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class CouponsListingView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "coupons_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['code']
+    ordering_fields = ['code', 'created_at', 'id', 'status'] 
+    def get(self, request, format=None):
+        category = Coupon.objects.all()
+        
+        code = request.query_params.get('code')
+        if code:
+            category = category.filter(code__icontains = code)
+
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                category = category.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                category = category.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        category = search_filter.filter_queryset(request, category, self)
+
+        ordering_filter = filters.OrderingFilter()
+        category = ordering_filter.filter_queryset(request, category, self)
+
+        if not category.ordered:
+            category = category.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(category, request, view=self)
+        serializer = CouponsListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+
+class CreateCouponView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_coupon",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = CreateCouponsSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Coupon Created Successfully", data=CouponsListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class EditCouponsView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_coupon",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = Coupon.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Coupon ID!")
+        
+        serializer = EditCouponsSerializer(category, data = request.data, partial=True)
+        if serializer.is_valid(raise_exception = True):
+            user= serializer.save()
+            return success_response(message="Coupon Updated Successfully", data=CouponsListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class UpdateCouponStatusView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_coupon_status",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = Coupon.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Coupon ID!")
+        
+        serializer = ChangeCouponStatusSerializer(category, data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Coupon Status Updated Successfully", data=CouponsListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class DeleteCouponView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "delete_coupon",
+                            [SuperAdmin]
+                        )]
+    def delete(self, request, cid, format=None):
+        try:
+            course = Coupon.objects.get(id = cid)
+            course.delete()
+            return success_response(message="Coupon Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
+        except Coupon.DoesNotExist:
+            return error_response(message="Coupon not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)

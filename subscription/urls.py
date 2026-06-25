@@ -20,6 +20,7 @@ urlpatterns = [
     path('add-to-cart/', AddtoCartView.as_view(), name="add-to-cart"),
     path('remove-to-cart/<cid>', RemoveCartView.as_view(), name="remove-to-cart"),
     path('view-cart/', ViewCartView.as_view(), name="view-cart"),
+    path('validate-coupon/', ValidateCouponView.as_view(), name="validate-coupon"),
     
     path('check-course-cart/', CheckCourseInCartView.as_view(), name="check-course-cart"),
     path('start-course-payment/', StartPaymentView.as_view(), name="start-course-payment"),

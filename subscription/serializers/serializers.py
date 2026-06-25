@@ -15,7 +15,7 @@ from datetime import datetime, date, timedelta
 import random, string
 import razorpay
 from django.db import transaction
-
+from django.db.models import F
 
 class AddtoCartSerializer(serializers.ModelSerializer) :
     course_id = serializers.IntegerField(required=True)
@@ -80,27 +80,43 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
     country = serializers.CharField(max_length = 100, required=False, allow_blank=True)
     user_id = serializers.CharField(max_length = 100, allow_blank=True)
     device_id = serializers.CharField(max_length = 255, write_only=True,required=True)
+    coupon_code = serializers.CharField(required=False, allow_blank=True, trim_whitespace=True)
     
     class Meta:
         model = Order
         fields = "__all__"
         
     def validate(self, data):
-        
-        cart_count = Cart.objects.filter(device_id = data.get('device_id')).count()
-        if cart_count == 0:
-            raise serializers.ValidationError("Empty Cart, No Course In Cart Found!")
-        
+        device_id = data.get('device_id')
+        coupon_code = data.get('coupon_code')
+        now = timezone.now()
+
+        # 1. Ensure the device actually has items to checkout
+        cart_items = Cart.objects.filter(device_id=device_id)
+        if not cart_items.exists():
+            raise serializers.ValidationError({"device_id": "Your cart is empty."})
+        data['cart_items'] = cart_items
+
+        # 2. If a coupon code is provided, validate it completely
+        if coupon_code:
+            try:
+                coupon = Coupon.objects.get(code__iexact=coupon_code.strip())
+            except Coupon.DoesNotExist:
+                raise serializers.ValidationError({"coupon_code": "This coupon code does not exist."})
+
+            if not coupon.status or not (coupon.valid_from <= now <= coupon.valid_to):
+                raise serializers.ValidationError({"coupon_code": "This coupon has expired or is inactive."})
+
+            if coupon.usages_count >= coupon.max_usages:
+                raise serializers.ValidationError({"coupon_code": "This coupon has reached its maximum usage limit."})
+
+            data['coupon_obj'] = coupon
+
         return data
 
 
     def create(self , validate_data):
 
-        cart_items = Cart.objects.filter(device_id=validate_data.get('device_id'))
-        total_amount = 0
-        for item in cart_items:
-            total_amount += item.course.price
-        
         if validate_data.get('user_id') is not None and validate_data.get('user_id') != "":
             user = User.objects.filter(id=validate_data.get('user_id')).first()
             if user is None:
@@ -142,18 +158,31 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
         count = Order.objects.all().count()
         order_id = f"{current_year}-{str(count + 1).zfill(4)}"  
         
-        tax = math.ceil(total_amount * 0.18)
-        total_cost = total_amount
+        cart_items = Cart.objects.filter(device_id=validate_data.get('device_id'))
+        coupon = Coupon.objects.get(code__iexact=validate_data.get('coupon_code').strip())
+        
+        total_original_price = sum(item.course.price for item in cart_items)
+        total_discount = 0.00
 
-        discounted_amount = 0
-        final_amount = math.ceil(total_cost)
+        if coupon:
+            if coupon.discount_type == 'percentage':
+                total_discount = (float(coupon.discount_value) / 100) * total_original_price
+            else:
+                total_discount = float(coupon.discount_value)
+
+            total_discount = min(total_discount, total_original_price)
+        
+        final_total = total_original_price - total_discount
+
+        tax = math.ceil(total_original_price * 0.18)
+        final_amount = math.ceil(final_total)
 
         order_total_amount = final_amount + tax
 
         book_order = Order(
             orderID = order_id,
             user = user,
-            discount_amount = discounted_amount,
+            discount_amount = total_discount,
             first_name = validate_data.get('first_name'),
             last_name = validate_data.get('last_name'),
             email = validate_data.get('email'),
@@ -163,11 +192,18 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
             state = validate_data.get('state'),
             country = validate_data.get('country'),
             pincode = validate_data.get('pincode'),
-            amount = total_amount,
+            amount = total_original_price,
             gst_amount = tax,
             total_amount = order_total_amount,
         )
         book_order.save()
+
+        if coupon:
+            book_order.coupon = coupon
+            book_order.save()
+
+            Coupon.objects.filter(id=coupon.id).update(usages_count=F('usages_count') + 1)
+            
 
         cart_count = Cart.objects.filter(device_id=validate_data.get('device_id'))
         for cart in cart_count:
@@ -179,7 +215,7 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
             cart_order.save()
 
         setting = GeneralSettings.objects.all().first()
-        if total_amount > 0 :
+        if order_total_amount > 0 :
             if setting.payment_type == 1:
                 client = razorpay.Client(auth=(setting.test_public_key, setting.test_secret_key))
             else:
@@ -630,3 +666,34 @@ class UserOrderListingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ["id","first_name","last_name","email","phone","total_amount","gst_amount","amount","razorpay_order_id","payment_method","subscription_status","created_at","ordered_courses","order_date","isPaid"]
+
+
+
+class ValidateDeviceCouponSerializer(serializers.Serializer):
+    device_id = serializers.CharField(required=True, trim_whitespace=True)
+    code = serializers.CharField(required=True, trim_whitespace=True)
+
+    def validate(self, data):
+        device_id = data.get('device_id')
+        code = data.get('code').upper()
+        now = timezone.now()
+
+        try:
+            coupon = Coupon.objects.get(code__iexact=code)
+        except Coupon.DoesNotExist:
+            raise serializers.ValidationError({"code": "This coupon code does not exist."})
+
+        if not coupon.status or not (coupon.valid_from <= now <= coupon.valid_to):
+            raise serializers.ValidationError({"code": "This coupon has expired or is inactive."})
+
+        if coupon.usages_count >= coupon.max_usages:
+            raise serializers.ValidationError({"code": "This coupon has reached its maximum usage limit."})
+
+        cart_items = Cart.objects.filter(device_id=device_id)
+        if not cart_items.exists():
+            raise serializers.ValidationError({"device_id": "No items found in the cart for this device."})
+
+        # Pass both variables forward to the view
+        data['coupon_obj'] = coupon
+        data['cart_items'] = cart_items
+        return data

@@ -83,7 +83,7 @@ class Order(models.Model):
     razorpay_order_id = models.CharField(max_length=255,null=True, blank=True)
     razorpay_payment_id = models.CharField(max_length=255,null=True, blank=True)
     razorpay_signature = models.TextField(null=True, blank=True)
-    coupon = models.ForeignKey('Coupon', null=True, blank=True, on_delete=models.SET_NULL)
+    coupon = models.ForeignKey('courses.Coupon', null=True, blank=True, on_delete=models.SET_NULL)
     plan = models.ForeignKey('SubscriptionPlans', null=True, blank=True, on_delete=models.SET_NULL)
     subscription_id = models.CharField(max_length=255, null=True, blank=True)
     subscription_response = models.JSONField(null=True, blank=True)
@@ -154,22 +154,6 @@ class UserCourses(models.Model):
     def __str__(self):
         return '%s' % self.id
     
-
-
-class Coupon(SoftDeleteModel):
-    DISCOUNT_TYPE_CHOICES = [
-        ('percentage', 'Percentage'),
-        ('fixed', 'Fixed Amount'),
-    ]
-
-    code = models.CharField(max_length=20, unique=True)
-    discount_type = models.CharField(max_length=10, choices=DISCOUNT_TYPE_CHOICES,default="fixed")
-    discount_value = models.DecimalField(max_digits=10, decimal_places=2,default=1)
-    expiration_date = models.DateTimeField(null=True, blank=True)
-    is_active = models.IntegerField(null=True, blank=True, default=1)
-
-    def __str__(self):
-        return self.code
 
 
 class Cart(models.Model):

@@ -3,6 +3,13 @@ from courses.views import *
 
 urlpatterns = [
     
+    path('get-coupons-listing/', CouponsListingView.as_view(), name="coupons-listing"), 
+    path('create-coupons/', CreateCouponView.as_view(), name="create-coupons"),
+    path('edit-coupons/<int:cid>', EditCouponsView.as_view(), name="edit-coupons"),
+    path('update-coupons-status/<int:cid>', UpdateCouponStatusView.as_view(), name="update-coupons-status"),
+    path('delete-coupons/<int:cid>', DeleteCouponView.as_view(), name="delete-coupons"),
+
+
     # Manage Category SubCategory & Tags APIs
     path('get-tags-listing/', TagsListingView.as_view(), name="tags-listing"), 
     path('create-tags/', CreateTagsView.as_view(), name="create-tags"),

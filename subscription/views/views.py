@@ -482,3 +482,41 @@ class GetPurchaseHistoryView(APIView):
         course = Order.objects.filter(user = request.user, isPaid = True)
         serializer = UserOrderListingSerializer(course, many=True)
         return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class ValidateCouponView(APIView):
+    renderer_classes = [SubscriptionRenderer]
+    def post(self, request,format=None):
+        serializer = ValidateDeviceCouponSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            coupon = serializer.validated_data['coupon_obj']
+            cart_items = serializer.validated_data['cart_items']
+            
+            total_cart_price = sum(item.course.price for item in cart_items if hasattr(item, 'course'))
+            
+            # Calculate discount
+            discount_amount = 0.00
+            if coupon.discount_type == 'percentage':
+                discount_amount = (float(coupon.discount_value) / 100) * total_cart_price
+            else:
+                # Fixed price discount
+                discount_amount = float(coupon.discount_value)
+
+            # Ensure discount doesn't exceed total cost
+            discount_amount = min(discount_amount, total_cart_price)
+            final_price = total_cart_price - discount_amount
+
+            return success_response(message="", data={
+                "coupon_code": coupon.code,
+                "discount_type": coupon.discount_type,
+                "discount_value": float(coupon.discount_value),
+                "summary": {
+                    "original_total": float(total_cart_price),
+                    "discount_applied": float(discount_amount),
+                    "final_total": float(final_price)
+                }
+            }, status_code=status.HTTP_200_OK)
+        
+        return error_response(message="", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+        
