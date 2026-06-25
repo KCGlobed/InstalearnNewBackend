@@ -169,7 +169,7 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
         
         total_original_price = sum(item.course.price for item in cart_items)
         total_discount = 0.00
-
+        coupon = None
         if validate_data.get('coupon_code'):
             coupon = Coupon.objects.get(code__iexact=validate_data.get('coupon_code').strip())
             if coupon.discount_type == 'percentage':
