@@ -181,8 +181,8 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
         
         final_total = total_original_price - total_discount
 
-        tax = math.ceil(final_total * 0.18)
-        final_amount = math.ceil(final_total)
+        tax = round(final_total * 0.18)
+        final_amount = round(final_total)
 
         order_total_amount = final_amount + tax
 
