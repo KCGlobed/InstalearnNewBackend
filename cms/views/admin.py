@@ -1339,3 +1339,142 @@ class DeleteHelpSupportArticleView(APIView):
             return success_response(message="Help & Support Article Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
         except HelpSupportArticle.DoesNotExist:
             return error_response(message="Help & Support Article not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+        
+
+class CouponListView(APIView):
+    renderer_classes = [CMSRenderer]
+    def get(self, request, format=None):
+        category = Coupon.objects.filter(status = True)
+        serializer = CouponListSerializer(category, many=True)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+
+class PromotionalBannerListingView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "promotional_banner_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title',"coupons__code"]
+    ordering_fields = ['title', 'created_at', 'id', 'status',"coupons__code"] 
+    def get(self, request, format=None):
+
+        blog_list = PromotionalBannerCampaign.objects.select_related("coupons").all()
+        
+        title = request.query_params.get('title')
+        if title:
+            blog_list = blog_list.filter(title__icontains=title)
+
+        coupons = request.query_params.get('coupon_code')
+        if coupons:
+            blog_list = blog_list.filter(coupons__code__icontains=coupons)
+        
+        active = request.query_params.get('status')
+        if active:
+            blog_list = blog_list.filter(status=active)
+
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                blog_list = blog_list.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                blog_list = blog_list.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        blog_list = search_filter.filter_queryset(request, blog_list, self)
+
+        ordering_filter = filters.OrderingFilter()
+        blog_list = ordering_filter.filter_queryset(request, blog_list, self)
+
+        if not blog_list.ordered:
+            blog_list = blog_list.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(blog_list, request, view=self)
+        serializer = PromotionalBannerListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+
+class CreatePromotionalBannerView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_promotional_banner",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = PromotionalBannerSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Banner Created Successfully", data=PromotionalBannerListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class UpdatePromotionalBannerView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_promotional_banner",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = PromotionalBannerCampaign.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Promotional Banner ID!")
+        
+        serializer = PromotionalBannerSerializer(category, data = request.data, partial=True, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user= serializer.save()
+            return success_response(message="Banner Updated Successfully", data=PromotionalBannerListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class UpdatePromotionalBannerStatusView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_promotional_banner",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = PromotionalBannerCampaign.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Promotional Banner ID!")
+        
+        serializer = ChangePromotionalBannerStatusSerializer(category, data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Banner Status Updated Successfully", data=PromotionalBannerListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class DeletePromotionalBannerView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "delete_promotional_banner",
+                            [SuperAdmin]
+                        )]
+    def delete(self, request, cid, format=None):
+        try:
+            course = PromotionalBannerCampaign.objects.get(id = cid)
+            course.delete()
+            return success_response(message="Promotional Banner Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
+        except PromotionalBannerCampaign.DoesNotExist:
+            return error_response(message="Promotional Banner not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)

@@ -189,3 +189,17 @@ class SubmitApplicationFormView(APIView):
             return success_response(message="Application Submitted Successfully", data=serializer.data, status_code=status.HTTP_200_OK)
 
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class PromotionalBannerListView(APIView):
+    renderer_classes = [CMSRenderer]
+    def get(self, request):
+        now = timezone.now()
+        category = PromotionalBannerCampaign.objects.filter(
+                            status=True,
+                            start_time__lte=now,
+                            end_time__gte=now
+                        )
+        serializer = PromotionalBannerListingSerializer(category, many=True)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)

@@ -396,7 +396,7 @@ class PromotionalBannerCampaign(models.Model):
     coupons = models.ForeignKey('courses.Coupon', null=True, blank=True, on_delete=models.CASCADE)
     start_time = models.DateTimeField(default=timezone.now)
     end_time = models.DateTimeField(help_text="The exact date/time when the countdown hits zero")
-    is_active = models.BooleanField(default=True)
+    status = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

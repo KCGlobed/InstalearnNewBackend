@@ -863,3 +863,116 @@ class ChangeHelpSupportArticlestatusSerializer(serializers.ModelSerializer) :
         category.save()
 
         return category
+    
+
+class CouponListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Coupon
+        fields = ['id',"code"]
+
+
+class PromotionalBannerListingSerializer(serializers.ModelSerializer):
+    coupon_info = CouponListSerializer(source='coupons', read_only=True)
+
+    class Meta:
+        model = PromotionalBannerCampaign
+        fields = ["id","title","display_text","start_time","end_time","status","created_at","coupon_info"]
+
+
+
+class PromotionalBannerSerializer(serializers.ModelSerializer) :
+    coupons_id = serializers.IntegerField(required=True)
+    title = serializers.CharField(max_length=255, required=True)
+    display_text = serializers.CharField(max_length=255, required=True)
+    start_time = serializers.DateTimeField(required=False, default=timezone.now)
+    end_time = serializers.DateTimeField(required=True)
+
+    class Meta:
+        model = PromotionalBannerCampaign
+        fields = ['title','display_text','coupons_id','start_time','end_time']
+        
+    def validate(self, data):
+        coupon_id = data.get('coupons_id')
+        if coupon_id:
+            if not Coupon.objects.filter(id=coupon_id).exists():
+                raise serializers.ValidationError({"coupons_id": "The requested Coupon does not exist."})
+
+        start_time = data.get('start_time', timezone.now())
+        end_time = data.get('end_time')
+        if end_time and end_time <= start_time:
+            raise serializers.ValidationError({"end_time": "The end time must be later than the start time."})
+        
+        return data
+
+    def create(self , validate_data):
+
+        coupon_id = validate_data.pop('coupons_id', None)
+        coupon_instance = Coupon.objects.get(id=coupon_id) if coupon_id else None
+
+        banner_campaign = PromotionalBannerCampaign(
+            title=validate_data.get('title'),
+            display_text=validate_data.get('display_text'),
+            coupons=coupon_instance,
+            start_time=validate_data.get('start_time', timezone.now()),
+            end_time=validate_data.get('end_time'),
+            status=True
+        )
+        banner_campaign.save()
+
+        return banner_campaign
+    
+
+class PromotionalBannerSerializer(serializers.ModelSerializer) :
+    coupons_id = serializers.IntegerField(required=True)
+    title = serializers.CharField(max_length=255, required=True)
+    display_text = serializers.CharField(max_length=255, required=True)
+    start_time = serializers.DateTimeField(required=False, default=timezone.now)
+    end_time = serializers.DateTimeField(required=True)
+
+    class Meta:
+        model = PromotionalBannerCampaign
+        fields = ['title','display_text','coupons_id','start_time','end_time']
+        
+    def validate(self, data):
+        coupon_id = data.get('coupons_id')
+        if coupon_id:
+            if not Coupon.objects.filter(id=coupon_id).exists():
+                raise serializers.ValidationError({"coupons_id": "The requested Coupon does not exist."})
+
+        start_time = data.get('start_time', timezone.now())
+        end_time = data.get('end_time')
+        if end_time and end_time <= start_time:
+            raise serializers.ValidationError({"end_time": "The end time must be later than the start time."})
+        
+        return data
+
+
+    def update(self , category, validate_data):
+
+        coupon_id = validate_data.pop('coupons_id', None)
+        coupon_instance = Coupon.objects.get(id=coupon_id) if coupon_id else None
+
+        category.title = validate_data.get('title', category.title)
+        category.display_text = validate_data.get('display_text', category.display_text)
+        category.coupons = coupon_instance
+        category.start_time = validate_data.get('start_time', category.start_time)
+        category.end_time = validate_data.get('end_time', category.end_time)
+        category.save()
+
+        return category
+    
+
+class ChangePromotionalBannerStatusSerializer(serializers.ModelSerializer) :
+    status = serializers.BooleanField(required=True)
+    class Meta:
+        model = PromotionalBannerCampaign
+        fields = ['status']
+        
+    def validate(self, data):
+        return data
+
+    def update(self , category, validate_data):
+        category.status = validate_data.get('status', category.status)
+        category.save()
+
+        return category

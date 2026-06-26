@@ -3,6 +3,14 @@ from cms.views import *
 
 urlpatterns = [
 
+    path('get-coupon-list/', CouponListView.as_view(), name="get-coupon-list"), 
+    path('get-promotional-banner-listing/', PromotionalBannerListingView.as_view(), name="get-promotional-banner-listing"), 
+    path('create-promotional-banner/', CreatePromotionalBannerView.as_view(), name="create-promotional-banner"),
+    path('update-promotional-banner/<int:cid>', UpdatePromotionalBannerView.as_view(), name="update-promotional-banner"),
+    path('update-promotional-banner-status/<int:cid>', UpdatePromotionalBannerStatusView.as_view(), name="update-promotional-banner-status"),
+    path('delete-promotional-banner/<int:cid>', DeletePromotionalBannerView.as_view(), name="delete-promotional-banner"),
+
+
     path('get-blogs-listing/', BlogsListingView.as_view(), name="get-blogs-listing"), 
     path('view-blog-info/<int:cid>', ViewBlogInfoView.as_view(), name="view-blog-info"),
     path('create-blog/', CreateBlogView.as_view(), name="create-blog"),
@@ -96,5 +104,7 @@ urlpatterns = [
     path('get-help-support-articles/<str:slug>', HelpSupportArticlesView.as_view(), name="get-help-support-articles"), 
     path('get-help-support-article-detail/<str:slug>', HelpSupportArticleDetailView.as_view(), name="get-help-support-detail"),
     path('submit-application-form/', SubmitApplicationFormView.as_view(), name="submit-application-form"), 
+
+    path('get-promotional-banner/', PromotionalBannerListView.as_view(), name="get-promotional-banner"), 
 
 ]   
