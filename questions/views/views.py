@@ -488,3 +488,83 @@ class ImportMCQsView(APIView):
             return success_response(message="MCQ Created Successfully", data={"imported_question_ids": imported_question_ids}, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
+
+
+class GetChapterQuizListingView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "chapter_quiz_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name',"chapter__name"]
+    ordering_fields = ['description',"name", 'id', 'status',"chapter__name"]
+    def get(self, request, format=None):
+        question = ChapterQuizs.objects.all()
+
+        chapter_id = request.query_params.get('chapter_id')
+        if chapter_id:
+            question = question.filter(chapter_id=chapter_id)
+
+        
+        name = request.query_params.get('name')
+        if name:
+            question = question.filter(name__icontains=name)
+
+        description = request.query_params.get('description')
+        if description:
+            question = question.filter(description__icontains=description)
+        
+        active = request.query_params.get('status')
+        if active:
+            question = question.filter(status=active)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                question = question.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                question = question.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+
+
+        search_filter = filters.SearchFilter()
+        question = search_filter.filter_queryset(request, question, self)
+
+        ordering_filter = filters.OrderingFilter()
+        question = ordering_filter.filter_queryset(request, question, self)
+
+        if not question.ordered:
+            question = question.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(question, request, view=self)
+        serializer = GetChapterQuizListSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+class ViewChapterQuizDetailView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "mcq_listing",
+                            [SuperAdmin]
+                        )]
+    def get(self, request,  cid , format=None):
+        question = ChapterQuizs.objects.filter(id=cid).first()
+        if question is None:
+            raise serializers.ValidationError("Invalid Quiz ID!")
+        
+        serializer = ViewChapterQuizDetailSerializer(question)
+        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)

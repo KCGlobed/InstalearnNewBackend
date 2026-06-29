@@ -70,3 +70,38 @@ class QuestionOptions(SoftDeleteModel):
         
     def __str__(self):
         return '%s' % self.id
+    
+
+
+class ChapterQuizs(models.Model):
+    chapter = models.ForeignKey('courses.Chapters', null=True, blank=True, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, null=True, blank=True)
+    thumbnail = models.ImageField(upload_to='mini_lms/images/', null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    pass_percentage = models.FloatField(default=0.0, null=True)
+    status = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    class Meta:
+        verbose_name = 'Chapter Quizs'
+        verbose_name_plural = 'Chapter Quizs'
+
+    def __str__(self):
+        return '%s' % self.name
+    
+
+
+class QuizQuestions(models.Model):
+    test_question = models.ForeignKey('TestQuestions', null=True, blank=True, on_delete=models.CASCADE)
+    chapter_quiz = models.ForeignKey('ChapterQuizs', null=True, blank=True, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add = True)
+    updated_at = models.DateTimeField(auto_now = True)
+
+    class Meta:
+        verbose_name = 'Quiz Questions'
+        verbose_name_plural = 'Quiz Questions'
+        
+    def __str__(self):
+        return '%s' % self.id

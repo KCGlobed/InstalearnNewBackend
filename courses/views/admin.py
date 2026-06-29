@@ -3084,7 +3084,7 @@ class CouponsListingView(APIView):
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['code']
-    ordering_fields = ['code', 'created_at', 'id', 'status'] 
+    ordering_fields = ['code', 'created_at', 'id', 'status',"discount_value"] 
     def get(self, request, format=None):
         category = Coupon.objects.all()
         

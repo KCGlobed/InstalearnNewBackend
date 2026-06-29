@@ -238,3 +238,61 @@ class ImportMCQSerializer(serializers.ModelSerializer) :
         
     def validate(self, data):
         return data
+
+
+class GetChapterQuizListSerializer(serializers.ModelSerializer):
+    chapter = serializers.SerializerMethodField('get_chapter')
+    total_question = serializers.SerializerMethodField('get_total_question')
+    
+    def get_total_question(self, obj):
+        option = QuizQuestions.objects.filter(chapter_quiz_id=obj.id).count()
+        return option
+    
+    
+    def get_chapter(self, obj):
+        if obj.chapter is None:
+            return []
+        category = Chapters.objects.filter(id=obj.chapter.id).first()
+        return ChapterInfoSerializer(category).data
+    
+    class Meta:
+        model = ChapterQuizs
+        fields = ["id","name","description","thumbnail","chapter","status","pass_percentage","total_question","created_at"]
+
+
+    
+
+class ViewQuizQuestionDetailSerializer(serializers.ModelSerializer):
+    question_detail = serializers.SerializerMethodField('get_question_detail')
+
+    def get_question_detail(self, obj):
+        question = QuestionContents.objects.filter(test_question_id=obj.id).first()
+        return QuestionInfoSerializer(question).data
+    
+    class Meta:
+        model = TestQuestions
+        fields = ["id","id_number","question_detail","created_at"]
+
+
+class ViewChapterQuizDetailSerializer(serializers.ModelSerializer):
+    chapter = serializers.SerializerMethodField('get_chapter')
+    total_question = serializers.SerializerMethodField('get_total_question')
+    quiz_questions = serializers.SerializerMethodField('get_quiz_questions')
+    
+    def get_quiz_questions(self, obj):
+        option = QuizQuestions.objects.filter(chapter_quiz_id=obj.id)
+        return ViewQuizQuestionDetailSerializer(option, many=True).data
+    
+    def get_total_question(self, obj):
+        option = QuizQuestions.objects.filter(chapter_quiz_id=obj.id).count()
+        return option
+    
+    def get_chapter(self, obj):
+        if obj.chapter is None:
+            return []
+        category = Chapters.objects.filter(id=obj.chapter.id).first()
+        return ChapterInfoSerializer(category).data
+    
+    class Meta:
+        model = ChapterQuizs
+        fields = ["id","name","description","thumbnail","chapter","status","pass_percentage","total_question","created_at"]

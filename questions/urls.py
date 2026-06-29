@@ -13,4 +13,7 @@ urlpatterns = [
     path('import-mcqs/', ImportMCQsView.as_view(), name="import-mcqs"),
     path('export-mcqs-listing-excel/', ExportMCQsListingExcelView.as_view(), name="export-mcqs-listing-excel"),
 
+    path('get-chapter-quiz-listing/', GetChapterQuizListingView.as_view(), name="get-chapter-quiz-listing"),
+    path('view-chapter-quiz-detail/<int:cid>', ViewChapterQuizDetailView.as_view(), name="view-chapter-quiz-detail"),
+
 ]   
