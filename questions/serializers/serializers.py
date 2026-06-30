@@ -5,6 +5,7 @@ from django.db import transaction
 from django.core.validators import FileExtensionValidator
 import html2text
 from mini_lms.utils import *
+import random
 
 class MCQListingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -271,7 +272,19 @@ class ViewQuizQuestionDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = TestQuestions
-        fields = ["id","id_number","question_detail","created_at"]
+        fields = ["id","id_number","question_detail"]
+
+
+class QuizQuestionsSerializer(serializers.ModelSerializer):
+    question_detail = serializers.SerializerMethodField('get_question_detail')
+
+    def get_question_detail(self, obj):
+        question = TestQuestions.objects.filter(id=obj.test_question.id).first()
+        return ViewQuizQuestionDetailSerializer(question).data
+    
+    class Meta:
+        model = QuizQuestions
+        fields = ["id","question_detail"]
 
 
 class ViewChapterQuizDetailSerializer(serializers.ModelSerializer):
@@ -281,7 +294,7 @@ class ViewChapterQuizDetailSerializer(serializers.ModelSerializer):
     
     def get_quiz_questions(self, obj):
         option = QuizQuestions.objects.filter(chapter_quiz_id=obj.id)
-        return ViewQuizQuestionDetailSerializer(option, many=True).data
+        return QuizQuestionsSerializer(option, many=True).data
     
     def get_total_question(self, obj):
         option = QuizQuestions.objects.filter(chapter_quiz_id=obj.id).count()
@@ -295,4 +308,161 @@ class ViewChapterQuizDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = ChapterQuizs
-        fields = ["id","name","description","thumbnail","chapter","status","pass_percentage","total_question","created_at"]
+        fields = ["id","name","description","thumbnail","chapter","status","pass_percentage","total_question","quiz_questions","created_at"]
+
+
+
+class CreateChapterQuizSerializer(serializers.ModelSerializer) :
+    name = serializers.CharField(max_length = 255, required=True)
+    description = serializers.CharField(required=True)
+    pass_percentage = serializers.IntegerField(required=True)
+    chapter_id = serializers.IntegerField(required=True)
+    thumbnail = serializers.FileField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
+
+
+    class Meta:
+        model = ChapterQuizs
+        fields = ['name','description','pass_percentage','chapter_id',"thumbnail"]
+        
+    def validate(self, data):
+        topic_count = Chapters.objects.filter(id=data.get('chapter_id')).count()
+        if topic_count == 0:
+            raise serializers.ValidationError("Chapter ID not found")
+        
+        return data
+
+    def create(self , validate_data):
+        chapter_info = Chapters.objects.get(id=validate_data.get('chapter_id'))
+        test_question = ChapterQuizs(
+            name = validate_data.get('name'),
+            description = validate_data.get('description'),
+            pass_percentage = validate_data.get('pass_percentage'),
+            thumbnail = validate_data.get('thumbnail'),
+            chapter = chapter_info
+        )
+        test_question.save()
+        return test_question
+    
+
+class EditMCQSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(max_length = 255, required=True)
+    description = serializers.CharField(required=True)
+    pass_percentage = serializers.IntegerField(required=True)
+    chapter_id = serializers.IntegerField(required=True)
+    thumbnail = serializers.FileField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
+
+
+    class Meta:
+        model = ChapterQuizs
+        fields = ['name','description','pass_percentage','chapter_id',"thumbnail"]
+        
+    def validate(self, data):
+        topic_count = Chapters.objects.filter(id=data.get('chapter_id')).count()
+        if topic_count == 0:
+            raise serializers.ValidationError("Chapter ID not found")
+        
+        return data
+
+    def update(self , question, validate_data):
+        chapter_id = validate_data.get('chapter_id', None) 
+        if chapter_id is not None:
+            question.chapter = Chapters.objects.get(id=validate_data.get('chapter_id'))
+
+        question.name = validate_data.get('name', question.name)
+        question.description = validate_data.get('description', question.description)
+        question.pass_percentage = validate_data.get('pass_percentage', question.pass_percentage)
+        question.thumbnail = validate_data.get('thumbnail', question.thumbnail)
+        question.save()
+
+        return question
+    
+
+class ChangeChapterQuizStatusSerializer(serializers.ModelSerializer) :
+    status = serializers.BooleanField(required=True)
+    class Meta:
+        model = ChapterQuizs
+        fields = ['status']
+        
+    def validate(self, data):
+        return data
+
+    def update(self , category, validate_data):
+        category.status = validate_data.get('status', category.status)
+        category.save()
+        return category
+    
+
+class AssignMCQsChapterQuizSerializer(serializers.ModelSerializer) :
+    quiz_id = serializers.IntegerField(required=True)
+    mcq_ids = serializers.ListField(
+                            child=serializers.IntegerField(required=True),
+                            min_length=5,
+                            required=True)
+
+    class Meta:
+        model = QuizQuestions
+        fields = ['quiz_id','mcq_ids']
+        
+    def validate(self, data):
+        return data
+
+    def create(self , validate_data):
+        question = ChapterQuizs.objects.get(id=validate_data.get('quiz_id'))
+        if validate_data.get('mcq_ids') is not None:
+            QuizQuestions.objects.filter(chapter_quiz_id = validate_data.get('quiz_id')).delete()
+            for i, option_text in enumerate(validate_data.get('mcq_ids')):
+                option = QuizQuestions(
+                    chapter_quiz = question,
+                    test_question_id = option_text,
+                )
+                option.save()
+
+        return question
+    
+
+
+class StartPracticeTestSerializer(serializers.ModelSerializer):
+    quiz_id = serializers.IntegerField(required=True)
+    course_id = serializers.IntegerField(required=True)
+    
+    class Meta:
+        model = ChapterQuizs
+        fields = ['quiz_id',"course_id"]
+
+
+    def validate(self, data):
+        return data
+    
+
+    def create(self , validate_data):
+        user = self.context.get('user')
+        course = Course.objects.get(id=validate_data.get('course_id'))
+        quiz_info = ChapterQuizs.objects.get(id=validate_data.get('quiz_id'))
+        question_ids = list(QuizQuestions.objects.filter(
+            chapter_quiz_id=validate_data.get('quiz_id')
+        ).values_list('id', flat=True))
+
+        random.shuffle(question_ids)
+        random.shuffle(question_ids)
+        quiz_questions = QuizQuestions.objects.filter(id__in=question_ids)
+
+        practice_test = PracticeTests(
+            course = course,
+            user = user,
+            total_question = len(quiz_questions),
+            total_never_attempt_question = len(quiz_questions),
+            chapter = quiz_info.chapter,
+            quiz = quiz_info
+        )
+        practice_test.save()
+
+        for questions in quiz_questions:
+            info = PracticeTestQuestions(
+                    user = user,
+                    practice_test = practice_test,
+                    question = questions.test_question,
+                )
+            info.save()
+
+
+        return True

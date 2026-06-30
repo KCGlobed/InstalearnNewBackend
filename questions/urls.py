@@ -15,5 +15,15 @@ urlpatterns = [
 
     path('get-chapter-quiz-listing/', GetChapterQuizListingView.as_view(), name="get-chapter-quiz-listing"),
     path('view-chapter-quiz-detail/<int:cid>', ViewChapterQuizDetailView.as_view(), name="view-chapter-quiz-detail"),
+    path('create-chapter-quiz/', CreateChapterQuizView.as_view(), name="create-chapter-quiz"),
+    path('edit-chapter-quiz/<int:cid>', EditChapterQuizView.as_view(), name="edit-chapter-quiz"),
+    path('update-chapter-quiz-status/<int:cid>', UpdateChapterQuizStatusView.as_view(), name="update-chapter-quiz-status"),
+    path('delete-chapter-quiz/<int:cid>', DeleteChapterQuizView.as_view(), name="delete-chapter-quiz"),
+    path('get-mcqs-lists/<int:cid>', GetMCQsListView.as_view(), name="get-mcqs-lists"),
+    path('assign-mcqs-chapter-quiz/', AssignMCQChapterQuizView.as_view(), name="assign-mcqs-chapter-quiz"),
+
+
+    path('get-chapter-quiz-list/<int:cid>', GetChapterQuizListView.as_view(), name="get-chapter-quiz-list"),
+    path('start-chapter-quiz/', StartPracticeTestView.as_view(), name="start-chapter-quiz"),
 
 ]   

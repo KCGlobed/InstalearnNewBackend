@@ -558,7 +558,7 @@ class ViewChapterQuizDetailView(APIView):
     renderer_classes = [QuestionRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "mcq_listing",
+                              "chapter_quiz_listing",
                             [SuperAdmin]
                         )]
     def get(self, request,  cid , format=None):
@@ -568,3 +568,136 @@ class ViewChapterQuizDetailView(APIView):
         
         serializer = ViewChapterQuizDetailSerializer(question)
         return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+
+class CreateChapterQuizView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_chapter_quiz",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = CreateChapterQuizSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Quiz Created Successfully", data=ViewChapterQuizDetailSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class EditChapterQuizView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_chapter_quiz",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        test_question = ChapterQuizs.objects.filter(id=cid).first()
+        if test_question is None:
+            raise serializers.ValidationError("Invalid Quiz ID!")
+        
+        serializer = EditMCQSerializer(test_question, data = request.data, partial=True)
+        if serializer.is_valid(raise_exception = True):
+            user = serializer.save()
+            return success_response(message="Quiz Updated Successfully", data=ViewChapterQuizDetailSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class UpdateChapterQuizStatusView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_chapter_quiz",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        test_question = ChapterQuizs.objects.filter(id=cid).first()
+        if test_question is None:
+            raise serializers.ValidationError("Invalid Quiz ID!")
+        
+        serializer = ChangeChapterQuizStatusSerializer(test_question, data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Quiz Status Updated Successfully", data=ViewChapterQuizDetailSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class DeleteChapterQuizView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "delete_chapter_quiz",
+                            [SuperAdmin]
+                        )]
+    def delete(self, request, cid, format=None):
+        try:
+            question = ChapterQuizs.objects.get(id = cid)
+            question.delete()
+            return success_response(message="Quiz Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
+        except ChapterQuizs.DoesNotExist:
+            return error_response(message="Quiz not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+        
+
+
+class GetMCQsListView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "mcq_listing",
+                            [SuperAdmin]
+                        )]
+    def get(self, request,  cid , format=None):
+        question = ChapterQuizs.objects.filter(id=cid).first()
+        if question is None:
+            raise serializers.ValidationError("Invalid Quiz ID!")
+        
+        question_list = TestQuestions.objects.filter(chapter = question.chapter)
+        serializer = MCQListingSerializer(question_list, many=True)
+        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class AssignMCQChapterQuizView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_chapter_quiz",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = AssignMCQsChapterQuizSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="MCQs Assigned Successfully", data=ViewChapterQuizDetailSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class GetChapterQuizListView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def get(self, request,  cid , format=None):
+        question = ChapterQuizs.objects.filter(chapter_id=cid)
+        serializer = ViewChapterQuizDetailSerializer(question, many=True)
+        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+
+class StartPracticeTestView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def post(self, request, format=None):
+        serializer = StartPracticeTestSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user = serializer.save()
+            return success_response(message="Quiz Created Successfully!", data=[], status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
