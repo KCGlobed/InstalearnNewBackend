@@ -915,7 +915,7 @@ class PromotionalBannerSerializer(serializers.ModelSerializer) :
             coupons=coupon_instance,
             start_time=validate_data.get('start_time', timezone.now()),
             end_time=validate_data.get('end_time'),
-            status=True
+            status=False
         )
         banner_campaign.save()
 
@@ -972,6 +972,9 @@ class ChangePromotionalBannerStatusSerializer(serializers.ModelSerializer) :
         return data
 
     def update(self , category, validate_data):
+        if validate_data.get('status'):
+            PromotionalBannerCampaign.objects.filter(status=True).update(status=False)
+
         category.status = validate_data.get('status', category.status)
         category.save()
 

@@ -200,6 +200,6 @@ class PromotionalBannerListView(APIView):
                             status=True,
                             start_time__lte=now,
                             end_time__gte=now
-                        )
-        serializer = PromotionalBannerListingSerializer(category, many=True)
+                        ).first()
+        serializer = PromotionalBannerListingSerializer(category)
         return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)

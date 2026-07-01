@@ -6,6 +6,8 @@ from django.core.validators import FileExtensionValidator
 import html2text
 from mini_lms.utils import *
 import random
+from datetime import datetime, date, timedelta
+from django.db.models import Sum, Count, Case, When, IntegerField,Avg, Q
 
 class MCQListingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -465,4 +467,174 @@ class StartPracticeTestSerializer(serializers.ModelSerializer):
             info.save()
 
 
-        return True
+        return practice_test
+    
+
+
+class QuestionDetailsSerializer(serializers.ModelSerializer):
+    question_detail = QuestionInfoSerializer(source="questioncontents_set.first", read_only=True)
+    options = QuestionOptionsSerializer(source="questionoptions_set", many=True, read_only=True)
+    
+    class Meta:
+        model = TestQuestions
+        fields = ['id', 'level', "id_number", "question_detail", "options"]
+    
+    def to_representation(self, instance):
+        import random
+        representation = super().to_representation(instance)
+        if 'options' in representation and isinstance(representation['options'], list):
+            random.shuffle(representation['options'])
+        
+        return representation
+    
+class PracticeTestQuestionDetailsSerializer(serializers.ModelSerializer):
+    question_info = QuestionDetailsSerializer(source="question", read_only=True)
+    selected_option = QuestionOptionsSerializer(read_only=True)
+
+    class Meta:
+        model = PracticeTestQuestions
+        fields = ['id', "question_info", "result", "attempted", "time_taken","selected_option"]
+
+
+class PracticeTestQuestionsSerializer(serializers.ModelSerializer):
+    test_questions = serializers.SerializerMethodField('get_test_questions')
+    def get_test_questions(self, obj):
+        category = PracticeTestQuestions.objects.filter(practice_test_id=obj.id).order_by("id")
+        return PracticeTestQuestionDetailsSerializer(category, many=True).data
+    
+    class Meta:
+        model = PracticeTests
+        fields = ['id','total_question','total_right_answer_given', 'total_wrong_answer_given','total_never_attempt_question',"total_time_taken","status","created_at","test_questions"]
+
+
+class QuestionResultDetailsSerializer(serializers.ModelSerializer):
+    question_detail = QuestionInfoSerializer(source="questioncontents_set.first", read_only=True)
+    options = QuestionOptionsSerializer(source="questionoptions_set", many=True, read_only=True)
+    
+    class Meta:
+        model = TestQuestions
+        fields = ['id', 'level', "id_number", "question_detail", "options","right_option"]
+
+
+class PracticeTestQuestionResultDetailsSerializer(serializers.ModelSerializer):
+    question_info = QuestionResultDetailsSerializer(source="question", read_only=True)
+    selected_option = QuestionOptionsSerializer(read_only=True)
+
+    class Meta:
+        model = PracticeTestQuestions
+        fields = ['id', "question_info", "result", "attempted", "time_taken","selected_option"]
+
+
+
+class SubmitPracticeTestAnswerSerializer(serializers.ModelSerializer):
+    practice_test_id = serializers.IntegerField(required=True)
+    question_id = serializers.IntegerField(required=True)
+    selected_option_id = serializers.IntegerField(required=True, allow_null=True)
+    time_taken = serializers.IntegerField(required=True)
+    is_completed = serializers.BooleanField(required=True)
+
+    class Meta:
+        model = PracticeTestQuestions
+        fields = ['practice_test_id',"question_id","selected_option_id","time_taken","is_completed"]
+
+    
+    def validate(self, data):
+
+        attempt = data.get('practice_test_id')
+        attempt_count = PracticeTests.objects.filter(id=attempt).count()
+        if attempt_count == 0:
+            raise serializers.ValidationError("Practice Test ID not found")
+        
+        question = PracticeTestQuestions.objects.filter(id = data.get('question_id')).first()
+        if question is None:
+            raise serializers.ValidationError("Invalid Question ID : "+str(data.get('question_id')))
+        
+        if data.get('selected_option_id') is None:
+            raise serializers.ValidationError({"selected_option_id": "This field is required. Question ID : "+str(data.get('question_id'))})
+            
+        return data
+    
+    def create(self , validate_data):
+        user = self.context.get('user')
+
+        with transaction.atomic():
+        
+            question = PracticeTestQuestions.objects.get(id = validate_data.get("question_id"))
+        
+            result = False
+            if question.question.right_option.id == validate_data.get("selected_option_id"):
+                result = True
+
+            question.selected_option = QuestionOptions.objects.get(id = validate_data.get("selected_option_id"))
+            question.time_taken = validate_data.get("time_taken")
+            question.attempted = True
+            question.result = result
+            question.save()
+
+            
+            test_question_list = PracticeTestQuestions.objects.filter(practice_test_id =validate_data.get("practice_test_id"))
+            results1 = test_question_list.aggregate(
+                        right_answer=Count(
+                            Case(
+                                When(result=True, attempted=True, then=1),
+                                    output_field=IntegerField()
+                            )
+                        ),
+                        wrong_answer=Count(
+                            Case(
+                                When(result=False, attempted=True, then=1),
+                                output_field=IntegerField()
+                            )
+                        ),
+                        not_attempted=Count(
+                            Case(
+                                When(attempted=False, then=1),
+                                output_field=IntegerField()
+                            )
+                        ),
+                        total_time=Sum('time_taken'),
+                        average_time_per_question=Avg('time_taken'),
+                        total_question=Count(
+                            Case(
+                                When(attempted=True, then=1),
+                                output_field=IntegerField()
+                            )
+                        )
+                    )
+
+            test_info = PracticeTests.objects.filter(id=validate_data.get("practice_test_id")).first()
+
+            total_question = PracticeTestQuestions.objects.only("id").filter(practice_test_id =validate_data.get("practice_test_id")).count()
+
+            right_practice = PracticeTestQuestions.objects.only("id").filter(practice_test_id =validate_data.get("practice_test_id"), attempted = True, result = 1).count()
+
+            mcq_score = 0
+            if total_question > 0:
+                mcq_score =  custom_round(right_practice * 100 / total_question)
+
+            test_info.total_right_answer_given = results1['right_answer']
+            test_info.total_wrong_answer_given = results1['wrong_answer']
+            test_info.total_never_attempt_question = results1['not_attempted']
+            test_info.total_time_taken = results1['total_time']
+            test_info.avg_time_per_question = results1['average_time_per_question']
+            test_info.score = custom_round(mcq_score)
+
+            if test_info.total_question == results1['total_question'] or validate_data.get("is_completed", False):
+                test_info.status = True
+                test_info.end_time = datetime.now()
+
+            test_info.save()
+
+        
+        return question
+    
+
+class PracticeTestResultsSerializer(serializers.ModelSerializer):
+    test_questions = serializers.SerializerMethodField('get_test_questions')
+    def get_test_questions(self, obj):
+        category = PracticeTestQuestions.objects.filter(practice_test_id=obj.id).order_by("id")
+        return PracticeTestQuestionResultDetailsSerializer(category, many=True).data
+    
+    class Meta:
+        model = PracticeTests
+        fields = ['id','total_question','total_right_answer_given', 'total_wrong_answer_given','total_never_attempt_question',"total_time_taken","status","created_at","test_questions"]

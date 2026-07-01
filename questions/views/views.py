@@ -684,7 +684,7 @@ class GetChapterQuizListView(APIView):
                         )]
     def get(self, request,  cid , format=None):
         question = ChapterQuizs.objects.filter(chapter_id=cid)
-        serializer = ViewChapterQuizDetailSerializer(question, many=True)
+        serializer = GetChapterQuizListSerializer(question, many=True)
         return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
     
 
@@ -699,5 +699,47 @@ class StartPracticeTestView(APIView):
         serializer = StartPracticeTestSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
             user = serializer.save()
-            return success_response(message="Quiz Created Successfully!", data=[], status_code=status.HTTP_200_OK)
+            return success_response(message="Quiz Created Successfully!", data=PracticeTestQuestionsSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class GetPracticeTestQuestionsView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def get(self, request,  cid , format=None):
+        question = PracticeTests.objects.filter(id=cid, user = request.user).first()
+        if question is None:
+            raise serializers.ValidationError("Invalid Quiz ID!")
+        serializer = PracticeTestQuestionsSerializer(question)
+        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class SubmitPracticeTestAnswerView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def post(self, request, format=None):
+        serializer = SubmitPracticeTestAnswerSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user = serializer.save()
+            return success_response(message="Answer Saved Successfully!", data=PracticeTestQuestionResultDetailsSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class GetPracticeTestResultView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def get(self, request, tid):
+        test = PracticeTests.objects.filter(id = tid, user = request.user).first()
+        if test is None:
+            raise ValidationError("Invalid Test ID!")
+        serializer = PracticeTestResultsSerializer(test)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)

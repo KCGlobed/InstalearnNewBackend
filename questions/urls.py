@@ -25,5 +25,7 @@ urlpatterns = [
 
     path('get-chapter-quiz-list/<int:cid>', GetChapterQuizListView.as_view(), name="get-chapter-quiz-list"),
     path('start-chapter-quiz/', StartPracticeTestView.as_view(), name="start-chapter-quiz"),
-
+    path('get-chapter-quiz-questions/<int:cid>', GetPracticeTestQuestionsView.as_view(), name="get-chapter-quiz-questions"),
+    path('submit-quiz-test-answer/', SubmitPracticeTestAnswerView.as_view(), name="submit-quiz-answer"),
+    path('get-quiz-test-result/<tid>', GetPracticeTestResultView.as_view(), name="get-quiz-test-result"),
 ]   
