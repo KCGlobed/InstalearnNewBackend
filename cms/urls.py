@@ -66,7 +66,8 @@ urlpatterns = [
     path('delete-help-support-topic/<int:cid>', DeleteHelpSupportTopicView.as_view(), name="delete-help-support-topic"),
 
 
-    path('get-help-support-topic-list/', HelpSupportTopicListView.as_view(), name="get-help-support-topic-list"), 
+    path('get-help-support-topic-list/', HelpSupportTopicListView.as_view(), name="get-help-support-topic-list"),
+    path('get-help-support-topic-and-sub-list/', HelpSupportTopicandSubTopicListView.as_view(), name="get-help-support-topic-and-sub-list"), 
     path('get-help-support-subtopic-listing/', HelpSupportSubTopicListingView.as_view(), name="get-help-support-subtopic-listing"), 
     path('create-help-support-subtopic/', CreateHelpSupportSubTopicView.as_view(), name="create-help-support-subtopic"),
     path('edit-help-support-subtopic/<int:cid>', EditHelpSupportSubTopicView.as_view(), name="edit-help-support-subtopic"),

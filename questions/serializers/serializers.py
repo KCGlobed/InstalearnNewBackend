@@ -638,3 +638,68 @@ class PracticeTestResultsSerializer(serializers.ModelSerializer):
     class Meta:
         model = PracticeTests
         fields = ['id','total_question','total_right_answer_given', 'total_wrong_answer_given','total_never_attempt_question',"total_time_taken","status","created_at","test_questions"]
+
+
+
+class PracticeTestListingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PracticeTests
+        fields = ['id','start_time','status', 'score',"created_at"]
+
+
+
+class RestartPracticeTestSerializer(serializers.ModelSerializer):
+    quiz_id = serializers.IntegerField(required=True)
+    course_id = serializers.IntegerField(required=True)
+    
+    class Meta:
+        model = ChapterQuizs
+        fields = ['quiz_id',"course_id"]
+
+
+    def validate(self, data):
+        return data
+    
+
+    def create(self , validate_data):
+        user = self.context.get('user')
+        course = Course.objects.get(id=validate_data.get('course_id'))
+        quiz_info = ChapterQuizs.objects.get(id=validate_data.get('quiz_id'))
+        
+        PracticeTests.objects.filter(
+            course = course,
+            user = user,
+            chapter = quiz_info.chapter,
+            quiz = quiz_info,
+            status = False
+        ).delete()
+
+
+        question_ids = list(QuizQuestions.objects.filter(
+            chapter_quiz_id=validate_data.get('quiz_id')
+        ).values_list('id', flat=True))
+
+        random.shuffle(question_ids)
+        random.shuffle(question_ids)
+        quiz_questions = QuizQuestions.objects.filter(id__in=question_ids)
+
+        practice_test = PracticeTests(
+            course = course,
+            user = user,
+            total_question = len(quiz_questions),
+            total_never_attempt_question = len(quiz_questions),
+            chapter = quiz_info.chapter,
+            quiz = quiz_info
+        )
+        practice_test.save()
+
+        for questions in quiz_questions:
+            info = PracticeTestQuestions(
+                    user = user,
+                    practice_test = practice_test,
+                    question = questions.test_question,
+                )
+            info.save()
+
+
+        return practice_test

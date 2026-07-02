@@ -743,3 +743,31 @@ class GetPracticeTestResultView(APIView):
             raise ValidationError("Invalid Test ID!")
         serializer = PracticeTestResultsSerializer(test)
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+
+class GetCompletedPracticeTestsView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def get(self, request, cid, chap_id, quiz_id):
+        test = PracticeTests.objects.filter(course_id = cid, chapter_id =chap_id ,quiz_id = quiz_id,   user = request.user).order_by("-id")
+        serializer = PracticeTestListingSerializer(test,many=True)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+
+class RestartPracticeTestView(APIView):
+    renderer_classes = [QuestionRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def post(self, request, format=None):
+        serializer = RestartPracticeTestSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user = serializer.save()
+            return success_response(message="Quiz Created Successfully!", data=PracticeTestQuestionsSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)

@@ -693,7 +693,19 @@ class ChangeHelpSupportTopicStatusSerializer(serializers.ModelSerializer) :
         category.save()
 
         return category
+
+
+class HelpSupportTopicAndSubTopicListSerializer(serializers.ModelSerializer):
+    subtopics = serializers.SerializerMethodField()
     
+    def get_subtopics(self, parent):
+        info = HelpSupportSubTopics.objects.filter(main_topic_id = parent.id)
+        return HelpSupportSubTopicListSerializer(info, many=True).data
+    
+    class Meta:
+        model = HelpSupportTopics
+        fields = ['id',"title","subtopics"]
+
 
 class HelpSupportSubTopicListSerializer(serializers.ModelSerializer):
     class Meta:

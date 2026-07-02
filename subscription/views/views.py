@@ -277,7 +277,8 @@ class ManageBackgroundTaskView(APIView):
 
         client = TranscoderServiceClient(credentials=credentials)
 
-        video_list = Videos.objects.filter(is_uploaded = True, is_completed = True, transcoded_video = "")
+        video_list = Videos.objects.filter(is_uploaded = True, is_completed = True, transcoded_video = "") | Videos.objects.filter(is_uploaded = True, is_completed = True, transcoded_video__isnull = True)
+        
         print(video_list)
         if video_list is not None:
             for video_info in video_list:

@@ -1060,6 +1060,15 @@ class DeleteHelpSupportTopicView(APIView):
         
 
 
+class HelpSupportTopicandSubTopicListView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, cid=None):
+        setting = HelpSupportTopics.objects.all()
+        serializer = HelpSupportTopicAndSubTopicListSerializer(setting, many=True)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
 class HelpSupportTopicListView(APIView):
     renderer_classes = [CMSRenderer]
     permission_classes = [IsAuthenticated]
