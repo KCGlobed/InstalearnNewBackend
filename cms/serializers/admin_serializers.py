@@ -794,7 +794,7 @@ class HelpSupportArticleListingSerializer(serializers.ModelSerializer):
     sub_topic = serializers.SerializerMethodField()
     
     def get_main_topic(self, parent):
-        info = HelpSupportTopics.objects.get(id = parent.sub_topic.id)
+        info = HelpSupportTopics.objects.get(id = parent.main_topic.id)
         return HelpSupportTopicListSerializer(info).data
     
     def get_sub_topic(self, parent):
