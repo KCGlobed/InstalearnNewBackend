@@ -1304,14 +1304,14 @@ class EditHelpSupportArticleView(APIView):
                             [SuperAdmin]
                         )]
     def post(self, request,  cid , format=None):
-        category = HelpSupportSubTopics.objects.filter(id=cid).first()
+        category = HelpSupportArticle.objects.filter(id=cid).first()
         if category is None:
-            raise ValidationError("Invalid Help & Support Sub Topic ID!")
+            raise ValidationError("Invalid Help & Support Article ID!")
         
         serializer = EditHelpSupportArticleserializer(category, data = request.data, partial=True)
         if serializer.is_valid(raise_exception = True):
             user= serializer.save()
-            return success_response(message="Help & Support Sub Topic Updated Successfully", data=HelpSupportArticleListingSerializer(user).data, status_code=status.HTTP_200_OK)
+            return success_response(message="Help & Support Article Updated Successfully", data=HelpSupportArticleListingSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
@@ -1323,14 +1323,14 @@ class UpdateHelpSupportArticleStatusView(APIView):
                             [SuperAdmin]
                         )]
     def post(self, request,  cid , format=None):
-        category = HelpSupportSubTopics.objects.filter(id=cid).first()
+        category = HelpSupportArticle.objects.filter(id=cid).first()
         if category is None:
-            raise ValidationError("Invalid Help & Support Sub Topic ID!")
+            raise ValidationError("Invalid Help & Support Article ID!")
         
         serializer = ChangeHelpSupportArticlestatusSerializer(category, data = request.data)
         if serializer.is_valid(raise_exception = True):
             user  = serializer.save()
-            return success_response(message="Help & Support Sub Topic Status Updated Successfully", data=HelpSupportArticleListingSerializer(user).data, status_code=status.HTTP_200_OK)
+            return success_response(message="Help & Support Article Status Updated Successfully", data=HelpSupportArticleListingSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
