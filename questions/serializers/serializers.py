@@ -642,9 +642,15 @@ class PracticeTestResultsSerializer(serializers.ModelSerializer):
 
 
 class PracticeTestListingSerializer(serializers.ModelSerializer):
+    result = serializers.SerializerMethodField('get_result')
+    def get_result(self, obj):
+        if obj.quiz.pass_percentage > obj.score:
+            return "Fail"
+        return "Pass"
+
     class Meta:
         model = PracticeTests
-        fields = ['id','start_time','status', 'score',"created_at"]
+        fields = ['id','start_time','status',"result", 'score',"created_at"]
 
 
 
