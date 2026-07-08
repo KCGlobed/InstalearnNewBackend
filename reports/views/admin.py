@@ -1164,6 +1164,19 @@ class TrailUserListingView(APIView):
                 
                 plans = plans.filter(q_objects)
 
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            plans = plans.filter(first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            plans = plans.filter(last_name__icontains = last_name)
+
+        email = request.query_params.get('email')
+        if email:
+            plans = plans.filter(email__icontains = email)
+
+            
         country = request.query_params.get('country')
         if country:
             plans = plans.filter(country = country)

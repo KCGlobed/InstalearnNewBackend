@@ -40,24 +40,28 @@ class CreateSubscriptionPlanSerializer(serializers.ModelSerializer) :
     currency = serializers.CharField(max_length = 10, required=True)
     feature = serializers.JSONField(required=True)
     plan_type = serializers.IntegerField(required=True)
+    no_of_licence = serializers.IntegerField(required=True)
     
 
     class Meta:
         model = SubscriptionPlans
-        fields =  ["plan_name","plan_description","banner_text","original_price","monthly_amount","amount","currency","plan_type","feature"]
+        fields =  ["plan_name","plan_description","banner_text","original_price","monthly_amount","amount","currency","plan_type","feature","no_of_licence"]
         
     def validate(self, data):
         return data
 
     def create(self , validate_data):
-        razorpay_key = Settings.objects.all().first()
+        razorpay_key = GeneralSettings.objects.all().first()
         if razorpay_key is None:
             raise serializers.ValidationError("Razorpay Key is not added in setting!")
         
         plan_detail = plan_interval(validate_data.get('plan_type'))
         
         try:
-            client = razorpay.Client(auth=(razorpay_key.public_key, razorpay_key.secret_key))
+            if razorpay_key.payment_type == 1:
+                client = razorpay.Client(auth=(razorpay_key.test_public_key, razorpay_key.test_secret_key))
+            else:
+                client = razorpay.Client(auth=(razorpay_key.live_public_key, razorpay_key.live_secret_key))
            
             plan_info = client.plan.create({
             'period': plan_detail['period'],
@@ -82,7 +86,9 @@ class CreateSubscriptionPlanSerializer(serializers.ModelSerializer) :
                 amount = validate_data.get('amount'),
                 currency = validate_data.get('currency'),
                 plan_type = validate_data.get('plan_type'),
-                feature = validate_data.get('feature')
+                no_of_licence = validate_data.get('no_of_licence'),
+                feature = validate_data.get('feature'),
+                plan_for = PlanFor.Corporates
             )
         sub_plan.save()
 
@@ -96,10 +102,11 @@ class EditSubscriptionPlanSerializer(serializers.ModelSerializer):
     monthly_amount = serializers.IntegerField(required=False, allow_null=True)
     original_price = serializers.IntegerField(required=False, allow_null=True)
     feature = serializers.JSONField(required=False)
+    no_of_licence = serializers.IntegerField(required=False, allow_null=True)
     
     class Meta:
         model = SubscriptionPlans
-        fields =  ["plan_name","plan_description","banner_text","original_price","monthly_amount","amount","feature"]
+        fields =  ["plan_name","plan_description","banner_text","original_price","monthly_amount","amount","feature","no_of_licence"]
         
     def validate(self, data):
         return data
@@ -114,6 +121,7 @@ class EditSubscriptionPlanSerializer(serializers.ModelSerializer):
         plan_info.monthly_amount = validate_data.get('monthly_amount', plan_info.monthly_amount)
         plan_info.amount = validate_data.get('amount', plan_info.amount)
         plan_info.feature = validate_data.get('feature', plan_info.feature)
+        plan_info.no_of_licence = validate_data.get('no_of_licence', plan_info.no_of_licence)
         plan_info.save()
 
         return plan_info

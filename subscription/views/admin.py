@@ -23,38 +23,6 @@ from xhtml2pdf import pisa
 from io import BytesIO
 from django.template.loader import get_template
 
-class GetSettingView(APIView):
-    renderer_classes = [SubscriptionRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_permission_or_roles(
-                              "manage_setting",
-                            [SuperAdmin]
-                        )]
-    def get(self, request, cid=None):
-        setting = Settings.objects.all().first()
-        if setting is None:
-            return success_response(message="Success", data={}, status_code=status.HTTP_200_OK)
-        serializer = SettingSerializer(setting)
-        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
-    
-
-
-class UpdateSettingView(APIView):
-    renderer_classes = [SubscriptionRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_permission_or_roles(
-                              "manage_setting",
-                            [SuperAdmin]
-                        )]
-    def post(self, request, format=None):
-        serializer = UpdateSettingSerializer(data = request.data, partial=True)
-        if serializer.is_valid(raise_exception = True):
-            user= serializer.save()
-            return success_response(message="Setting Updated Successfully", data=SettingSerializer(user).data, status_code=status.HTTP_200_OK)
-        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
-    
-
-
 
 class SubscriptionPlanListingView(APIView):
     renderer_classes = [SubscriptionRenderer]
@@ -69,7 +37,7 @@ class SubscriptionPlanListingView(APIView):
     ordering_fields = ['plan_name', 'created_at', 'id', 'status'] 
     def get(self, request, format=None):
         
-        plans = SubscriptionPlans.objects.filter(plan_for = PlanFor.Students)
+        plans = SubscriptionPlans.objects.filter(plan_for = PlanFor.Corporates)
         
         search_filter = filters.SearchFilter()
         plans = search_filter.filter_queryset(request, plans, self)
@@ -94,7 +62,7 @@ class SubscriptionPlanDetailView(APIView):
                             [SuperAdmin]
                         )]
     def get(self, request, cid=None):
-        topic = SubscriptionPlans.objects.filter(id=cid, plan_for = PlanFor.Students).first()
+        topic = SubscriptionPlans.objects.filter(id=cid, plan_for = PlanFor.Corporates).first()
         if topic is None:
             raise NotFound("Invalid Plan ID!")
         
