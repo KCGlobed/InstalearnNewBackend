@@ -235,7 +235,7 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
                                         "name": book_order.first_name+" "+book_order.last_name,
                                         "email": book_order.email,
                                         "phone_number": book_order.phone,
-                                        "payment_type":"mini_course_payment",
+                                        "payment_type":"instalearn_course_payment",
                                     }})
             book_order.razorpay_order_id = payment['id']
             book_order.save()
@@ -326,13 +326,7 @@ class StartSubscriptionSerializer(serializers.ModelSerializer) :
     first_name = serializers.CharField(max_length = 100, required=True)
     last_name = serializers.CharField(max_length = 100, required=True)
     email = serializers.EmailField(max_length = 100, required=True)
-    mobile = serializers.CharField(max_length = 12, required=True)
-    address = serializers.CharField(max_length = 255, required=False, allow_blank=True)
-    city = serializers.CharField(max_length = 100, required=False, allow_blank=True)
-    state = serializers.CharField(max_length = 100, required=False, allow_blank=True)
-    postal_code = serializers.CharField(max_length = 12, required=False, allow_blank=True)
-    country = serializers.CharField(max_length = 100, required=False, allow_blank=True)
-    gateway_type = serializers.CharField(max_length = 100, write_only=True,required=True)
+    mobile = serializers.CharField(max_length = 100, required=True)
     user_id = serializers.CharField(max_length = 100, allow_blank=True)
     plan_id = serializers.IntegerField(required=True,write_only=True)
 
@@ -342,23 +336,17 @@ class StartSubscriptionSerializer(serializers.ModelSerializer) :
         
     def validate(self, data):
 
-        gateway_type = data.get('gateway_type')
-        gateway_count = Settings.objects.filter(gateway_type=gateway_type).count()
-        if gateway_count == 0:
-            raise serializers.ValidationError("Invalid Payment Gateway")
-        
         plan_id = data.get('plan_id')
         plan_count = SubscriptionPlans.objects.filter(id=plan_id).count()
         if plan_count == 0:
-            raise serializers.ValidationError("Invalid Subscription Plan")
+            raise serializers.ValidationError("Invalid Subscription Plan ID")
         
         return data
 
 
     def create(self , validate_data):
 
-        gateway_type = validate_data.get('gateway_type')
-        razorpay_key = Settings.objects.filter(gateway_type=gateway_type).first()
+        settings = GeneralSettings.objects.all().first()
         subscription_plan = SubscriptionPlans.objects.filter(id=validate_data.get('plan_id')).first()
 
         
@@ -403,8 +391,8 @@ class StartSubscriptionSerializer(serializers.ModelSerializer) :
         count = Order.objects.all().count()
         order_id = f"{current_year}-{str(count + 1).zfill(4)}"  
         
-        tax = subscription_plan.gst_amount
-        total_amount = subscription_plan.amount_without_gst
+        tax = 0
+        total_amount = 0
         order_total_amount = subscription_plan.amount
 
         book_order = Order(
@@ -415,13 +403,7 @@ class StartSubscriptionSerializer(serializers.ModelSerializer) :
             last_name = validate_data.get('last_name'),
             email = validate_data.get('email'),
             mobile = validate_data.get('mobile'),
-            address = validate_data.get('address'),
-            city = validate_data.get('city'),
-            state = validate_data.get('state'),
-            country = validate_data.get('country'),
-            postal_code = validate_data.get('postal_code'),
-            payment_gateway = validate_data.get('gateway_type'),
-            payment_type = "subscription",
+            payment_type = PaymentType.Subscription,
             subscription_plan = subscription_plan,
             amount = total_amount,
             tax_amount = tax,
@@ -429,23 +411,24 @@ class StartSubscriptionSerializer(serializers.ModelSerializer) :
         )
         book_order.save()
 
-        if razorpay_key.gateway_type == "razorpay":
-            if total_amount > 0 :
-                client = razorpay.Client(auth=(razorpay_key.public_key, razorpay_key.secret_key))
-                payment = client.order.create({"amount": book_order.total_amount * 100, 
-                                        "currency": "INR", 
-                                        "payment_capture": "1",
-                                        "notes":{
-                                            "name": book_order.first_name+" "+book_order.last_name,
-                                            "email": book_order.email,
-                                            "phone_number": book_order.mobile,
-                                            "payment_type":"mini_course_payment",
-                                            "plan_name":subscription_plan.plan_name
-                                        }})
-                book_order.razorpay_order_id = payment['id']
-                book_order.save()
-        else:
-            raise serializers.ValidationError('Invalid Payment Gateway')
+        if total_amount > 0 :
+            if settings.payment_type == 1:
+                client = razorpay.Client(auth=(settings.test_public_key, settings.test_secret_key))
+            else:
+                client = razorpay.Client(auth=(settings.live_public_key, settings.live_secret_key))
+                
+            payment = client.order.create({"amount": book_order.total_amount * 100, 
+                                    "currency": "INR", 
+                                    "payment_capture": "1",
+                                    "notes":{
+                                        "name": book_order.first_name+" "+book_order.last_name,
+                                        "email": book_order.email,
+                                        "phone_number": book_order.phone,
+                                        "payment_type":"instalearn_subscription_payment",
+                                    }})
+            book_order.razorpay_order_id = payment['id']
+            book_order.save()
+        
 
         return book_order
     
@@ -454,16 +437,11 @@ class CompleteSubscriptionSerializer(serializers.ModelSerializer) :
     razorpay_payment_id = serializers.CharField(required=True,write_only = True)
     razorpay_order_id = serializers.CharField(required=True,write_only = True)
     razorpay_signature = serializers.CharField(required=True,write_only = True)
-    gateway_type = serializers.CharField(max_length = 100, required=True)
     class Meta:
         model = Order
         fields = ['razorpay_payment_id','razorpay_order_id','razorpay_signature',"gateway_type"]
         
     def validate(self, data):
-        gateway_type = data.get('gateway_type')
-        gateway_count = Settings.objects.filter(gateway_type=gateway_type).count()
-        if gateway_count == 0:
-            raise serializers.ValidationError("Invalid Payment Gateway")
         
         return data
 
@@ -489,37 +467,21 @@ class CompleteSubscriptionSerializer(serializers.ModelSerializer) :
         order.razorpay_signature = raz_signature
         order.save()
         
-        gateway_type = validate_data.get('gateway_type')
-        razorpay_key = Settings.objects.filter(gateway_type=gateway_type).first()
-        if razorpay_key.gateway_type == "razorpay":
-            try:
-                client = razorpay.Client(auth=(razorpay_key.public_key, razorpay_key.secret_key))
-                check = client.utility.verify_payment_signature(data)
-                if check == False:
-                    raise serializers.ValidationError('Invalid Signature')
-            except Exception as error:
-                raise serializers.ValidationError("Unale to verify your Payment")
-        else:
-            raise serializers.ValidationError("Invalid Payment Gateway")
+        setting = GeneralSettings.objects.all().first()
+        try:
+            if setting.payment_type == 1:
+                client = razorpay.Client(auth=(setting.test_public_key, setting.test_secret_key))
+            else:
+                client = razorpay.Client(auth=(setting.live_public_key, setting.live_secret_key))
+            check = client.utility.verify_payment_signature(data)
+            if check == False:
+                raise serializers.ValidationError('Invalid Signature')
+        except Exception as error:
+            raise serializers.ValidationError("Unale to verify your Payment")
         
         order.isPaid = True
         order.payment_status = "completed"
         order.save()
-
-        cart_count = SubscriptionCourses.objects.filter(subscription_plan_id = order.subscription_plan.id)
-        for cart in cart_count:
-            order_c = UserCourses.objects.filter(course = cart.course,user = order.user).first()
-            if order_c is not None:
-                order_c.order = order
-                order_c.save()
-            else:
-                cart_order = UserCourses(
-                    order = order,
-                    course = cart.course,
-                    user = order.user,
-                    paid = 1
-                )
-                cart_order.save()
 
         return order
     

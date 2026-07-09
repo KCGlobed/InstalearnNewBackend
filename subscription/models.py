@@ -61,6 +61,10 @@ class PaymentMethod(models.IntegerChoices):
     Online = 1, 'Online'
     Offline = 2, 'Offline'
 
+class PaymentType(models.IntegerChoices):
+    Course = 1, 'Course'
+    Subscription = 2, 'Subscription'
+
 
 class Order(models.Model):
     orderID = models.CharField(max_length=255, null=True, blank=True)
@@ -93,6 +97,7 @@ class Order(models.Model):
     subscription_url = models.CharField(max_length=255, null=True, blank=True)
     subscription_status = models.IntegerField(choices=OrderStatus.choices,default=OrderStatus.Initiate)
     subscription_type = models.IntegerField(choices=PlanType.choices,default=PlanType.Monthly)
+    payment_type = models.IntegerField(choices=PaymentType.choices,default=PaymentType.Course)
     trail_mode = models.BooleanField(default=False)
     try_for_free = models.BooleanField(default=False)
     payment_method = models.IntegerField(choices=PaymentMethod.choices,default=PaymentMethod.Online)

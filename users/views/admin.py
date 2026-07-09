@@ -34,7 +34,7 @@ class GetUserListingView(APIView):
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['first_name','last_name',"email"]
-    ordering_fields = ['first_name',"last_name","email", 'created_at', 'id', 'status'] 
+    ordering_fields = ['first_name',"last_name","email", 'created_at', 'id', 'is_active'] 
     def get(self, request, user_type, format=None):
         
         user_role = get_url_role(user_type)
