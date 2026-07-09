@@ -27,13 +27,13 @@ class SubscriptionPlansSerializer(serializers.ModelSerializer):
 class SubscriptionPlanDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubscriptionPlans
-        fields = ["id","plan_id","plan_name","plan_description","banner_text","original_price","monthly_amount","amount","currency","plan_type","status","feature","created_at"]
+        fields = ["id","plan_id","plan_name","plan_description","banner_text","original_price","monthly_amount","amount","currency","plan_type","status","feature","no_of_licence","created_at"]
 
 
 class CreateSubscriptionPlanSerializer(serializers.ModelSerializer) :
     plan_name = serializers.CharField(max_length = 255, required=True)
     plan_description = serializers.CharField(required=True)
-    banner_text = serializers.CharField(max_length = 255, required=False)
+    banner_text = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     amount = serializers.IntegerField(required=True)
     monthly_amount = serializers.IntegerField(required=False, allow_null=True)
     original_price = serializers.IntegerField(required=False, allow_null=True)
@@ -98,7 +98,7 @@ class CreateSubscriptionPlanSerializer(serializers.ModelSerializer) :
 class EditSubscriptionPlanSerializer(serializers.ModelSerializer):
     plan_name = serializers.CharField(max_length = 255, required=True)
     plan_description = serializers.CharField(required=True)
-    banner_text = serializers.CharField(max_length = 255, required=False)
+    banner_text = serializers.CharField(max_length = 255, required=False, allow_blank=True)
     monthly_amount = serializers.IntegerField(required=False, allow_null=True)
     original_price = serializers.IntegerField(required=False, allow_null=True)
     feature = serializers.JSONField(required=False)

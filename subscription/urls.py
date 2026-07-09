@@ -27,6 +27,7 @@ urlpatterns = [
     path('complete-course-payment/', CompletePaymentView.as_view(), name="complete-course-payment"),
     path('webhook-response/', WebhookResponseView.as_view(), name="webhook-response"),
 
+    path('get-subscription-plan-list/', SubscriptionPlanListView.as_view(), name="get-subscription-plan-list"),
     path('start-subscription/', StartSubscriptionView.as_view(), name="start-subscription"),
     path('complete-subscription/', CompleteSubscriptionView.as_view(), name="complete-subscription"),
 

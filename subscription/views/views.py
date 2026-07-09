@@ -263,6 +263,13 @@ class TrailRegistrationView(APIView):
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
+class SubscriptionPlanListView(APIView):
+    renderer_classes = [SubscriptionRenderer]
+    def get(self, request, format=None):
+        plans = SubscriptionPlans.objects.filter(plan_for = PlanFor.Corporates, status = True)
+        serializer = SubscriptionPlanDetailSerializer(plans, many=True)
+        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
 
 class ManageBackgroundTaskView(APIView):
     renderer_classes = [SubscriptionRenderer]

@@ -40,8 +40,10 @@ class CourseInstructorSerializer(serializers.ModelSerializer) :
     instructor = serializers.SerializerMethodField()
 
     def get_instructor(self, parent):
-        info = InstructorProfile.objects.get(id = parent.instructor.id)
-        return InstructorSerializer(info).data
+        if parent.instructor is not None:
+            info = InstructorProfile.objects.get(id = parent.instructor.id)
+            return InstructorSerializer(info).data
+        return []
 
     class Meta:
         model = CourseInstructors
