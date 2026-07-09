@@ -480,7 +480,7 @@ class CompleteSubscriptionSerializer(serializers.ModelSerializer) :
             raise serializers.ValidationError("Unale to verify your Payment")
         
         order.isPaid = True
-        order.payment_status = "completed"
+        order.subscription_status = OrderStatus.Active
         order.save()
 
         return order
