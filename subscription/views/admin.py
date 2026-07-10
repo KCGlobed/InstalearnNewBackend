@@ -39,6 +39,27 @@ class SubscriptionPlanListingView(APIView):
         
         plans = SubscriptionPlans.objects.filter(plan_for = PlanFor.Corporates)
         
+        plan_name = request.query_params.get('plan_name')
+        if plan_name:
+            plans = plans.filter(plan_name__icontains = plan_name)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                plans = plans.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                plans = plans.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
         search_filter = filters.SearchFilter()
         plans = search_filter.filter_queryset(request, plans, self)
 
