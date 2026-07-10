@@ -326,8 +326,9 @@ class StartSubscriptionSerializer(serializers.ModelSerializer) :
     first_name = serializers.CharField(max_length = 100, required=True)
     last_name = serializers.CharField(max_length = 100, required=True)
     email = serializers.EmailField(max_length = 100, required=True)
-    mobile = serializers.CharField(max_length = 100, required=True)
-    user_id = serializers.CharField(max_length = 100, allow_blank=True)
+    phone = serializers.CharField(max_length = 100, required=True)
+    user_id = serializers.IntegerField(allow_null=True, required=False)
+    compnay_name = serializers.CharField(required=False, allow_blank=True)
     plan_id = serializers.IntegerField(required=True,write_only=True)
 
     class Meta:
@@ -346,7 +347,7 @@ class StartSubscriptionSerializer(serializers.ModelSerializer) :
 
     def create(self , validate_data):
 
-        settings = GeneralSettings.objects.all().first()
+        general_settings = GeneralSettings.objects.all().first()
         subscription_plan = SubscriptionPlans.objects.filter(id=validate_data.get('plan_id')).first()
 
         
@@ -363,9 +364,10 @@ class StartSubscriptionSerializer(serializers.ModelSerializer) :
                 info = { "first_name": validate_data.get('first_name'),"last_name": validate_data.get('last_name'), 'email': validate_data.get('email').lower(), 'phone': validate_data.get('phone'), 'password': password}
 
                 user_info = User.objects.create_user(**info)
-                assign_role(user_info, Student)
+                assign_role(user_info, CorporateAdmin)
 
                 user_info.email_verified = 1
+                user_info.company_name = validate_data.get('compnay_name')
                 user_info.save()
                 
                 url = settings.BASE_URL+"/login"
@@ -392,30 +394,30 @@ class StartSubscriptionSerializer(serializers.ModelSerializer) :
         order_id = f"{current_year}-{str(count + 1).zfill(4)}"  
         
         tax = 0
-        total_amount = 0
+        total_amount = subscription_plan.amount
         order_total_amount = subscription_plan.amount
 
         book_order = Order(
             orderID = order_id,
             user = user,
-            coupon_code = validate_data.get('code'),
             first_name = validate_data.get('first_name'),
             last_name = validate_data.get('last_name'),
             email = validate_data.get('email'),
-            mobile = validate_data.get('mobile'),
+            phone = validate_data.get('phone'),
             payment_type = PaymentType.Subscription,
-            subscription_plan = subscription_plan,
+            plan = subscription_plan,
+            subscription_id = subscription_plan.id,
             amount = total_amount,
-            tax_amount = tax,
+            gst_amount = tax,
             total_amount = order_total_amount,
         )
         book_order.save()
 
         if total_amount > 0 :
-            if settings.payment_type == 1:
-                client = razorpay.Client(auth=(settings.test_public_key, settings.test_secret_key))
+            if general_settings.payment_type == 1:
+                client = razorpay.Client(auth=(general_settings.test_public_key, general_settings.test_secret_key))
             else:
-                client = razorpay.Client(auth=(settings.live_public_key, settings.live_secret_key))
+                client = razorpay.Client(auth=(general_settings.live_public_key, general_settings.live_secret_key))
                 
             payment = client.order.create({"amount": book_order.total_amount * 100, 
                                     "currency": "INR", 

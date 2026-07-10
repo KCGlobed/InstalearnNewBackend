@@ -30,6 +30,7 @@ urlpatterns = [
     path('get-subscription-plan-list/', SubscriptionPlanListView.as_view(), name="get-subscription-plan-list"),
     path('start-subscription/', StartSubscriptionView.as_view(), name="start-subscription"),
     path('complete-subscription/', CompleteSubscriptionView.as_view(), name="complete-subscription"),
+    path('handle-subscription-webhook/', PaymentResponseView.as_view(), name="handle-subscription-webhook"),
 
     path('trail-registration/', TrailRegistrationView.as_view(), name="trail-registration"),
     path('get-purchase-history/', GetPurchaseHistoryView.as_view(), name="get-purchase-history"),

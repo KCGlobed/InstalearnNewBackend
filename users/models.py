@@ -145,6 +145,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=100, blank=True)
     first_name = models.CharField(max_length=100, blank=True,null=True)
     last_name = models.CharField(max_length=100 ,blank=True,null=True)
+    company_name = models.CharField(max_length=255, blank=True,null=True)
     email = models.EmailField(max_length=255,unique=True)
     phone1 = models.CharField(max_length=100,blank=True,null=True)
     phone2 = models.CharField(max_length=100,blank=True,null=True)

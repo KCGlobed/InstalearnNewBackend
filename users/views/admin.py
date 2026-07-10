@@ -42,6 +42,38 @@ class GetUserListingView(APIView):
             raise NotFound("Invalid User Type!")
 
         users_list = User.objects.filter(role = user_role)
+
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            users_list = users_list.filter(first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            users_list = users_list.filter(last_name__icontains = last_name)
+
+        email = request.query_params.get('email')
+        if email:
+            users_list = users_list.filter(email__icontains = email)
+
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                users_list = users_list.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                users_list = users_list.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+
         search_filter = filters.SearchFilter()
         users_list = search_filter.filter_queryset(request, users_list, self)
 

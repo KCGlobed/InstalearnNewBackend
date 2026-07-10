@@ -229,7 +229,7 @@ class StartSubscriptionView(APIView):
         serializer = StartSubscriptionSerializer(data = request.data)
         if serializer.is_valid(raise_exception = True):
             user  = serializer.save()
-            return success_response(message="Subscription Created Successfully!", data={}, status_code=status.HTTP_200_OK)
+            return success_response(message="Subscription Created Successfully!", data=serializer.data, status_code=status.HTTP_200_OK)
         
         return error_response(message="", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
@@ -528,3 +528,214 @@ class ValidateCouponView(APIView):
         
         return error_response(message="", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
         
+
+class PaymentResponseView(APIView):
+    renderer_classes = [SubscriptionRenderer]
+    def post(self, request, format=None):
+
+        if request.data['event'] == 'subscription.activated':
+
+            payment = OrderSubscriptionPayments()
+            payment.order = Order.objects.filter(razorpay_order_id = request.data['payload']['subscription']['entity']['id']).first()    
+            payment.payment_id = request.data['payload']['payment']['entity']['id']
+            payment.razorpay_order_id = request.data['payload']['payment']['entity']['order_id']
+            payment.invoice_id = request.data['payload']['payment']['entity']['invoice_id']
+            payment.amount = (request.data['payload']['payment']['entity']['amount'] / 100)
+            payment.response = request.data
+            payment.status = request.data['event']
+            payment.isPaid = True
+            payment.save()
+
+            order_info = Order.objects.filter(razorpay_order_id = request.data['payload']['subscription']['entity']['id']).first()
+
+            if order_info is not None:
+                order_info.subscription_status = OrderStatus.Active
+                order_info.next_due =    datetime.fromtimestamp(request.data['payload']['subscription']['entity']['current_end']).strftime('%Y-%m-%d')
+                order_info.end_date =    datetime.fromtimestamp(request.data['payload']['subscription']['entity']['end_at']).strftime('%Y-%m-%d')
+                order_info.save()
+
+                plan_info = SubscriptionPlans.objects.filter(id = order_info.plan.id).first()
+                subject = 'Subscription Activated'
+                email_from = settings.EMAIL_HOST_USER
+                recipient_list = [order_info.email, ]
+                html_message = loader.render_to_string(
+                    'subscription_email.html',
+                    {
+                        'username': str(order_info.first_name)+' '+str(order_info.last_name),
+                        'plan_name': plan_info.plan_name,
+                        'price': plan_info.amount,
+                        'price_with_sign': plan_info.amount
+                    }
+                )
+                email = EmailMessage(
+                    subject, html_message, email_from, recipient_list)
+                
+                # email.attach_file("")
+                email.content_subtype = "html"
+                email.send()
+
+            if request.data['payload']['payment']['entity']['email']:
+                subject = 'Payment Recieved!'
+                email_from = settings.EMAIL_HOST_USER
+                recipient_list = [request.data['payload']['payment']['entity']['email'], ]
+                html_message = loader.render_to_string(
+                    'subscription_payment_email.html',
+                    {
+                        'subscription_id': request.data['payload']['subscription']['entity']['id']
+                    }
+                )
+                email = EmailMessage(
+                    subject, html_message, email_from, recipient_list)
+                email.content_subtype = "html"
+                email.send()
+
+
+                subject = 'Subscription Payment Recieved!'
+                email_from = settings.EMAIL_HOST_USER
+                recipient_list = [settings.ADMIN_EMAIL, ]
+                html_message = loader.render_to_string(
+                    'subscription_payment_email_admin.html',
+                    {
+                        'subscription_id': request.data['payload']['subscription']['entity']['id'],
+                        "email":request.data['payload']['payment']['entity']['email']
+                    }
+                )
+                email = EmailMessage(
+                    subject, html_message, email_from, recipient_list)
+                email.content_subtype = "html"
+                email.send()
+
+
+
+        if request.data['event'] == 'subscription.charged':
+            
+            today = datetime.today().date()
+            order_data = OrderSubscriptionPayments.objects.filter(payment_date__date=today, payment_id = request.data['payload']['payment']['entity']['id'], razorpay_order_id = request.data['payload']['payment']['entity']['order_id'], invoice_id = request.data['payload']['payment']['entity']['invoice_id'],status = 'subscription.charged').count()
+
+            if order_data == 0:
+                payment = OrderSubscriptionPayments()
+                payment.order = Order.objects.filter(razorpay_order_id = request.data['payload']['subscription']['entity']['id']).first()    
+                payment.payment_id = request.data['payload']['payment']['entity']['id']
+                payment.razorpay_order_id = request.data['payload']['payment']['entity']['order_id']
+                payment.invoice_id = request.data['payload']['payment']['entity']['invoice_id']
+                payment.amount = (request.data['payload']['payment']['entity']['amount'] / 100)
+                payment.response = request.data
+                payment.status = request.data['event']
+                payment.isPaid = True
+                payment.save()
+
+                order_info = Order.objects.filter(razorpay_order_id = request.data['payload']['subscription']['entity']['id']).first()
+
+                if order_info is not None:
+
+                    order_info.next_due =    datetime.fromtimestamp(request.data['payload']['subscription']['entity']['current_end']).strftime('%Y-%m-%d')
+                    order_info.end_date =    datetime.fromtimestamp(request.data['payload']['subscription']['entity']['end_at']).strftime('%Y-%m-%d')
+                    order_info.save()
+                    
+                    razorpay_key = GeneralSettings.objects.all().first()
+                    if razorpay_key.payment_type == 1:
+                        client = razorpay.Client(auth=(razorpay_key.test_public_key, razorpay_key.test_secret_key))
+                    else:
+                        client = razorpay.Client(auth=(razorpay_key.live_public_key, razorpay_key.live_secret_key))
+                    invoice_info = client.invoice.fetch(request.data['payload']['payment']['entity']['invoice_id'])
+
+                    result = {
+                            'invoice_info': invoice_info,
+                            'order_info':order_info,
+                            'isssue_date' : datetime.fromtimestamp(invoice_info['issued_at'])
+                        }
+
+                    template = get_template('pdf/invoice.html')
+                    html  = template.render(result)
+                    result = BytesIO()
+                    destination = settings.MEDIA_ROOT+ 'pdf_reports/'
+                    if not os.path.exists(destination):
+                        os.makedirs(destination)
+                    file = open(destination + str(order_info.user.id) +'_invoice.pdf', "w+b")
+                    html = html.encode('latin-1', 'replace').decode('latin-1')
+                    pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), dest=file)
+
+                    subject = 'Subscription Invoice'
+                    email_from = settings.EMAIL_HOST_USER
+                    recipient_list = [order_info.email, ]
+                    html_message = loader.render_to_string(
+                        'invoice.html',
+                        {
+                            'username': str(order_info.first_name)+' '+str(order_info.last_name),
+                        }
+                    )
+                    email = EmailMessage(
+                        subject, html_message, email_from, recipient_list)
+                    
+                    email.attach_file(destination + str(order_info.user.id) +'_invoice.pdf')
+                    email.content_subtype = "html"
+                    email.send()
+
+
+
+        if request.data['event'] == 'subscription.cancelled':
+
+            payment = OrderSubscriptionPayments()
+            payment.order = Order.objects.filter(razorpay_order_id = request.data['payload']['subscription']['entity']['id']).first() 
+            payment.response = request.data
+            payment.status = request.data['event']
+            payment.isPaid = False
+            payment.save()
+
+            order_info = Order.objects.filter(razorpay_order_id = request.data['payload']['subscription']['entity']['id']).first()
+
+            if order_info is not None:
+                order_info.subscription_status = OrderStatus.Cancelled
+                order_info.save()
+
+        if request.data['event'] == 'subscription.paused':
+
+            payment = OrderSubscriptionPayments()
+            payment.order = Order.objects.filter(razorpay_order_id = request.data['payload']['subscription']['entity']['id']).first() 
+            payment.response = request.data
+            payment.status = request.data['event']
+            payment.isPaid = False
+            payment.save()
+
+            order_info = Order.objects.filter(razorpay_order_id = request.data['payload']['subscription']['entity']['id']).first()
+
+            if order_info is not None:
+                order_info.subscription_status = OrderStatus.Paused
+                order_info.save()
+
+
+        if request.data['event'] == 'subscription.resumed':
+
+            payment = OrderSubscriptionPayments()
+            payment.order = Order.objects.filter(razorpay_order_id = request.data['payload']['subscription']['entity']['id']).first() 
+            payment.response = request.data
+            payment.status = request.data['event']
+            payment.isPaid = False
+            payment.save()
+
+            order_info = Order.objects.filter(razorpay_order_id = request.data['payload']['subscription']['entity']['id']).first()
+
+            if order_info is not None:
+                order_info.subscription_status = OrderStatus.Active
+                order_info.next_due =    datetime.fromtimestamp(request.data['payload']['subscription']['entity']['current_end']).strftime('%Y-%m-%d')
+                order_info.end_date =    datetime.fromtimestamp(request.data['payload']['subscription']['entity']['end_at']).strftime('%Y-%m-%d')
+                order_info.save()
+
+
+        if request.data['event'] == 'subscription.completed':
+
+            payment = OrderSubscriptionPayments()
+            payment.order = Order.objects.filter(razorpay_order_id = request.data['payload']['subscription']['entity']['id']).first() 
+            payment.response = request.data
+            payment.status = request.data['event']
+            payment.isPaid = False
+            payment.save()
+
+            order_info = Order.objects.filter(razorpay_order_id = request.data['payload']['subscription']['entity']['id']).first()
+
+            if order_info is not None:
+                order_info.subscription_status = OrderStatus.Expired
+                order_info.save()
+
+
+        return success_response(message="Success", data=[], status_code=status.HTTP_200_OK)

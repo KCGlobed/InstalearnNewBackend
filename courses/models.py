@@ -98,7 +98,7 @@ class Course(SoftDeleteModel):
 
 class CourseInstructors(models.Model):
     course = models.ForeignKey('Course', null=True, blank=True, on_delete=models.CASCADE)
-    instructor = models.ForeignKey('instructor.InstructorProfile', null=True, blank=True, on_delete=models.SET_NULL)
+    instructor = models.ForeignKey('instructor.InstructorProfile', null=True, blank=True, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
