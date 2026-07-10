@@ -20,7 +20,7 @@ from rolepermissions.permissions import grant_permission,revoke_permission
 class UserLoginSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(max_length = 255,required=True)
     password = serializers.CharField(max_length = 255,required=True)
-    role = serializers.CharField(max_length = 255,required=True)
+    role = serializers.CharField(max_length = 255,required=False, allow_blank=True)
     device_type = serializers.CharField(max_length = 255, required=True)
     device_id = serializers.CharField(max_length = 255, required=True)
 
@@ -39,15 +39,13 @@ class UserLoginSerializer(serializers.ModelSerializer):
         if user.email_verified == 0:
             raise serializers.ValidationError("User email is not verified!")
         
-        try:
-            if data.get('role') == "Student":
-                assign_role(user, globals()[data.get('role')])
-                
-            if not has_role(user, globals()[data.get('role')]):
-                if not has_role(user, data.get('role')):
-                    raise serializers.ValidationError("Invalid User!")
-        except KeyError:
-            raise serializers.ValidationError("Invalid Role Type!")
+        if data.get('role') is not None:
+            try:
+                if not has_role(user, globals()[data.get('role')]):
+                    if not has_role(user, data.get('role')):
+                        raise serializers.ValidationError("Invalid User!")
+            except KeyError:
+                raise serializers.ValidationError("Invalid Role Type!")
         
         if user:
             if not user.check_password(data.get('password')):

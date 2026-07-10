@@ -104,7 +104,7 @@ class UserLoginView(APIView):
 
                 image_url = user.image.url if user.image else None
 
-                return success_response(message="Login Success", data={'token': token, 'user_role': serializer.data.get('role'), "user_id":user.id,"email":user.email,"first_name":user.first_name,"last_name":user.last_name,"phone":user.phone1,"image":image_url}, status_code=status.HTTP_200_OK)
+                return success_response(message="Login Success", data={'token': token, 'user_role': get_user_role(user), "user_id":user.id,"email":user.email,"first_name":user.first_name,"last_name":user.last_name,"phone":user.phone1,"image":image_url}, status_code=status.HTTP_200_OK)
             else:
                 return error_response(message="failed", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
         
