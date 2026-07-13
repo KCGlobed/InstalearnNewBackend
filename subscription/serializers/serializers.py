@@ -481,7 +481,7 @@ class CompleteSubscriptionSerializer(serializers.ModelSerializer) :
                 client = razorpay.Client(auth=(setting.test_public_key, setting.test_secret_key))
             else:
                 client = razorpay.Client(auth=(setting.live_public_key, setting.live_secret_key))
-            check = client.utility.verify_payment_signature(data)
+            check = client.utility.verify_subscription_payment_signature(data)
             if check == False:
                 raise serializers.ValidationError('Invalid Signature')
         except Exception as error:
