@@ -447,7 +447,7 @@ class CompleteSubscriptionSerializer(serializers.ModelSerializer) :
     razorpay_signature = serializers.CharField(required=True,write_only = True)
     class Meta:
         model = Order
-        fields = ['razorpay_payment_id','razorpay_order_id','razorpay_signature',"gateway_type"]
+        fields = ['razorpay_payment_id','razorpay_order_id','razorpay_signature']
         
     def validate(self, data):
         
