@@ -572,15 +572,79 @@ class PaymentResponseView(APIView):
         end_date_val = datetime.fromtimestamp(end_at_ts).strftime('%Y-%m-%d') if end_at_ts else None
 
         # 3. Handle Events
-        try:
-            # --- EVENT: SUBSCRIPTION ACTIVATED ---
-            if event == 'subscription.activated':
-                # Create payment record
+        # try:
+        # --- EVENT: SUBSCRIPTION ACTIVATED ---
+        if event == 'subscription.activated':
+            # Create payment record
+            OrderSubscriptionPayments.objects.create(
+                order=order_info,
+                payment_id=payment_entity.get('id'),
+                razorpay_order_id=payment_entity.get('order_id'),
+                invoice_id=payment_entity.get('invoice_id'),
+                amount=(payment_entity.get('amount', 0) / 100),
+                response=data,
+                status=event,
+                isPaid=True
+            )
+
+            if order_info:
+                order_info.subscription_status = OrderStatus.Active
+                if next_due_date: order_info.next_due = next_due_date
+                if end_date_val: order_info.end_date = end_date_val
+                order_info.save()
+
+                # Send User Subscription Email
+                plan_info = SubscriptionPlans.objects.filter(id=order_info.plan.id).first()
+                if plan_info:
+                    html_message = loader.render_to_string('subscription_email.html', {
+                        'username': f"{order_info.first_name} {order_info.last_name}",
+                        'plan_name': plan_info.plan_name,
+                        'price': plan_info.amount,
+                        'price_with_sign': plan_info.currency
+                    })
+                    email = EmailMessage('Subscription Activated', html_message, settings.EMAIL_HOST_USER, [order_info.email])
+                    email.content_subtype = "html"
+                    email.send()
+
+            # User Payment Received Email
+            user_email = payment_entity.get('email')
+            if user_email:
+                html_user = loader.render_to_string('subscription_payment_email.html', {'subscription_id': subscription_id})
+                email_user = EmailMessage('Payment Received!', html_user, settings.EMAIL_HOST_USER, [order_info.email])
+                email_user.content_subtype = "html"
+                email_user.send()
+
+                # Admin Notification Email
+                html_admin = loader.render_to_string('subscription_payment_email_admin.html', {
+                    'subscription_id': subscription_id,
+                    "email": user_email
+                })
+                email_admin = EmailMessage('Subscription Payment Received!', html_admin, settings.EMAIL_HOST_USER, [settings.ADMIN_EMAIL])
+                email_admin.content_subtype = "html"
+                email_admin.send()
+
+        # --- EVENT: SUBSCRIPTION CHARGED ---
+        elif event == 'subscription.charged':
+            today = datetime.today().date()
+            payment_id = payment_entity.get('id')
+            rp_order_id = payment_entity.get('order_id')
+            invoice_id = payment_entity.get('invoice_id')
+
+            # Check if already processed
+            already_processed = OrderSubscriptionPayments.objects.filter(
+                payment_date__date=today, 
+                payment_id=payment_id, 
+                razorpay_order_id=rp_order_id, 
+                invoice_id=invoice_id,
+                status='subscription.charged'
+            ).exists()
+
+            if not already_processed:
                 OrderSubscriptionPayments.objects.create(
                     order=order_info,
-                    payment_id=payment_entity.get('id'),
-                    razorpay_order_id=payment_entity.get('order_id'),
-                    invoice_id=payment_entity.get('invoice_id'),
+                    payment_id=payment_id,
+                    razorpay_order_id=rp_order_id,
+                    invoice_id=invoice_id,
                     amount=(payment_entity.get('amount', 0) / 100),
                     response=data,
                     status=event,
@@ -588,136 +652,72 @@ class PaymentResponseView(APIView):
                 )
 
                 if order_info:
-                    order_info.subscription_status = OrderStatus.Active
                     if next_due_date: order_info.next_due = next_due_date
                     if end_date_val: order_info.end_date = end_date_val
                     order_info.save()
-
-                    # Send User Subscription Email
-                    plan_info = SubscriptionPlans.objects.filter(id=order_info.plan.id).first()
-                    if plan_info:
-                        html_message = loader.render_to_string('subscription_email.html', {
-                            'username': f"{order_info.first_name} {order_info.last_name}",
-                            'plan_name': plan_info.plan_name,
-                            'price': plan_info.amount,
-                            'price_with_sign': plan_info.amount
-                        })
-                        email = EmailMessage('Subscription Activated', html_message, settings.EMAIL_HOST_USER, [order_info.email])
-                        email.content_subtype = "html"
-                        email.send()
-
-                # User Payment Received Email
-                user_email = payment_entity.get('email')
-                if user_email:
-                    html_user = loader.render_to_string('subscription_payment_email.html', {'subscription_id': subscription_id})
-                    email_user = EmailMessage('Payment Received!', html_user, settings.EMAIL_HOST_USER, [user_email])
-                    email_user.content_subtype = "html"
-                    email_user.send()
-
-                    # Admin Notification Email
-                    html_admin = loader.render_to_string('subscription_payment_email_admin.html', {
-                        'subscription_id': subscription_id,
-                        "email": user_email
-                    })
-                    email_admin = EmailMessage('Subscription Payment Received!', html_admin, settings.EMAIL_HOST_USER, [settings.ADMIN_EMAIL])
-                    email_admin.content_subtype = "html"
-                    email_admin.send()
-
-            # --- EVENT: SUBSCRIPTION CHARGED ---
-            elif event == 'subscription.charged':
-                today = datetime.today().date()
-                payment_id = payment_entity.get('id')
-                rp_order_id = payment_entity.get('order_id')
-                invoice_id = payment_entity.get('invoice_id')
-
-                # Check if already processed
-                already_processed = OrderSubscriptionPayments.objects.filter(
-                    payment_date__date=today, 
-                    payment_id=payment_id, 
-                    razorpay_order_id=rp_order_id, 
-                    invoice_id=invoice_id,
-                    status='subscription.charged'
-                ).exists()
-
-                if not already_processed:
-                    OrderSubscriptionPayments.objects.create(
-                        order=order_info,
-                        payment_id=payment_id,
-                        razorpay_order_id=rp_order_id,
-                        invoice_id=invoice_id,
-                        amount=(payment_entity.get('amount', 0) / 100),
-                        response=data,
-                        status=event,
-                        isPaid=True
-                    )
-
-                    if order_info:
-                        if next_due_date: order_info.next_due = next_due_date
-                        if end_date_val: order_info.end_date = end_date_val
-                        order_info.save()
+                    
+                    # Generate Razorpay Client for Invoice Download
+                    razorpay_key = GeneralSettings.objects.first()
+                    if razorpay_key:
+                        if razorpay_key.payment_type == 1:
+                            client = razorpay.Client(auth=(razorpay_key.test_public_key, razorpay_key.test_secret_key))
+                        else:
+                            client = razorpay.Client(auth=(razorpay_key.live_public_key, razorpay_key.live_secret_key))
                         
-                        # Generate Razorpay Client for Invoice Download
-                        razorpay_key = GeneralSettings.objects.first()
-                        if razorpay_key:
-                            if razorpay_key.payment_type == 1:
-                                client = razorpay.Client(auth=(razorpay_key.test_public_key, razorpay_key.test_secret_key))
-                            else:
-                                client = razorpay.Client(auth=(razorpay_key.live_public_key, razorpay_key.live_secret_key))
+                        if invoice_id:
+                            invoice_info = client.invoice.fetch(invoice_id)
+                            result = {
+                                'invoice_info': invoice_info,
+                                'order_info': order_info,
+                                'isssue_date': datetime.fromtimestamp(invoice_info.get('issued_at', 0))
+                            }
+
+                            template = get_template('pdf/invoice.html')
+                            html = template.render(result).encode('latin-1', 'replace').decode('latin-1')
                             
-                            if invoice_id:
-                                invoice_info = client.invoice.fetch(invoice_id)
-                                result = {
-                                    'invoice_info': invoice_info,
-                                    'order_info': order_info,
-                                    'isssue_date': datetime.fromtimestamp(invoice_info.get('issued_at', 0))
-                                }
+                            destination = os.path.join(settings.MEDIA_ROOT, 'pdf_reports/')
+                            os.makedirs(destination, exist_ok=True)
+                            
+                            pdf_path = os.path.join(destination, f"{order_info.user.id}_invoice.pdf")
+                            with open(pdf_path, "w+b") as file:
+                                pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), dest=file)
 
-                                template = get_template('pdf/invoice.html')
-                                html = template.render(result).encode('latin-1', 'replace').decode('latin-1')
-                                
-                                destination = os.path.join(settings.MEDIA_ROOT, 'pdf_reports/')
-                                os.makedirs(destination, exist_ok=True)
-                                
-                                pdf_path = os.path.join(destination, f"{order_info.user.id}_invoice.pdf")
-                                with open(pdf_path, "w+b") as file:
-                                    pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), dest=file)
+                            # Send Invoice Email
+                            html_message = loader.render_to_string('invoice.html', {
+                                'username': f"{order_info.first_name} {order_info.last_name}",
+                            })
+                            email = EmailMessage('Subscription Invoice', html_message, settings.EMAIL_HOST_USER, [order_info.email])
+                            email.attach_file(pdf_path)
+                            email.content_subtype = "html"
+                            email.send()
 
-                                # Send Invoice Email
-                                html_message = loader.render_to_string('invoice.html', {
-                                    'username': f"{order_info.first_name} {order_info.last_name}",
-                                })
-                                email = EmailMessage('Subscription Invoice', html_message, settings.EMAIL_HOST_USER, [order_info.email])
-                                email.attach_file(pdf_path)
-                                email.content_subtype = "html"
-                                email.send()
+        # --- STATUS EVENT HANDLING MAPPING ---
+        elif event in ['subscription.cancelled', 'subscription.paused', 'subscription.resumed', 'subscription.completed']:
+            status_mapping = {
+                'subscription.cancelled': OrderStatus.Cancelled,
+                'subscription.paused': OrderStatus.Paused,
+                'subscription.resumed': OrderStatus.Active,
+                'subscription.completed': OrderStatus.Expired,
+            }
+            
+            OrderSubscriptionPayments.objects.create(
+                order=order_info,
+                response=data,
+                status=event,
+                isPaid=False
+            )
 
-            # --- STATUS EVENT HANDLING MAPPING ---
-            elif event in ['subscription.cancelled', 'subscription.paused', 'subscription.resumed', 'subscription.completed']:
-                status_mapping = {
-                    'subscription.cancelled': OrderStatus.Cancelled,
-                    'subscription.paused': OrderStatus.Paused,
-                    'subscription.resumed': OrderStatus.Active,
-                    'subscription.completed': OrderStatus.Expired,
-                }
-                
-                OrderSubscriptionPayments.objects.create(
-                    order=order_info,
-                    response=data,
-                    status=event,
-                    isPaid=False
-                )
+            if order_info:
+                order_info.subscription_status = status_mapping[event]
+                if event == 'subscription.resumed':
+                    if next_due_date: order_info.next_due = next_due_date
+                    if end_date_val: order_info.end_date = end_date_val
+                order_info.save()
 
-                if order_info:
-                    order_info.subscription_status = status_mapping[event]
-                    if event == 'subscription.resumed':
-                        if next_due_date: order_info.next_due = next_due_date
-                        if end_date_val: order_info.end_date = end_date_val
-                    order_info.save()
-
-        except Exception as exc:
-            # Logs the exact line number and problem without failing entirely
-            logger.error(f"Error executing webhook event logic ({event}): {str(exc)}", exc_info=True)
-            # We still return a 200/Success to Razorpay so it doesn't queue duplicate retry requests
-            return success_response(message="Handled with internal log errors", data=[], status_code=status.HTTP_200_OK)
+        # except Exception as exc:
+        #     # Logs the exact line number and problem without failing entirely
+        #     logger.error(f"Error executing webhook event logic ({event}): {str(exc)}", exc_info=True)
+        #     # We still return a 200/Success to Razorpay so it doesn't queue duplicate retry requests
+        #     return success_response(message="Handled with internal log errors", data=[], status_code=status.HTTP_200_OK)
 
         return success_response(message="Success", data=[], status_code=status.HTTP_200_OK)

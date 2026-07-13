@@ -418,17 +418,23 @@ class StartSubscriptionSerializer(serializers.ModelSerializer) :
                 client = razorpay.Client(auth=(general_settings.test_public_key, general_settings.test_secret_key))
             else:
                 client = razorpay.Client(auth=(general_settings.live_public_key, general_settings.live_secret_key))
-                
-            payment = client.order.create({"amount": book_order.total_amount * 100, 
-                                    "currency": "INR", 
-                                    "payment_capture": "1",
-                                    "notes":{
-                                        "name": book_order.first_name+" "+book_order.last_name,
-                                        "email": book_order.email,
-                                        "phone_number": book_order.phone,
-                                        "payment_type":"instalearn_subscription_payment",
-                                    }})
+            
+            if subscription_plan.plan_type == 1:
+                quantity = 60
+            elif subscription_plan.plan_type == 2:
+                quantity = 10
+            else:
+                quantity = 5
+
+            payment = client.subscription.create({
+                            'plan_id': subscription_plan.plan_id,
+                            'customer_notify': True,
+                            'quantity': 1,
+                            'total_count': quantity,
+                            'notes': {'payment_type': 'instalearn_subscription_payment'}
+                        })
             book_order.razorpay_order_id = payment['id']
+            book_order.subscription_url = payment['short_url']
             book_order.save()
         
 
@@ -460,7 +466,7 @@ class CompleteSubscriptionSerializer(serializers.ModelSerializer) :
             raise serializers.ValidationError("Invalid Razorpay order ID")
         
         data = {
-            'razorpay_order_id': ord_id,
+            'razorpay_subscription_id': ord_id,
             'razorpay_payment_id': raz_pay_id,
             'razorpay_signature': raz_signature
         }
