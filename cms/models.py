@@ -394,9 +394,10 @@ class PromotionalBannerCampaign(models.Model):
     title = models.CharField(max_length=100, help_text="Internal name, e.g., Summer Sale 2026")
     display_text = models.CharField(max_length=255, help_text="e.g., Summer Sale is On!")
     coupons = models.ForeignKey('courses.Coupon', null=True, blank=True, on_delete=models.CASCADE)
+    thumbnail = models.ImageField(upload_to='mini_lms/images/', null=True, blank=True)
     start_time = models.DateTimeField(default=timezone.now)
     end_time = models.DateTimeField(help_text="The exact date/time when the countdown hits zero")
-    status = models.BooleanField(default=True)
+    status = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

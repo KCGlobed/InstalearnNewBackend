@@ -888,7 +888,7 @@ class PromotionalBannerListingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PromotionalBannerCampaign
-        fields = ["id","title","display_text","start_time","end_time","status","created_at","coupon_info"]
+        fields = ["id","title","display_text","start_time","end_time","status","created_at","coupon_info","thumbnail"]
 
 
 
@@ -940,10 +940,11 @@ class PromotionalBannerSerializer(serializers.ModelSerializer) :
     display_text = serializers.CharField(max_length=255, required=True)
     start_time = serializers.DateTimeField(required=False, default=timezone.now)
     end_time = serializers.DateTimeField(required=True)
+    thumbnail = serializers.FileField(required=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
 
     class Meta:
         model = PromotionalBannerCampaign
-        fields = ['title','display_text','coupons_id','start_time','end_time']
+        fields = ['title','display_text','coupons_id','start_time','end_time',"thumbnail"]
         
     def validate(self, data):
         coupon_id = data.get('coupons_id')
@@ -964,6 +965,7 @@ class PromotionalBannerSerializer(serializers.ModelSerializer) :
         coupon_id = validate_data.pop('coupons_id', None)
         coupon_instance = Coupon.objects.get(id=coupon_id) if coupon_id else None
 
+        category.thumbnail = validate_data.get('thumbnail', category.thumbnail)
         category.title = validate_data.get('title', category.title)
         category.display_text = validate_data.get('display_text', category.display_text)
         category.coupons = coupon_instance

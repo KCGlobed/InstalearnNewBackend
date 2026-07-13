@@ -34,6 +34,7 @@ urlpatterns = [
 
     path('trail-registration/', TrailRegistrationView.as_view(), name="trail-registration"),
     path('get-purchase-history/', GetPurchaseHistoryView.as_view(), name="get-purchase-history"),
+    path('get-my-active-subscription/', GetMyActiveSubscriptionView.as_view(), name="get-my-active-subscription"),
 
     path('manage-background-tasks/', ManageBackgroundTaskView.as_view(), name="manage-background-tasks"),
     path('manage-learning-reminders/', ManageLearningRemindersView.as_view(), name="manage-learning-reminders"),

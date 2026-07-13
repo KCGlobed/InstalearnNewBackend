@@ -502,8 +502,17 @@ class GetPurchaseHistoryView(APIView):
     renderer_classes = [SubscriptionRenderer]
     permission_classes = [IsAuthenticated]
     def get(self, request,format=None):
-        course = Order.objects.filter(user = request.user, isPaid = True)
+        course = Order.objects.filter(user = request.user, isPaid = True, payment_type = PaymentType.Course)
         serializer = UserOrderListingSerializer(course, many=True)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+class GetMyActiveSubscriptionView(APIView):
+    renderer_classes = [SubscriptionRenderer]
+    permission_classes = [IsAuthenticated]
+    def get(self, request,format=None):
+        course = Order.objects.filter(user = request.user, isPaid = True, payment_type = PaymentType.Subscription)
+        serializer = UserSubscriptionListingSerializer(course, many=True)
         return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
     
 

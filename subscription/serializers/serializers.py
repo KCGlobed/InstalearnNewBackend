@@ -645,6 +645,26 @@ class UserOrderListingSerializer(serializers.ModelSerializer):
         fields = ["id","first_name","last_name","email","phone","total_amount","gst_amount","amount","razorpay_order_id","payment_method","subscription_status","created_at","ordered_courses","order_date","isPaid"]
 
 
+class PlanInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubscriptionPlans
+        fields = ["id",'plan_name']
+
+class UserSubscriptionListingSerializer(serializers.ModelSerializer):
+    plan_info = serializers.SerializerMethodField('get_plan_info')
+    order_date = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+
+    def get_plan_info(self, obj):
+        category = SubscriptionPlans.objects.filter(id=obj.plan.id).first()
+        return PlanInfoSerializer(category).data
+
+    
+    class Meta:
+        model = Order
+        fields = ["id","first_name","last_name","email","phone","total_amount","no_of_licence","razorpay_order_id","payment_method","subscription_status","created_at","plan_info","order_date","isPaid","start_date","next_due"]
+
+
 
 class ValidateDeviceCouponSerializer(serializers.Serializer):
     device_id = serializers.CharField(required=True, trim_whitespace=True)
