@@ -258,12 +258,8 @@ class CompleteSubscriptionView(APIView):
 
             order = Order.objects.filter(id = order_info.id).first()
             order_data = CourseOrderSerializer(order)
-            
-            book_list = UserCourses.objects.filter(order_id = order_info.id, paid = 1).values_list('course', flat=True)
-            category = Course.objects.filter(id__in=book_list)
-            book_info = CourseListsSerializer(category,many =True)
 
-            return success_response(message="Payment successfully received!", data={"order_info":order_data.data, "ordered_courses": book_info.data}, status_code=status.HTTP_200_OK)
+            return success_response(message="Payment successfully received!", data={"order_info":order_data.data}, status_code=status.HTTP_200_OK)
 
         return error_response(message="", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
