@@ -146,15 +146,15 @@
           
           <h1>INVOICE</h1>
           <div style="margin-bottom: 20px;">
-            <div style="display: inline-block;">Invoice No.: KCG/{{year}}/{{order_id|order_id_convert}}</div>
+            <div style="display: inline-block;">Invoice No.: KCG/{{order_info.orderID}}{{order_subscription}}</div>
             <div style="display: inline-block;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
             <div style="display: inline-block;">Date: {{isssue_date}}</div>
           </div>
           <div id="project">
             <div>Name : {{order_info.user.first_name}} {{order_info.user.last_name}}</div>
             <div>Email : <a href="mailto:{{order_info.user.email}}">{{order_info.user.email}}</a></div>
-            <div>Phone : {{order_info.mobile}}</div>
-            <div>Address : {{order_info.user.address}}, {{order_info.user.city}}, {{order_info.user.state}}, {{order_info.user.country}}, {{order_info.user.pincode}}</div>
+            <div>Phone : {{order_info.phone}}</div>
+            
           </div>
           <div style="margin-bottom: 25px;"></div>
           <br><br>
@@ -167,36 +167,20 @@
             <thead>
               <tr>
                 <th class="desc">Plan Name </th>
-                <th>Gross Amount in INR</th>
-                {% if order_info.user.state|lower == 'haryana' %}
-                  <th>CGST @ 9% <br>SGST @ 9%</th>
-                {% else %}
-                  <th>IGST @ 18%</th>
-                {% endif %}
-                <th>Total Amount in INR</th>
+                <th>Gross Amount</th>
+                <th>Total Amount</th>
               </tr>
             </thead>
             <tbody>
-              {% for item in invoice_info.line_items %}
               <tr>
-                <td class="desc">{{item.name}}</td>
-                <td class="unit">{{item.unit_amount|calculate_actual_amount}}</td>
-                <td class="qty">{{item.unit_amount|calculate_gst}}</td>
-                <td class="total">{{invoice_info.currency}} {{item.amount|convert_price}}</td>
+                <td class="desc">{{plan_info.plan_name}}</td>
+                <td class="qty">{{plan_info.currency}} {{plan_info.amount}}</td>
+                <td class="total">{{plan_info.currency}} {{plan_info.amount}}</td>
               </tr>
-              {% endfor %}
-              {% if invoice_info.amount|calculate_discount:invoice_info.gross_amount > 0 %}
-
-              <tr>
-                <td colspan="3">Discount Amount</td>
-                <td class="total">{{invoice_info.currency}} {{invoice_info.amount|calculate_discount_with_sign:invoice_info.gross_amount}}</td>
-              </tr>
-
-
-              {% endif %}
+              
               <tr>
                 <td colspan="3">Total Amount</td>
-                <td class="total">{{invoice_info.currency}} {{invoice_info.amount|convert_price}}</td>
+                <td class="total">{{plan_info.currency}} {{plan_info.amount}}</td>
               </tr>
             </tbody>
           </table>

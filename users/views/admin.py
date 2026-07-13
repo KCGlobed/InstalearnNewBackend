@@ -56,6 +56,10 @@ class GetUserListingView(APIView):
             users_list = users_list.filter(email__icontains = email)
 
 
+        is_active = request.query_params.get('is_active')
+        if is_active:
+            users_list = users_list.filter(is_active = is_active)
+
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         

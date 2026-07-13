@@ -544,8 +544,6 @@ class ValidateCouponView(APIView):
         return error_response(message="", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
         
 
-logger = logging.getLogger(__name__)
-
 class PaymentResponseView(APIView):
     renderer_classes = [SubscriptionRenderer]
 
@@ -607,7 +605,7 @@ class PaymentResponseView(APIView):
                     email.send()
 
             # User Payment Received Email
-            user_email = payment_entity.get('email')
+            user_email = order_info.email
             if user_email:
                 html_user = loader.render_to_string('subscription_payment_email.html', {'subscription_id': subscription_id})
                 email_user = EmailMessage('Payment Received!', html_user, settings.EMAIL_HOST_USER, [order_info.email])
@@ -640,7 +638,7 @@ class PaymentResponseView(APIView):
             ).exists()
 
             if not already_processed:
-                OrderSubscriptionPayments.objects.create(
+                order_subscription = OrderSubscriptionPayments.objects.create(
                     order=order_info,
                     payment_id=payment_id,
                     razorpay_order_id=rp_order_id,
@@ -665,11 +663,15 @@ class PaymentResponseView(APIView):
                             client = razorpay.Client(auth=(razorpay_key.live_public_key, razorpay_key.live_secret_key))
                         
                         if invoice_id:
+                            plan_info = SubscriptionPlans.objects.filter(id=order_info.plan.id).first()
+
                             invoice_info = client.invoice.fetch(invoice_id)
                             result = {
                                 'invoice_info': invoice_info,
                                 'order_info': order_info,
-                                'isssue_date': datetime.fromtimestamp(invoice_info.get('issued_at', 0))
+                                'isssue_date': datetime.fromtimestamp(invoice_info.get('issued_at', 0)),
+                                "plan_info":plan_info,
+                                "order_subscription":order_subscription.id
                             }
 
                             template = get_template('pdf/invoice.html')
@@ -685,6 +687,9 @@ class PaymentResponseView(APIView):
                             # Send Invoice Email
                             html_message = loader.render_to_string('invoice.html', {
                                 'username': f"{order_info.first_name} {order_info.last_name}",
+                                "plan_info":plan_info,
+                                'order_info': order_info,
+                                "order_subscription":order_subscription.id
                             })
                             email = EmailMessage('Subscription Invoice', html_message, settings.EMAIL_HOST_USER, [order_info.email])
                             email.attach_file(pdf_path)

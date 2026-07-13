@@ -146,7 +146,7 @@
           
           <h1>INVOICE</h1>
           <div style="margin-bottom: 20px;">
-            <div style="display: inline-block;">Invoice No.: KCG/{{order_info.orderID}}</div>
+            <div style="display: inline-block;">Invoice No.: KCG/{{order_info.orderID}}{{order_subscription}}</div>
             <div style="display: inline-block;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
             <div style="display: inline-block;">Date: {{isssue_date}}</div>
           </div>
@@ -154,7 +154,6 @@
             <div>Name : {{order_info.first_name}} {{order_info.last_name}}</div>
             <div>Email : <a href="mailto:{{order_info.email}}">{{order_info.email}}</a></div>
             <div>Phone : {{order_info.mobile}}</div>
-            <div>Address : {{order_info.address}}, {{order_info.city}}, {{order_info.country}}, {{order_info.postal_code}}</div>
           </div>
           <div style="margin-bottom: 25px;"></div>
           <br><br>
@@ -166,35 +165,20 @@
           <table>
             <thead>
               <tr>
-                <th class="desc">Course Name </th>
+                <th class="desc">Plan Name </th>
                 <th class="desc">Price</th>
-                <th class="desc">Quantity</th>
-                <th>Total Amount in INR</th>
+                <th>Total Amount</th>
               </tr>
             </thead>
             <tbody>
-              {% for item in order_list %}
               <tr>
-                <td class="desc">{{item.book_name}}</td>
-                <td class="unit">INR {{item.book_price}}</td>
-                <td class="qty">{{item.qunatity}}</td>
-                <td class="qty">INR {{item.total_price}}</td>
+                <td class="desc">{{plan_info.plan_name}}</td>
+                <td class="unit">{{plan_info.currency}} {{plan_info.amount}}</td>
+                <td class="qty">{{plan_info.currency}} {{plan_info.amount}}</td>
               </tr>
-              {% endfor %}
               <tr>
-                <td colspan="3">GST</td>
-                <td class="total">INR {{order_info.tax_amount}}</td>
-              </tr>
-              {% if order_info.discount_amount %}
-                <tr>
-                  <td colspan="3">Discount (Coupon Code: {{order_info.coupon_code}})</td>
-                  <td class="total">INR {{order_info.discount_amount}}</td>
-                </tr>
-              {% endif %}
-
-              <tr>
-                <td colspan="3">Total Amount</td>
-                <td class="total">INR {{order_info.total_amount}}</td>
+                <td colspan="2">Total Amount</td>
+                <td class="total">{{plan_info.currency}} {{order_info.total_amount}}</td>
               </tr>
             </tbody>
           </table>

@@ -43,6 +43,10 @@ class SubscriptionPlanListingView(APIView):
         if plan_name:
             plans = plans.filter(plan_name__icontains = plan_name)
 
+        subscription_status = request.query_params.get('status')
+        if subscription_status:
+            plans = plans.filter(status = subscription_status)
+
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         
