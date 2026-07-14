@@ -507,8 +507,8 @@ class GetMyActiveSubscriptionView(APIView):
     renderer_classes = [SubscriptionRenderer]
     permission_classes = [IsAuthenticated]
     def get(self, request,format=None):
-        course = Order.objects.filter(user = request.user, isPaid = True, payment_type = PaymentType.Subscription)
-        serializer = UserSubscriptionListingSerializer(course, many=True)
+        course = Order.objects.filter(user = request.user, isPaid = True, payment_type = PaymentType.Subscription).first()
+        serializer = UserSubscriptionListingSerializer(course)
         return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
     
 
@@ -594,6 +594,7 @@ class PaymentResponseView(APIView):
                 order_info.subscription_status = OrderStatus.Active
                 if next_due_date: order_info.next_due = next_due_date
                 if end_date_val: order_info.end_date = end_date_val
+                order_info.isPaid = True
                 order_info.save()
 
                 # Send User Subscription Email

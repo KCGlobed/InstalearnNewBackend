@@ -27,14 +27,15 @@ class SubscriptionPlansSerializer(serializers.ModelSerializer):
 class SubscriptionPlanDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubscriptionPlans
-        fields = ["id","plan_id","plan_name","plan_description","banner_text","original_price","monthly_amount","amount","currency","plan_type","status","feature","no_of_licence","created_at"]
+        fields = ["id","plan_id","plan_name","plan_description","banner_text","original_price","monthly_amount","amount","gst_amount","amount_without_gst","currency","plan_type","status","feature","no_of_licence","created_at"]
 
 
 class CreateSubscriptionPlanSerializer(serializers.ModelSerializer) :
     plan_name = serializers.CharField(max_length = 255, required=True)
     plan_description = serializers.CharField(required=True)
     banner_text = serializers.CharField(max_length = 255, required=False, allow_blank=True)
-    amount = serializers.IntegerField(required=True)
+    amount_without_gst = serializers.IntegerField(required=True)
+    gst_amount = serializers.IntegerField(required=True)
     monthly_amount = serializers.IntegerField(required=False, allow_null=True)
     original_price = serializers.IntegerField(required=False, allow_null=True)
     currency = serializers.CharField(max_length = 10, required=True)
@@ -45,7 +46,7 @@ class CreateSubscriptionPlanSerializer(serializers.ModelSerializer) :
 
     class Meta:
         model = SubscriptionPlans
-        fields =  ["plan_name","plan_description","banner_text","original_price","monthly_amount","amount","currency","plan_type","feature","no_of_licence"]
+        fields =  ["plan_name","plan_description","banner_text","original_price","monthly_amount","amount_without_gst","gst_amount","currency","plan_type","feature","no_of_licence"]
         
     def validate(self, data):
         return data
@@ -68,7 +69,7 @@ class CreateSubscriptionPlanSerializer(serializers.ModelSerializer) :
             'interval': plan_detail['interval'],
             'item': {
                 'name': validate_data.get('plan_name'),
-                'amount': validate_data.get('amount') * 100,
+                'amount': (validate_data.get('amount_without_gst') + validate_data.get('gst_amount'))  * 100,
                 'currency': validate_data.get('currency'),
                 'description': validate_data.get('plan_description'),
                 }
@@ -83,7 +84,9 @@ class CreateSubscriptionPlanSerializer(serializers.ModelSerializer) :
                 banner_text = validate_data.get('banner_text'),
                 original_price = validate_data.get('original_price'),
                 monthly_amount = validate_data.get('monthly_amount'),
-                amount = validate_data.get('amount'),
+                amount = validate_data.get('amount_without_gst') + validate_data.get('gst_amount'),
+                amount_without_gst = validate_data.get('amount_without_gst'),
+                gst_amount = validate_data.get('gst_amount'),
                 currency = validate_data.get('currency'),
                 plan_type = validate_data.get('plan_type'),
                 no_of_licence = validate_data.get('no_of_licence'),
