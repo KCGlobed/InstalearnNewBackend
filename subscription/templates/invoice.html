@@ -174,12 +174,17 @@
             <tbody>
               <tr>
                 <td class="desc">{{plan_info.plan_name}}</td>
-                <td class="qty">{{plan_info.currency}} {{plan_info.amount}}</td>
-                <td class="total">{{plan_info.currency}} {{plan_info.amount}}</td>
+                <td class="qty">{{plan_info.currency}} {{plan_info.amount_without_gst}}</td>
+                <td class="total">{{plan_info.currency}} {{plan_info.amount_without_gst}}</td>
               </tr>
               
               <tr>
-                <td colspan="3">Total Amount</td>
+                <td colspan="2">GST Amount</td>
+                <td class="total">{{plan_info.currency}} {{order_info.gst_amount}}</td>
+              </tr>
+
+              <tr>
+                <td colspan="2">Total Amount</td>
                 <td class="total">{{plan_info.currency}} {{plan_info.amount}}</td>
               </tr>
             </tbody>

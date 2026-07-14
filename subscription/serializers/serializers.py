@@ -393,8 +393,8 @@ class StartSubscriptionSerializer(serializers.ModelSerializer) :
         count = Order.objects.all().count()
         order_id = f"{current_year}-{str(count + 1).zfill(4)}"  
         
-        tax = 0
-        total_amount = subscription_plan.amount
+        tax = subscription_plan.gst_amount
+        total_amount = subscription_plan.amount_without_gst
         order_total_amount = subscription_plan.amount
 
         book_order = Order(
