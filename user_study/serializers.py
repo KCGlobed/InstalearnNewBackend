@@ -14,6 +14,7 @@ from datetime import datetime
 import random, string
 import razorpay
 from django.db.models import Sum, Avg, Count
+from mini_lms.utils import *
 
 
 
@@ -871,3 +872,130 @@ class RemindersListingSerializer(serializers.ModelSerializer):
     class Meta:
         model = LearningReminders
         fields = "__all__"
+
+
+
+class ShareCourseAccessSerializer(serializers.ModelSerializer) :
+    first_name = serializers.CharField(max_length = 255, required=True)
+    last_name = serializers.CharField(max_length = 255, required=True)
+    email = serializers.EmailField(max_length = 255, required=True)
+    phone = serializers.CharField(max_length = 255, required=True)
+    course_id = serializers.ListField(required=True)
+    
+    class Meta:
+        model = Order
+        fields = ['first_name',"last_name","email","phone",'course_id']
+        
+    def validate(self, data):
+
+        course_order = Order.objects.filter(
+            user_id=self.context.get('user').id, 
+            isPaid=True, 
+            payment_type=PaymentType.Subscription
+        ).first()
+        if course_order is None:
+            raise serializers.ValidationError("You do not have an active subscription plan. Please subscribe to gain access.")
+
+        no_of_licences = course_order.no_of_licence if course_order else 0 
+
+        used_licences_count = User.objects.filter(
+            corporate_id = self.context.get('user').id
+        ).count()
+
+        if used_licences_count >= no_of_licences:
+            raise serializers.ValidationError("You have used all the student seats available under this subscription. Please upgrade your plan or purchase additional licenses to add more users.")
+        
+        user_info = User.objects.filter(email = data.get('email').lower()).first()
+        if user_info is not None:
+            raise serializers.ValidationError("User already registed with this email")
+
+    
+        return data
+
+
+    def create(self , validate_data):
+
+        password = generate_random_password(8)
+
+        info = { "first_name": validate_data.get('first_name'),"last_name": validate_data.get('last_name'), 'email': validate_data.get('email').lower(), 'password': password}
+
+        user_info = User.objects.create_user(**info)
+        assign_role(user_info, "Student")
+
+        user_info.role = User.Student
+        user_info.email_verified = 1
+        user_info.is_active = True
+        user_info.save()
+        
+        url = settings.BASE_URL+"/login"
+
+        subject = 'Thank you for registering!'
+
+        message = f''
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [user_info.email, ]
+        html_message = loader.render_to_string(
+            'new_user_email.html',
+            {
+                'name': user_info.first_name +' '+ user_info.last_name,
+                'verification_link': url,
+                "email": user_info.email,
+                "password": password,
+
+            }
+        )
+
+        send_mail( subject, message, email_from, recipient_list,html_message=html_message )
+
+        course_order = Order.objects.filter(
+            user_id=self.context.get('user').id, 
+            isPaid=True, 
+            payment_type=PaymentType.Subscription
+        ).first()
+
+        cart_items = Course.objects.filter(id__in=validate_data.get('course_id'))
+        for cart_course in cart_items:
+            cart_order = UserCourses(
+                order = course_order,
+                course = cart_course,
+                user = user_info,
+                paid=True
+
+            )
+            cart_order.save()
+
+        return True
+    
+
+class MyCourseDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ["id",'name']
+
+
+
+class UserCoursesListSerializer(serializers.ModelSerializer):
+    course_detail = MyCourseDetailSerializer(source="course", read_only=True)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Pass the context to the nested serializer
+        if 'context' in kwargs:
+            self.fields['course_detail'].context.update(kwargs['context'])
+
+    class Meta:
+        model = UserCourses
+        fields = ["id", "course_detail"]
+
+
+class StudentListingSerializer(serializers.ModelSerializer):
+    date_joined = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    courses = serializers.SerializerMethodField('get_courses')
+    
+    def get_courses(self, obj):
+        users_courses = UserCourses.objects.filter(user=obj, paid=True).select_related("course").order_by("-id")
+        return UserCoursesListSerializer(users_courses, many=True, context={"user": obj.id}).data
+    
+    class Meta:
+        model = User
+        fields = ['id','first_name','last_name', 'email','phone1',"is_active","date_joined","image","courses"]

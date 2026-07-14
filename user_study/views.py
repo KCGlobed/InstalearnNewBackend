@@ -20,6 +20,8 @@ from google.oauth2 import service_account
 info = json.loads(os.environ.get("GOOGLE_CREDENTIALS_JSON"))
 credentials = service_account.Credentials.from_service_account_info(info)
 client = storage.Client(credentials=credentials, project=credentials.project_id)
+from mini_lms.pagination import CustomPageNumberPagination
+from rest_framework import filters
 
 class PurchasedCoursesView(APIView):
     renderer_classes = [UserStudyRenderer]
@@ -927,3 +929,86 @@ class GetDashboardCountersView(APIView):
 
         }
         return success_response(message="Success", data=data, status_code=status.HTTP_200_OK)
+    
+
+class ShareCourseAccessView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = ShareCourseAccessSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user= serializer.save()
+            return success_response(message="Course Access Shared Successfully", data=[], status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class GetStudentListingView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['first_name',"last_name","email", 'date_joined', 'id', 'is_active',"phone1","category"]
+    ordering_fields = ['first_name',"last_name","email", 'date_joined', 'id', 'is_active',"phone1","category"] 
+    def get(self, request, format=None):
+        
+        users_list = User.objects.filter(role = User.Student)
+
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            users_list = users_list.filter(first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            users_list = users_list.filter(last_name__icontains = last_name)
+
+        email = request.query_params.get('email')
+        if email:
+            users_list = users_list.filter(email__icontains = email)
+
+        phone1 = request.query_params.get('phone')
+        if phone1:
+            users_list = users_list.filter(phone1__icontains = phone1)
+
+        is_active = request.query_params.get('status')
+        if is_active:
+            users_list = users_list.filter(is_active = is_active)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                start_datetime_aware = timezone.make_aware(start_datetime, timezone.get_current_timezone())
+                users_list = users_list.filter(created_at__gte=start_datetime_aware)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                end_datetime_aware = timezone.make_aware(end_datetime, timezone.get_current_timezone())
+                users_list = users_list.filter(created_at__lte=end_datetime_aware)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+
+        search_filter = filters.SearchFilter()
+        users_list = search_filter.filter_queryset(request, users_list, self)
+
+        ordering_filter = filters.OrderingFilter()
+        users_list = ordering_filter.filter_queryset(request, users_list, self)
+
+        if not users_list.ordered:
+            users_list = users_list.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(users_list, request, view=self)
+        serializer = StudentListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)

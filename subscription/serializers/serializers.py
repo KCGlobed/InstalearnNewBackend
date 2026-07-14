@@ -366,6 +366,7 @@ class StartSubscriptionSerializer(serializers.ModelSerializer) :
                 user_info = User.objects.create_user(**info)
                 assign_role(user_info, CorporateAdmin)
 
+                user_info.role = User.CorporateAdmin
                 user_info.email_verified = 1
                 user_info.company_name = validate_data.get('compnay_name')
                 user_info.save()

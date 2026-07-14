@@ -39,7 +39,8 @@ class UserLoginSerializer(serializers.ModelSerializer):
         if user.email_verified == 0:
             raise serializers.ValidationError("User email is not verified!")
         
-        if data.get('role') is not None:
+        role_value = data.get('role')
+        if role_value and str(role_value).strip():
             try:
                 if not has_role(user, globals()[data.get('role')]):
                     if not has_role(user, data.get('role')):

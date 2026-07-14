@@ -53,4 +53,6 @@ urlpatterns = [
     path('reminder/delete/<cid>', DeleteRemindersView.as_view(), name="delete-reminder"),
 
     path('get-dashboard-counters/', GetDashboardCountersView.as_view(), name="get-dashboard-counters"),
+    path('share-course-access/', ShareCourseAccessView.as_view(), name="share-course-access"),
+    # path('get-corporate-users-list/', GetCorporateUsersListView.as_view(), name="get-corporate-users-list"),
 ]
