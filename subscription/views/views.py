@@ -748,6 +748,10 @@ class PaymentResponseView(APIView):
                 if event == 'subscription.resumed':
                     if next_due_date: order_info.next_due = next_due_date
                     if end_date_val: order_info.end_date = end_date_val
+                else:
+                    order_info.next_due = datetime.today().strftime('%Y-%m-%d')
+                    order_info.end_date = datetime.today().strftime('%Y-%m-%d')
+
                 order_info.save()
 
         # except Exception as exc:

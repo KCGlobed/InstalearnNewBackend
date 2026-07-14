@@ -742,6 +742,7 @@ class CancelSubscriptionSerializer(serializers.ModelSerializer) :
             raise serializers.ValidationError("Unale to verify your Payment")
         
         order.subscription_status = OrderStatus.Cancelled
+        order.isPaid = False
         order.save()
 
         return order
