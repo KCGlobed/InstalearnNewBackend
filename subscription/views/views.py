@@ -269,6 +269,7 @@ class CancelSubscriptionView(APIView):
     def post(self, request, format=None):
         serializer = CancelSubscriptionSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
+            serializer.save()
             return success_response(message="Subscription cancelled successfully!", data={}, status_code=status.HTTP_200_OK)
 
         return error_response(message="", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
@@ -279,6 +280,7 @@ class UpgradeSubscriptionView(APIView):
     def post(self, request, format=None):
         serializer = UpgradeSubscriptionSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
+            serializer.save()
             return success_response(message="Subscription upgraded successfully!", data={}, status_code=status.HTTP_200_OK)
 
         return error_response(message="", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
