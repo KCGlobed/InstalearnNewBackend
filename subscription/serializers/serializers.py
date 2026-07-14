@@ -706,7 +706,7 @@ class ValidateDeviceCouponSerializer(serializers.Serializer):
     
 
 
-class CompleteSubscriptionSerializer(serializers.ModelSerializer) :
+class CancelSubscriptionSerializer(serializers.ModelSerializer) :
     order_id = serializers.CharField(required=True,write_only = True)
     
     class Meta:
@@ -746,7 +746,7 @@ class CompleteSubscriptionSerializer(serializers.ModelSerializer) :
         return order
     
 
-class CompleteSubscriptionSerializer(serializers.ModelSerializer) :
+class UpgradeSubscriptionSerializer(serializers.ModelSerializer) :
     order_id = serializers.CharField(required=True,write_only = True)
     plan_id = serializers.CharField(required=True,write_only = True)
 
@@ -785,7 +785,9 @@ class CompleteSubscriptionSerializer(serializers.ModelSerializer) :
         except Exception as error:
             raise serializers.ValidationError("Unale to verify your Payment")
         
-        order.subscription_status = OrderStatus.Cancelled
+        order.subscription_status = OrderStatus.Active
+        order.no_of_licence = subscription_plan.no_of_licence
+
         order.save()
 
         return order
