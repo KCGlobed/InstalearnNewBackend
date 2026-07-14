@@ -52,4 +52,5 @@ urlpatterns = [
     path('reminder/get-reminders/', GetRemindersView.as_view(), name="get-reminder"),
     path('reminder/delete/<cid>', DeleteRemindersView.as_view(), name="delete-reminder"),
 
+    path('get-dashboard-counters/', GetDashboardCountersView.as_view(), name="get-dashboard-counters"),
 ]

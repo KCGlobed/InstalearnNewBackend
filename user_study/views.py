@@ -902,3 +902,28 @@ class DeleteRemindersView(APIView):
         except LearningReminders.DoesNotExist:
             return error_response(message="Reminder not Found!", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
         
+
+class GetDashboardCountersView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin]
+                        )]
+    def get(self, request,format=None):
+        
+        course_order = Order.objects.filter(
+            user=request.user, 
+            isPaid=True, 
+            payment_type=PaymentType.Subscription
+        ).first()
+
+        no_of_licences = course_order.no_of_licence if course_order else 0 
+
+        license_used = User.objects.filter(corporate = request.user).count()
+
+        data = {
+            "no_of_licences":no_of_licences,
+            "license_used":license_used,
+
+        }
+        return success_response(message="Success", data=data, status_code=status.HTTP_200_OK)

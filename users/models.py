@@ -136,6 +136,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     
     uid = models.UUIDField(unique=True, editable=False, default=uuid.uuid4, blank=True, null=True, verbose_name='Public identifier')
+    corporate = models.ForeignKey('User', null=True, blank=True, on_delete=models.SET_NULL)
     role = models.PositiveSmallIntegerField(choices=ROLE_CHOICES, blank=True, null=True, default=16)
     reference_id = models.CharField(max_length=100, blank=True,null=True)
     category = models.CharField(max_length=20, choices=STUDENT_CATEGORY, default='DIRECT')
