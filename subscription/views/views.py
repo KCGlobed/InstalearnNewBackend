@@ -696,31 +696,34 @@ class PaymentResponseView(APIView):
                                 'invoice_info': invoice_info,
                                 'order_info': order_info,
                                 'isssue_date': datetime.fromtimestamp(invoice_info.get('issued_at', 0)),
-                                "plan_info":plan_info,
-                                "order_subscription":order_subscription.id
+                                "plan_info": plan_info,
+                                "order_subscription": order_subscription.id
                             }
 
                             template = get_template('pdf/invoice.html')
                             html = template.render(result).encode('latin-1', 'replace').decode('latin-1')
-                            
-                            destination = os.path.join(settings.MEDIA_ROOT, 'pdf_reports/')
-                            os.makedirs(destination, exist_ok=True)
-                            
-                            pdf_path = os.path.join(destination, f"{order_info.user.id}_invoice.pdf")
-                            with open(pdf_path, "w+b") as file:
-                                pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), dest=file)
 
-                            # Send Invoice Email
-                            html_message = loader.render_to_string('invoice.html', {
-                                'username': f"{order_info.first_name} {order_info.last_name}",
-                                "plan_info":plan_info,
-                                'order_info': order_info,
-                                "order_subscription":order_subscription.id
-                            })
-                            email = EmailMessage('Subscription Invoice', html_message, settings.EMAIL_HOST_USER, [order_info.email])
-                            email.attach_file(pdf_path)
-                            email.content_subtype = "html"
-                            email.send()
+                            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=True) as temp_pdf:
+                                pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), dest=temp_pdf)
+                                temp_pdf.flush()
+                                temp_pdf.seek(0)
+                                html_message = loader.render_to_string('invoice.html', {
+                                    'username': f"{order_info.first_name} {order_info.last_name}",
+                                    "plan_info": plan_info,
+                                    'order_info': order_info,
+                                    "order_subscription": order_subscription.id
+                                })
+                                
+                                email = EmailMessage(
+                                    'Subscription Invoice', 
+                                    html_message, 
+                                    settings.EMAIL_HOST_USER, 
+                                    [order_info.email]
+                                )
+                                email.content_subtype = "html"
+                                email.attach(f"{order_info.user.id}_invoice.pdf", temp_pdf.read(), "application/pdf")
+                                
+                                email.send()
 
         # --- STATUS EVENT HANDLING MAPPING ---
         elif event in ['subscription.cancelled', 'subscription.paused', 'subscription.resumed', 'subscription.completed']:
