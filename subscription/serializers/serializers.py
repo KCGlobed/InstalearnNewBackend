@@ -436,6 +436,7 @@ class StartSubscriptionSerializer(serializers.ModelSerializer) :
                         })
             book_order.razorpay_order_id = payment['id']
             book_order.subscription_url = payment['short_url']
+            book_order.subscription_id = payment['id']
             book_order.save()
         
 
@@ -702,3 +703,89 @@ class ValidateDeviceCouponSerializer(serializers.Serializer):
         data['coupon_obj'] = coupon
         data['cart_items'] = cart_items
         return data
+    
+
+
+class CompleteSubscriptionSerializer(serializers.ModelSerializer) :
+    order_id = serializers.CharField(required=True,write_only = True)
+    
+    class Meta:
+        model = Order
+        fields = ['order_id']
+        
+    def validate(self, data):
+        return data
+
+
+    def create(self , validate_data):
+        
+        ord_id = validate_data.get("order_id")
+
+        try:
+            order = Order.objects.get(id=ord_id)
+        except Order.DoesNotExist:
+            raise serializers.ValidationError("Invalid order ID")
+       
+        setting = GeneralSettings.objects.all().first()
+        try:
+            if setting.payment_type == 1:
+                client = razorpay.Client(auth=(setting.test_public_key, setting.test_secret_key))
+            else:
+                client = razorpay.Client(auth=(setting.live_public_key, setting.live_secret_key))
+            subscriptionId = order.subscription_id
+
+            client.subscription.cancel(subscriptionId, {
+            "cancel_at_cycle_end": False
+            })
+        except Exception as error:
+            raise serializers.ValidationError("Unale to verify your Payment")
+        
+        order.subscription_status = OrderStatus.Cancelled
+        order.save()
+
+        return order
+    
+
+class CompleteSubscriptionSerializer(serializers.ModelSerializer) :
+    order_id = serializers.CharField(required=True,write_only = True)
+    plan_id = serializers.CharField(required=True,write_only = True)
+
+    class Meta:
+        model = Order
+        fields = ['order_id',"plan_id"]
+        
+    def validate(self, data):
+        return data
+
+
+    def create(self , validate_data):
+        
+        ord_id = validate_data.get("order_id")
+
+        try:
+            order = Order.objects.get(id=ord_id)
+        except Order.DoesNotExist:
+            raise serializers.ValidationError("Invalid order ID")
+       
+        subscription_plan = SubscriptionPlans.objects.filter(id=validate_data.get('plan_id')).first()
+    
+        setting = GeneralSettings.objects.all().first()
+        try:
+            if setting.payment_type == 1:
+                client = razorpay.Client(auth=(setting.test_public_key, setting.test_secret_key))
+            else:
+                client = razorpay.Client(auth=(setting.live_public_key, setting.live_secret_key))
+            subscriptionId = order.subscription_id
+
+            client.subscription.update(subscriptionId, {
+                "plan_id": subscription_plan.plan_id,
+                "customer_notify":True,
+                "schedule_change_at":"now"
+            })
+        except Exception as error:
+            raise serializers.ValidationError("Unale to verify your Payment")
+        
+        order.subscription_status = OrderStatus.Cancelled
+        order.save()
+
+        return order

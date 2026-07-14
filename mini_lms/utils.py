@@ -141,10 +141,13 @@ def get_country_from_ip(ip_address):
     
 
 def get_user_role(user): 
-    for role, role_name in ROLE_MAPPING.items(): 
-        if has_role(user, [role]): 
-            return role_name 
-    return None
+    all_role_keys = list(ROLE_MAPPING.keys())
+    assigned_roles = [
+        ROLE_MAPPING[role] 
+        for role in all_role_keys 
+        if has_role(user, [role])
+    ]
+    return assigned_roles
 
 
 def get_role(role_info): 
