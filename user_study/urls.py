@@ -56,5 +56,6 @@ urlpatterns = [
     path('share-course-access/', ShareCourseAccessView.as_view(), name="share-course-access"),
     path('get-corporate-users-list/', GetCorporateUsersListView.as_view(), name="get-corporate-users-list"),
     path('assign-course-to-students/', AssignCourseAccessView.as_view(), name="assign-course-to-students"),
+    path('remove-course-to-students/', RemoveCourseAccessView.as_view(), name="remove-course-to-students"),
 
 ]

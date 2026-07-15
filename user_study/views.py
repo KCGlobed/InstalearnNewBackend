@@ -923,9 +923,13 @@ class GetDashboardCountersView(APIView):
 
         license_used = User.objects.filter(corporate = request.user).count()
 
+        users_list = User.objects.filter(corporate = request.user).count()
+
         data = {
             "no_of_licences":no_of_licences,
             "license_used":license_used,
+            "remaning_licence":no_of_licences - license_used,
+            "registered_users": users_list
 
         }
         return success_response(message="Success", data=data, status_code=status.HTTP_200_OK)
@@ -941,7 +945,7 @@ class ShareCourseAccessView(APIView):
         serializer = ShareCourseAccessSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
             user= serializer.save()
-            return success_response(message="Course Access Shared Successfully", data=[], status_code=status.HTTP_200_OK)
+            return success_response(message="Course Access Shared Successfully", data=StudentListingSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
@@ -1024,5 +1028,19 @@ class AssignCourseAccessView(APIView):
         serializer = AssignCourseAccessSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
             user= serializer.save()
-            return success_response(message="Course Access Shared Successfully", data=[], status_code=status.HTTP_200_OK)
+            return success_response(message="Course Access Shared Successfully", data=StudentListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class RemoveCourseAccessView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = RemoveCourseAccessSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user= serializer.save()
+            return success_response(message="Course Access Shared Successfully", data=StudentListingSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)

@@ -984,7 +984,7 @@ class ShareCourseAccessSerializer(serializers.ModelSerializer) :
             )
             cart_order.save()
 
-        return True
+        return user_info
     
 
 class MyCourseDetailSerializer(serializers.ModelSerializer):
@@ -1084,4 +1084,72 @@ class AssignCourseAccessSerializer(serializers.ModelSerializer) :
             )
             cart_order.save()
 
-        return True
+        return user_info
+
+
+class RemoveCourseAccessSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(required=True)
+    course_id = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=True
+    )
+    
+    class Meta:
+        model = Order
+        fields = ["user_id", "course_id"]
+    
+    def validate_user_id(self, value):
+        if not User.objects.filter(id=value).exists():
+            raise serializers.ValidationError("User does not exist.")
+        return value
+
+    def validate_course_id(self, value):
+        if not value:
+            raise serializers.ValidationError("Course ID list cannot be empty.")
+
+        existing_ids = set(
+            Course.objects.filter(id__in=value).values_list('id', flat=True)
+        )
+        
+        missing_ids = set(value) - existing_ids
+        if missing_ids:
+            raise serializers.ValidationError(
+                f"The following course IDs do not exist: {list(missing_ids)}"
+            )
+        return value
+    
+    def validate(self, data):
+        user_id = data.get('user_id')
+        course_ids = data.get('course_id')
+        
+        user_info = User.objects.get(id=user_id)
+        
+        assigned_course_ids = set(
+            UserCourses.objects.filter(
+                user=user_info, 
+                course_id__in=course_ids
+            ).values_list('course_id', flat=True)
+        )
+        
+        not_assigned = set(course_ids) - assigned_course_ids
+        
+        if not_assigned:
+            course_names = list(Course.objects.filter(id__in=not_assigned).values_list('name', flat=True))
+            raise serializers.ValidationError(
+                f"User does not have access to these courses: {', '.join(course_names)}"
+            )
+            
+        return data
+
+    def create(self, validated_data):
+        user_id = validated_data.get('user_id')
+        course_ids = validated_data.get('course_id')
+        
+        user_info = User.objects.get(id=user_id)
+
+        UserCourses.objects.filter(
+            user=user_info, 
+            course_id__in=course_ids
+        ).delete()
+
+        return user_info
