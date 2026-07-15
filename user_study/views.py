@@ -945,7 +945,7 @@ class ShareCourseAccessView(APIView):
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
-class GetStudentListingView(APIView):
+class GetCorporateUsersListView(APIView):
     renderer_classes = [UserStudyRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_roles(
@@ -957,7 +957,7 @@ class GetStudentListingView(APIView):
     ordering_fields = ['first_name',"last_name","email", 'date_joined', 'id', 'is_active',"phone1","category"] 
     def get(self, request, format=None):
         
-        users_list = User.objects.filter(role = User.Student)
+        users_list = User.objects.filter(corporate = request.user)
 
         first_name = request.query_params.get('first_name')
         if first_name:
@@ -1012,3 +1012,17 @@ class GetStudentListingView(APIView):
         page = paginator.paginate_queryset(users_list, request, view=self)
         serializer = StudentListingSerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
+    
+
+class AssignCourseAccessView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = ShareCourseAccessSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user= serializer.save()
+            return success_response(message="Course Access Shared Successfully", data=[], status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)

@@ -54,5 +54,7 @@ urlpatterns = [
 
     path('get-dashboard-counters/', GetDashboardCountersView.as_view(), name="get-dashboard-counters"),
     path('share-course-access/', ShareCourseAccessView.as_view(), name="share-course-access"),
-    # path('get-corporate-users-list/', GetCorporateUsersListView.as_view(), name="get-corporate-users-list"),
+    path('get-corporate-users-list/', GetCorporateUsersListView.as_view(), name="get-corporate-users-list"),
+    path('assign-course-to-students/', AssignCourseAccessView.as_view(), name="assign-course-to-students"),
+
 ]

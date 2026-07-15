@@ -119,6 +119,33 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
             
             data['coupon_obj'] = coupon
 
+        
+        user_id = data.get('user_id')
+        if user_id and str(user_id).strip():
+            user = User.objects.filter(id=user_id).first()
+            if user is None:
+                raise serializers.ValidationError('Invalid User ID')
+            
+            course = Order.objects.filter(user = user, isPaid = True, payment_type = PaymentType.Subscription, subscription_status=OrderStatus.Active).order_by('-created_at').first()
+
+            if course is not None:
+                raise serializers.ValidationError('You have a already active subscription')
+            
+            if has_role(user, CorporateAdmin):
+                if has_role(user, CorporateAdmin):
+                    raise serializers.ValidationError("Direct course purchases are unavailable. You may only access this content via an active subscription.!")
+            
+        email = data.get('email')
+        if email and str(email).strip():
+            user = User.objects.filter(email=email).first()
+            if user is not None:
+                course = Order.objects.filter(user = user, isPaid = True, payment_type = PaymentType.Subscription, subscription_status=OrderStatus.Active).order_by('-created_at').first()
+
+                if course is not None:
+                    raise serializers.ValidationError('You have a already active subscription')
+
+                if has_role(user, CorporateAdmin):
+                    raise serializers.ValidationError("Direct course purchases are unavailable. You may only access this content via an active subscription.!")
         return data
 
 
@@ -342,6 +369,26 @@ class StartSubscriptionSerializer(serializers.ModelSerializer) :
         if plan_count == 0:
             raise serializers.ValidationError("Invalid Subscription Plan ID")
         
+        user_id = data.get('user_id')
+        if user_id and str(user_id).strip():
+            user = User.objects.filter(id=user_id).first()
+            if user is None:
+                raise serializers.ValidationError('Invalid User ID')
+            
+            course = Order.objects.filter(user = user, isPaid = True, payment_type = PaymentType.Subscription, subscription_status=OrderStatus.Active).order_by('-created_at').first()
+
+            if course is not None:
+                raise serializers.ValidationError('You have a already active subscription')
+            
+        email = data.get('email')
+        if email and str(email).strip():
+            user = User.objects.filter(email=email).first()
+            if user is not None:
+                course = Order.objects.filter(user = user, isPaid = True, payment_type = PaymentType.Subscription, subscription_status=OrderStatus.Active).order_by('-created_at').first()
+
+                if course is not None:
+                    raise serializers.ValidationError('You have a already active subscription')
+
         return data
 
 

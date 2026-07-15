@@ -891,8 +891,9 @@ class ShareCourseAccessSerializer(serializers.ModelSerializer) :
         course_order = Order.objects.filter(
             user_id=self.context.get('user').id, 
             isPaid=True, 
-            payment_type=PaymentType.Subscription
-        ).first()
+            payment_type=PaymentType.Subscription, 
+            subscription_status=OrderStatus.Active
+        ).order_by('-created_at').first()
         if course_order is None:
             raise serializers.ValidationError("You do not have an active subscription plan. Please subscribe to gain access.")
 
@@ -950,8 +951,9 @@ class ShareCourseAccessSerializer(serializers.ModelSerializer) :
         course_order = Order.objects.filter(
             user_id=self.context.get('user').id, 
             isPaid=True, 
-            payment_type=PaymentType.Subscription
-        ).first()
+            payment_type=PaymentType.Subscription, 
+            subscription_status=OrderStatus.Active
+        ).order_by('-created_at').first()
 
         cart_items = Course.objects.filter(id__in=validate_data.get('course_id'))
         for cart_course in cart_items:
@@ -999,3 +1001,54 @@ class StudentListingSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id','first_name','last_name', 'email','phone1',"is_active","date_joined","image","courses"]
+
+
+
+class ShareCourseAccessSerializer(serializers.ModelSerializer) :
+    user_id = serializers.IntegerField(required=True)
+    course_id = serializers.ListField(required=True)
+    
+    class Meta:
+        model = Order
+        fields = ["user_id",'course_id']
+        
+    def validate(self, data):
+        user_info = User.objects.get(id = data.get('user_id'))
+        course_order = Order.objects.filter(
+            user_id=self.context.get('user').id, 
+            isPaid=True, 
+            payment_type=PaymentType.Subscription, 
+            subscription_status=OrderStatus.Active
+        ).order_by('-created_at').first()
+
+        cart_items = Course.objects.filter(id__in=data.get('course_id'))
+        for cart_course in cart_items:
+            if UserCourses.objects.filter(user=user_info, course=cart_course).exists():
+                raise serializers.ValidationError(f"You have already purchased the course: {cart_course.name}")
+
+    
+        return data
+
+
+    def create(self , validate_data):
+
+        user_info = User.objects.get(id = validate_data.get('user_id'))
+        course_order = Order.objects.filter(
+            user_id=self.context.get('user').id, 
+            isPaid=True, 
+            payment_type=PaymentType.Subscription, 
+            subscription_status=OrderStatus.Active
+        ).order_by('-created_at').first()
+
+        cart_items = Course.objects.filter(id__in=validate_data.get('course_id'))
+        for cart_course in cart_items:
+            cart_order = UserCourses(
+                order = course_order,
+                course = cart_course,
+                user = user_info,
+                paid=True
+
+            )
+            cart_order.save()
+
+        return True

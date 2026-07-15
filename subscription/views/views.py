@@ -529,7 +529,7 @@ class GetMyActiveSubscriptionView(APIView):
     renderer_classes = [SubscriptionRenderer]
     permission_classes = [IsAuthenticated]
     def get(self, request,format=None):
-        course = Order.objects.filter(user = request.user, isPaid = True, payment_type = PaymentType.Subscription).first()
+        course = Order.objects.filter(user = request.user, isPaid = True, payment_type = PaymentType.Subscription, subscription_status=OrderStatus.Active).order_by('-created_at').first()
         serializer = UserSubscriptionListingSerializer(course)
         return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
     
