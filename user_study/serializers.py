@@ -1004,7 +1004,7 @@ class StudentListingSerializer(serializers.ModelSerializer):
 
 
 
-class ShareCourseAccessSerializer(serializers.ModelSerializer) :
+class AssignCourseAccessSerializer(serializers.ModelSerializer) :
     user_id = serializers.IntegerField(required=True)
     course_id = serializers.ListField(required=True)
     
@@ -1024,9 +1024,8 @@ class ShareCourseAccessSerializer(serializers.ModelSerializer) :
         cart_items = Course.objects.filter(id__in=data.get('course_id'))
         for cart_course in cart_items:
             if UserCourses.objects.filter(user=user_info, course=cart_course).exists():
-                raise serializers.ValidationError(f"You have already purchased the course: {cart_course.name}")
-
-    
+                raise serializers.ValidationError(f"User have a already course access of x: {cart_course.name}")
+            
         return data
 
 

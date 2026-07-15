@@ -1021,7 +1021,7 @@ class AssignCourseAccessView(APIView):
                             [CorporateAdmin]
                         )]
     def post(self, request, format=None):
-        serializer = ShareCourseAccessSerializer(data = request.data, context={'user':request.user})
+        serializer = AssignCourseAccessSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
             user= serializer.save()
             return success_response(message="Course Access Shared Successfully", data=[], status_code=status.HTTP_200_OK)
