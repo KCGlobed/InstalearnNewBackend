@@ -886,6 +886,23 @@ class ShareCourseAccessSerializer(serializers.ModelSerializer) :
         model = Order
         fields = ['first_name',"last_name","email","phone",'course_id']
         
+    def validate_course_id(self, value):
+        if not value:
+            raise serializers.ValidationError("Course ID list cannot be empty.")
+
+        existing_ids = set(
+            Course.objects.filter(id__in=value).values_list('id', flat=True)
+        )
+        
+        missing_ids = set(value) - existing_ids
+        
+        if missing_ids:
+            raise serializers.ValidationError(
+                f"The following course IDs do not exist: {list(missing_ids)}"
+            )
+        return value
+    
+
     def validate(self, data):
 
         course_order = Order.objects.filter(
@@ -925,6 +942,7 @@ class ShareCourseAccessSerializer(serializers.ModelSerializer) :
 
         user_info.role = User.Student
         user_info.email_verified = 1
+        user_info.corporate = self.context.get('user')
         user_info.is_active = True
         user_info.save()
         
@@ -1000,7 +1018,7 @@ class StudentListingSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id','first_name','last_name', 'email','phone1',"is_active","date_joined","image","courses"]
+        fields = ['id','first_name','last_name', 'email','phone1',"is_active","date_joined","last_login","image","courses"]
 
 
 
@@ -1011,7 +1029,23 @@ class AssignCourseAccessSerializer(serializers.ModelSerializer) :
     class Meta:
         model = Order
         fields = ["user_id",'course_id']
+    
+    def validate_course_id(self, value):
+        if not value:
+            raise serializers.ValidationError("Course ID list cannot be empty.")
+
+        existing_ids = set(
+            Course.objects.filter(id__in=value).values_list('id', flat=True)
+        )
         
+        missing_ids = set(value) - existing_ids
+        
+        if missing_ids:
+            raise serializers.ValidationError(
+                f"The following course IDs do not exist: {list(missing_ids)}"
+            )
+        return value
+    
     def validate(self, data):
         user_info = User.objects.get(id = data.get('user_id'))
         course_order = Order.objects.filter(
