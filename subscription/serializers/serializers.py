@@ -695,7 +695,7 @@ class UserOrderListingSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
 
     def get_ordered_courses(self, obj):
-        category = Course.objects.filter(usercourses__user_id=obj.user.id).distinct()
+        category = Course.objects.filter(usercourses__user_id=obj.user.id, usercourses__order_id = obj.id).distinct()
         return CourseListSerializer(category, many=True).data
 
     

@@ -921,16 +921,28 @@ class GetDashboardCountersView(APIView):
 
         no_of_licences = course_order.no_of_licence if course_order else 0 
 
-        license_used = User.objects.filter(corporate = request.user).count()
+        corporate_users = User.objects.filter(corporate=request.user)
+        users_id = list(corporate_users.values_list("id", flat=True))
+        license_used = len(users_id)  # Avoids another .count() query
 
-        users_list = User.objects.filter(corporate = request.user).count()
+        course_count = UserCourses.objects.filter(user_id__in=users_id).count()
+
+        video_stats = UserLectureProgress.objects.filter(user_id__in=users_id).aggregate(
+            total_watched=Count('id'),
+            total_duration=Sum('total_duration')
+        )
+
+        total_video_watched = video_stats['total_watched'] or 0
+        total_duration_video_watched = video_stats['total_duration'] or 0
 
         data = {
-            "no_of_licences":no_of_licences,
-            "license_used":license_used,
-            "remaning_licence":no_of_licences - license_used,
-            "registered_users": users_list
-
+            "no_of_licences": no_of_licences,
+            "license_used": license_used,
+            "remaning_licence": no_of_licences - license_used,
+            "registered_users": license_used,
+            "assigned_courses": course_count,
+            "total_video_watched": total_video_watched,
+            "total_duration_video_watched": total_duration_video_watched
         }
         return success_response(message="Success", data=data, status_code=status.HTTP_200_OK)
     
@@ -1042,5 +1054,5 @@ class RemoveCourseAccessView(APIView):
         serializer = RemoveCourseAccessSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
             user= serializer.save()
-            return success_response(message="Course Access Shared Successfully", data=StudentListingSerializer(user).data, status_code=status.HTTP_200_OK)
+            return success_response(message="Course Access Removed Successfully", data=StudentListingSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
