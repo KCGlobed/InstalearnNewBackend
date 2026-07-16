@@ -11,7 +11,8 @@ from mini_lms.utils import *
 import tempfile
 from rolepermissions.checkers import has_role
 from rest_framework.permissions import IsAuthenticated
-from datetime import timedelta , timezone
+from datetime import timedelta 
+from django.utils import timezone
 import pandas as pd
 from mini_lms.permissions import RoleOrPermissionCheck
 import json
