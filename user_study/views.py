@@ -22,6 +22,8 @@ credentials = service_account.Credentials.from_service_account_info(info)
 client = storage.Client(credentials=credentials, project=credentials.project_id)
 from mini_lms.pagination import CustomPageNumberPagination
 from rest_framework import filters
+from django.db.models import Count, Sum
+from django.db.models.functions import TruncDay, TruncMonth, TruncYear, TruncWeek
 
 class PurchasedCoursesView(APIView):
     renderer_classes = [UserStudyRenderer]
@@ -1056,3 +1058,122 @@ class RemoveCourseAccessView(APIView):
             user= serializer.save()
             return success_response(message="Course Access Removed Successfully", data=StudentListingSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+class GetUserStudyProgressView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [
+        IsAuthenticated, 
+        RoleOrPermissionCheck.for_roles([CorporateAdmin])
+    ]
+
+    def get(self, request, format=None):
+        corporate_users = User.objects.filter(corporate=request.user)
+        users_id = list(corporate_users.values_list("id", flat=True))
+
+        period = request.query_params.get('period', 'daily').lower()
+        now = timezone.now()
+        
+        # Base query layout mapping
+        progress_qs = UserLectureProgress.objects.filter(user_id__in=users_id)
+        
+        if period == 'daily':
+            start_date = (now - timedelta(days=6)).replace(hour=0, minute=0, second=0, microsecond=0)
+            
+            stats = (
+                progress_qs.filter(created_at__gte=start_date)
+                .annotate(day=TruncDay('created_at'))
+                .values('day')
+                .annotate(watched=Count('id'), duration=Sum('total_duration'))
+                .order_by('day')
+            )
+
+            result_data = []
+            for i in range(7):
+                day_date = start_date + timedelta(days=i)
+                day_label = day_date.strftime('%a')
+                
+                match = next((item for item in stats if item['day'].date() == day_date.date()), None)
+                result_data.append({
+                    "label": day_label,
+                    "video_watched": match['watched'] if match else 0,
+                    "duration": match['duration'] if match and match['duration'] else 0
+                })
+
+        elif period == 'weekly':
+            start_date = (now - timedelta(weeks=4)).replace(hour=0, minute=0, second=0, microsecond=0)
+            
+            stats = (
+                progress_qs.filter(created_at__gte=start_date)
+                .annotate(week=TruncWeek('created_at'))
+                .values('week')
+                .annotate(watched=Count('id'), duration=Sum('total_duration'))
+                .order_by('week')
+            )
+            
+            result_data = []
+            for i in range(4):
+                weeks_ago = 3 - i
+                w_start = (now - timedelta(weeks=weeks_ago)).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=now.weekday())
+                w_end = w_start + timedelta(days=7)
+                
+                label = "Current Week" if weeks_ago == 0 else f"Last Week {weeks_ago}"
+                match = next((item for item in stats if w_start.date() <= item['week'].date() < w_end.date()), None)
+                
+                result_data.append({
+                    "label": label,
+                    "video_watched": match['watched'] if match else 0,
+                    "duration": match['duration'] if match and match['duration'] else 0
+                })
+
+        elif period == 'monthly':
+            start_date = (now - timedelta(days=365)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            
+            stats = (
+                progress_qs.filter(created_at__gte=start_date)
+                .annotate(month=TruncMonth('created_at'))
+                .values('month')
+                .annotate(watched=Count('id'), duration=Sum('total_duration'))
+                .order_by('month')
+            )
+
+            result_data = []
+            for i in reversed(range(12)):
+                target_month_date = now - timedelta(days=30 * i)
+                month_label = target_month_date.strftime('%B')
+                
+                match = next((item for item in stats if item['month'].month == target_month_date.month and item['month'].year == target_month_date.year), None)
+                
+                result_data.append({
+                    "label": month_label,
+                    "video_watched": match['watched'] if match else 0,
+                    "duration": match['duration'] if match and match['duration'] else 0
+                })
+
+        elif period == 'yearly':
+            current_year = now.year
+            start_date = now.replace(year=current_year - 4, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            
+            stats = (
+                progress_qs.filter(created_at__gte=start_date)
+                .annotate(year=TruncYear('created_at'))
+                .values('year')
+                .annotate(watched=Count('id'), duration=Sum('total_duration'))
+                .order_by('year')
+            )
+
+            result_data = []
+            for i in reversed(range(5)):
+                target_year = current_year - i
+                match = next((item for item in stats if item['year'].year == target_year), None)
+                
+                result_data.append({
+                    "label": str(target_year),
+                    "video_watched": match['watched'] if match else 0,
+                    "duration": match['duration'] if match and match['duration'] else 0
+                })
+        
+        else:
+            return success_response(message="Invalid period value", data=[], status_code=status.HTTP_400_BAD_REQUEST)
+
+        return success_response(message="Success", data=result_data, status_code=status.HTTP_200_OK)

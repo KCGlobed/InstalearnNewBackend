@@ -1011,6 +1011,21 @@ class UserCoursesListSerializer(serializers.ModelSerializer):
 class StudentListingSerializer(serializers.ModelSerializer):
     date_joined = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     courses = serializers.SerializerMethodField('get_courses')
+    courses_progress = serializers.SerializerMethodField('get_courses_progress')
+    
+    def get_courses_progress(self, obj):
+        users_courses = UserCourses.objects.filter(user=obj, paid=True).values_list("course")
+        total_video_duration = Course.objects.filter(id__in = users_courses).aggregate(Sum('total_video_duration')).get('total_video_duration__sum')  or 0
+
+        total_duration_video_watched = UserLectureProgress.objects.filter(course_id__in = users_courses, user_id = obj.id).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+        video_duration_progress = 0
+        if total_duration_video_watched > total_video_duration:
+            video_duration_progress =  100
+        else:
+            if total_video_duration > 0:
+                video_duration_progress =  math.ceil(total_duration_video_watched * 100 / total_video_duration)
+
+        return video_duration_progress
     
     def get_courses(self, obj):
         users_courses = UserCourses.objects.filter(user=obj, paid=True).select_related("course").order_by("-id")
@@ -1018,7 +1033,7 @@ class StudentListingSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id','first_name','last_name', 'email','phone1',"is_active","date_joined","last_login","image","courses"]
+        fields = ['id','first_name','last_name', 'email','phone1',"is_active","date_joined","last_login","image","courses","courses_progress"]
 
 
 
