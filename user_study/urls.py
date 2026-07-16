@@ -59,5 +59,6 @@ urlpatterns = [
     path('remove-course-to-students/', RemoveCourseAccessView.as_view(), name="remove-course-to-students"),
     
     path('get-user-study-progress/', GetUserStudyProgressView.as_view(), name="get-user-study-progress"),
+    path('get-user-courses-progress/', GetUserCoursesProgressView.as_view(), name="get-user-courses-progress"),
 
 ]

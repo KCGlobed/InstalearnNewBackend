@@ -1168,3 +1168,70 @@ class RemoveCourseAccessSerializer(serializers.ModelSerializer):
         ).delete()
 
         return user_info
+    
+
+class ParentCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Categories
+        fields = ["id","name","description","bg_code","text_code","icon"]
+        
+        
+class CourseCategorySerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    category_info = serializers.SerializerMethodField('get_category_info')
+    
+    def get_category_info(self, obj):
+        category = Categories.objects.filter(id=obj.category.id).first()
+        return ParentCategorySerializer(category).data
+    
+    class Meta:
+        model = Course
+        fields = ["id","category_info","created_at"]
+
+
+class GetUserProgressSerializer(serializers.ModelSerializer):
+    avg_progress = serializers.SerializerMethodField('get_avg_progress')
+    enrolled_students = serializers.SerializerMethodField('get_enrolled_students')
+    categories = serializers.SerializerMethodField('get_categories')
+    certificates = serializers.SerializerMethodField('get_certificates')
+
+    def get_certificates(self, obj):
+        user_course =  UserCertificates.objects.filter(user_id__in= self.context.get('users_id'), course_id = obj.id).count()
+        return user_course
+    
+    def get_categories(self, obj):
+        category = CourseCategories.objects.filter(course_id=obj.id)
+        return CourseCategorySerializer(category, many=True).data
+    
+
+    def get_enrolled_students(self, obj):
+        user_course =  UserCourses.objects.filter(user_id__in= self.context.get('users_id'), course_id = obj.id).count()
+        return user_course
+    
+    def get_avg_progress(self, obj):
+        users_id = UserCourses.objects.filter(user_id__in = self.context.get('users_id'), course_id = obj.id).values_list("user",flat=True)
+        user_id_list = users_id
+        num_users = len(user_id_list)
+        
+        if num_users == 0 or not obj.total_video_duration or obj.total_video_duration <= 0:
+            return 0
+
+        total_duration_watched_group = UserLectureProgress.objects.filter(
+            course_id=obj.id, 
+            user_id__in=user_id_list
+        ).aggregate(total=Sum('total_duration')).get('total') or 0
+
+        max_possible_duration_group = obj.total_video_duration * num_users
+
+        if total_duration_watched_group >= max_possible_duration_group:
+            overall_progress = 100
+        else:
+            overall_progress = math.ceil(
+                (total_duration_watched_group * 100) / max_possible_duration_group
+            )
+
+        return overall_progress
+
+    class Meta:
+        model = Course
+        fields = ['id',"name","short_description","image","avg_rating","total_reviews","updated_at","avg_progress","enrolled_students","categories","certificates"]
