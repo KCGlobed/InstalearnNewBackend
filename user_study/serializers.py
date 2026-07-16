@@ -1235,3 +1235,51 @@ class GetUserProgressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = ['id',"name","short_description","image","avg_rating","total_reviews","updated_at","avg_progress","enrolled_students","categories","certificates"]
+
+
+
+class ReshareUserLoginDetailSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(required=True)
+    
+    class Meta:
+        model = User
+        fields = ["user_id"]
+    
+    def validate_user_id(self, value):
+        if not User.objects.filter(id=value, corporate_id = self.context.get('user')).exists():
+            raise serializers.ValidationError("User does not exist.")
+        return value
+
+    def validate(self, data):
+        return data
+
+    def create(self, validated_data):
+        user_id = validated_data.get('user_id')
+        
+        user_info = User.objects.get(id=user_id)
+
+        url = settings.BASE_URL+"/login"
+        
+        password = generate_random_password(8)
+
+        user_info.set_password(password)
+        user_info.save()
+
+        subject = 'Thank you for registering!'
+
+        message = f''
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [user_info.email, ]
+        html_message = loader.render_to_string(
+            'new_user_email.html',
+            {
+                'name': user_info.first_name +' '+ user_info.last_name,
+                'verification_link': url,
+                "email": user_info.email,
+                "password": password,
+            }
+        )
+
+        send_mail( subject, message, email_from, recipient_list,html_message=html_message )
+
+        return user_info

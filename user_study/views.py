@@ -1202,3 +1202,17 @@ class GetUserCoursesProgressView(APIView):
         serializer = GetUserProgressSerializer(category, many=True, context={'user':request.user,"users_id":users_id})
 
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
+class ReshareUserLoginDetailView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = ReshareUserLoginDetailSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user= serializer.save()
+            return success_response(message="Course Access Removed Successfully", data=StudentListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)

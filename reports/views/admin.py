@@ -1850,7 +1850,7 @@ class ActiveOrderListingView(APIView):
     ordering_fields = ['first_name', "last_name","email",'created_at', 'id'] 
     def get(self, request, format=None):
         
-        plans = Order.objects.filter(subscription_status__in = [OrderStatus.Active , OrderStatus.Expired])
+        plans = Order.objects.filter(subscription_status__in = [OrderStatus.Active , OrderStatus.Expired], payment_type = PaymentType.Course)
         
         first_name = request.query_params.get('first_name')
         if first_name:
