@@ -247,3 +247,166 @@ class StudentLoginActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = UserLoginActivity
         fields = ["id","login_IP","device_id","country","device_type","created_at"]
+
+
+
+class PlanInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubscriptionPlans
+        fields = ["id",'plan_name']
+
+
+class OrderInfoSerializer(serializers.ModelSerializer):
+    plan_info = serializers.SerializerMethodField('get_plan_info')
+    
+    def get_plan_info(self, obj):
+        return PlanInfoSerializer(obj.plan).data
+        
+    class Meta:
+        model = Order
+        fields = ["id",'start_date',"next_due","end_date","subscription_type","subscription_status","plan_info"]
+
+class CorproateUserListingSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    counters = serializers.SerializerMethodField('get_counters')
+    active_suscription = serializers.SerializerMethodField('get_active_suscription')
+    
+    def get_active_suscription(self, obj):
+        course_order = Order.objects.filter(
+            user=obj.id, 
+            isPaid=True, 
+            payment_type=PaymentType.Subscription
+        ).first()
+
+        if course_order is not None:
+            return OrderInfoSerializer(course_order).data
+        return {}
+    
+    def get_counters(self, obj):
+        course_order = Order.objects.filter(
+            user=obj.id, 
+            isPaid=True, 
+            payment_type=PaymentType.Subscription
+        ).first()
+
+        no_of_licences = course_order.no_of_licence if course_order else 0 
+
+        corporate_users = User.objects.filter(corporate=obj.id)
+        users_id = list(corporate_users.values_list("id", flat=True))
+        license_used = len(users_id)  # Avoids another .count() query
+
+        course_count = UserCourses.objects.filter(user_id__in=users_id).count()
+
+        data = {
+            "no_of_licences": no_of_licences,
+            "license_used": license_used,
+            "remaning_licence": no_of_licences - license_used,
+            "registered_users": license_used,
+            "assigned_courses": course_count,
+        }
+        return data
+    
+    class Meta:
+        model = User
+        fields = ["id",'first_name',"last_name","email","is_active","created_at","counters","active_suscription"]
+
+
+
+
+class MyCourseDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ["id",'name']
+
+class UserCoursesListSerializer(serializers.ModelSerializer):
+    course_detail = MyCourseDetailSerializer(source="course", read_only=True)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Pass the context to the nested serializer
+        if 'context' in kwargs:
+            self.fields['course_detail'].context.update(kwargs['context'])
+
+    class Meta:
+        model = UserCourses
+        fields = ["id", "course_detail"]
+
+
+class StudentListingSerializer(serializers.ModelSerializer):
+    date_joined = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    courses = serializers.SerializerMethodField('get_courses')
+    courses_progress = serializers.SerializerMethodField('get_courses_progress')
+    
+    def get_courses_progress(self, obj):
+        users_courses = UserCourses.objects.filter(user=obj, paid=True).values_list("course")
+        total_video_duration = Course.objects.filter(id__in = users_courses).aggregate(Sum('total_video_duration')).get('total_video_duration__sum')  or 0
+
+        total_duration_video_watched = UserLectureProgress.objects.filter(course_id__in = users_courses, user_id = obj.id).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+        video_duration_progress = 0
+        if total_duration_video_watched > total_video_duration:
+            video_duration_progress =  100
+        else:
+            if total_video_duration > 0:
+                video_duration_progress =  math.ceil(total_duration_video_watched * 100 / total_video_duration)
+
+        return video_duration_progress
+    
+    def get_courses(self, obj):
+        users_courses = UserCourses.objects.filter(user=obj, paid=True).select_related("course").order_by("-id")
+        return UserCoursesListSerializer(users_courses, many=True, context={"user": obj.id}).data
+    
+    class Meta:
+        model = User
+        fields = ['id','first_name','last_name', 'email','phone1',"is_active","date_joined","last_login","image","courses","courses_progress"]
+
+
+class CorproateUserDetailSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    counters = serializers.SerializerMethodField('get_counters')
+    active_suscription = serializers.SerializerMethodField('get_active_suscription')
+    student_lists = serializers.SerializerMethodField('get_student_lists')
+    
+    def get_student_lists(self, obj):
+        users_list = User.objects.filter(corporate = obj.id)
+        serializer = StudentListingSerializer(users_list, many=True)
+        return serializer.data
+    
+
+    def get_active_suscription(self, obj):
+        course_order = Order.objects.filter(
+            user=obj.id, 
+            isPaid=True, 
+            payment_type=PaymentType.Subscription
+        ).first()
+
+        if course_order is not None:
+            return OrderInfoSerializer(course_order).data
+        return {}
+    
+    def get_counters(self, obj):
+        course_order = Order.objects.filter(
+            user=obj.id, 
+            isPaid=True, 
+            payment_type=PaymentType.Subscription
+        ).first()
+
+        no_of_licences = course_order.no_of_licence if course_order else 0 
+
+        corporate_users = User.objects.filter(corporate=obj.id)
+        users_id = list(corporate_users.values_list("id", flat=True))
+        license_used = len(users_id)  # Avoids another .count() query
+
+        course_count = UserCourses.objects.filter(user_id__in=users_id).count()
+
+        data = {
+            "no_of_licences": no_of_licences,
+            "license_used": license_used,
+            "remaning_licence": no_of_licences - license_used,
+            "registered_users": license_used,
+            "assigned_courses": course_count,
+        }
+        return data
+    
+    class Meta:
+        model = User
+        fields = ["id",'first_name',"last_name","email","is_active","created_at","counters","active_suscription","student_lists"]

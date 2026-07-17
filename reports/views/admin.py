@@ -4087,3 +4087,354 @@ class GetStudentActivityExcelReportView(APIView):
             )
         finally:
             os.remove(pdf_path)
+
+
+
+class CorporateUserListingView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "corporate_admin_user_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['first_name','last_name',"email"]
+    ordering_fields = ['first_name', 'created_at', 'id', 'last_name',"email"] 
+    def get(self, request, format=None):
+        
+        plans = User.objects.filter(role = User.CorporateAdmin)
+        
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            plans = plans.filter(first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            plans = plans.filter(last_name__icontains = last_name)
+
+        email = request.query_params.get('email')
+        if email:
+            plans = plans.filter(email__icontains = email)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                plans = plans.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                plans = plans.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+
+
+        search_filter = filters.SearchFilter()
+        plans = search_filter.filter_queryset(request, plans, self)
+
+        ordering_filter = filters.OrderingFilter()
+        plans = ordering_filter.filter_queryset(request, plans, self)
+
+        if not plans.ordered:
+            plans = plans.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(plans, request, view=self)
+        serializer = CorproateUserListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+
+class ExportPDFCorporateAdminUserListingView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "corporate_admin_user_listing_pdf_report",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, format=None):
+        
+        plans = User.objects.filter(role = User.CorporateAdmin)
+        
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            plans = plans.filter(first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            plans = plans.filter(last_name__icontains = last_name)
+
+        email = request.query_params.get('email')
+        if email:
+            plans = plans.filter(email__icontains = email)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                plans = plans.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                plans = plans.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+
+
+        search_filter = filters.SearchFilter()
+        plans = search_filter.filter_queryset(request, plans, self)
+
+        ordering_filter = filters.OrderingFilter()
+        plans = ordering_filter.filter_queryset(request, plans, self)
+
+        if not plans.ordered:
+            plans = plans.order_by('-id')
+
+
+        serializer = CorproateUserListingSerializer(plans, many=True)
+        
+        data = {
+            "order_data":serializer.data
+        }
+
+
+        template = get_template('pdf/coporate_admin_user_report.html')
+        html  = template.render(data)
+        # Use tempfile to create a temporary PDF file
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            html = html.encode('latin-1', 'replace').decode('latin-1')
+            pdf = pisa.CreatePDF(BytesIO(html.encode("ISO-8859-1")), dest=temp_file)
+
+            if pdf.err:
+                raise Exception("PDF generation error!")
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            report_name = "coporate_admin_user_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            # Ensure the temporary file is deleted from the server's disk
+            os.remove(pdf_path)
+    
+
+
+class ExportExcelCorporateAdminUserListingView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "corporate_admin_user_listing_excel_report",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, format=None):
+        
+        plans = User.objects.filter(role = User.CorporateAdmin)
+        
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            plans = plans.filter(first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            plans = plans.filter(last_name__icontains = last_name)
+
+        email = request.query_params.get('email')
+        if email:
+            plans = plans.filter(email__icontains = email)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                plans = plans.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                plans = plans.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+
+
+        search_filter = filters.SearchFilter()
+        plans = search_filter.filter_queryset(request, plans, self)
+
+        ordering_filter = filters.OrderingFilter()
+        plans = ordering_filter.filter_queryset(request, plans, self)
+
+        if not plans.ordered:
+            plans = plans.order_by('-id')
+
+
+        serializer = CorproateUserListingSerializer(plans, many=True)
+        
+        lis = []
+        
+        lis.append({
+                "first_name":"Coporate Admin User Report",
+                "last_name":'',
+                "email":'',
+                "phone":'',
+                "start_date":'',
+                "end_date":'',
+                "subscription_status":'',
+                "ordered_courses":'',
+                "licenced":"",
+                "status":"",
+                "type":"",
+                "course":"",
+                "created_at":'',
+            })
+        
+        lis.append({
+                "first_name":"",
+                "last_name":'',
+                "email":'',
+                "phone":'',
+                "start_date":'',
+                "end_date":'',
+                "subscription_status":'',
+                "ordered_courses":'',
+                "licenced":"",
+                "status":"",
+                "type":"",
+                "course":"",
+                "created_at":'',
+            })
+        if end_date and start_date:
+            lis.append({
+                    "first_name":"Start Date",
+                    "last_name":start_date,
+                    "email":'',
+                    "phone":'',
+                    "start_date":'End Date',
+                    "end_date":end_date,
+                    "subscription_status":'',
+                    "ordered_courses":'',
+                    "licenced":"",
+                    "status":"",
+                    "type":"",
+                    "course":"",
+                    "created_at":'',
+                })
+            
+            lis.append({
+                    "first_name":"",
+                    "last_name":'',
+                    "email":'',
+                    "phone":'',
+                    "start_date":'',
+                    "end_date":'',
+                    "subscription_status":'',
+                    "ordered_courses":'',
+                    "licenced":"",
+                    "status":"",
+                    "type":"",
+                    "course":"",
+                    "created_at":'',
+                })
+        
+        lis.append({
+                "first_name":"First Name",
+                "last_name":'Last Name',
+                "email":'Email',
+                "phone":'Plan Name',
+                "start_date":'Start Date',
+                "end_date":'Next Due',
+                "subscription_status":'End Date',
+                "ordered_courses":'No. of Licecnce Consumed',
+                "licenced":"No. Of Licenced Alloted",
+                "status":"Subscription Status",
+                "type":"Subscription Type",
+                "course":"Total Assign Courses",
+                "created_at":'Created At',
+            })
+        for order in serializer.data:
+
+            lis.append({
+                "first_name":order['first_name'],
+                "last_name":order['last_name'],
+                "email":order['email'],
+                "phone":order['active_suscription']['plan_info']['plan_name'],
+                "start_date":order['active_suscription']['start_date'],
+                "end_date":order['active_suscription']['next_due'],
+                "subscription_status":order['active_suscription']['end_date'],
+                "ordered_courses":order['counters']['license_used'],
+                "licenced":order['counters']['no_of_licences'],
+                "status":OrderStatus(order['active_suscription']['subscription_status']).label,
+                "type":PlanType(order['active_suscription']['subscription_type']).label,
+                "course":order['counters']['assigned_courses'],
+                "created_at":order['created_at'],
+            })
+
+        
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            df = pd.DataFrame.from_dict(lis)
+            df.to_excel(pdf_path, header=False, index=False)
+        
+        try:
+            # GCS file naming logic
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            report_name = "corporate_admin_user_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
+
+            # Upload the temporary file to GCS
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            # Ensure the temporary file is deleted
+            os.remove(pdf_path)
+
+
+class ViewCorporateAdminUserDetailView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "view_corporate_admin_user_detail",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, id):
+        
+        user = User.objects.filter(id = id).first()
+        serializer = CorproateUserDetailSerializer(user)
+        
+        return success_response(
+            message="Success",
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
