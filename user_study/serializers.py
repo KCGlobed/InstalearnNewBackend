@@ -923,9 +923,13 @@ class ShareCourseAccessSerializer(serializers.ModelSerializer) :
         if used_licences_count >= no_of_licences:
             raise serializers.ValidationError("You have used all the student seats available under this subscription. Please upgrade your plan or purchase additional licenses to add more users.")
         
-        user_info = User.objects.filter(email = data.get('email').lower()).first()
-        if user_info is not None:
-            raise serializers.ValidationError("User already registed with this email")
+        email_to_check = data.get('email', '').lower()
+        current_user = self.context.get('user')
+
+        email_exists = User.objects.filter(email=email_to_check).exclude(id=current_user.id).exists()
+
+        if email_exists:
+            raise serializers.ValidationError("A user is already registered with this email.")
 
     
         return data
@@ -935,16 +939,28 @@ class ShareCourseAccessSerializer(serializers.ModelSerializer) :
 
         password = generate_random_password(8)
 
-        info = { "first_name": validate_data.get('first_name'),"last_name": validate_data.get('last_name'), 'email': validate_data.get('email').lower(), 'password': password}
+        email_to_check = validate_data.get('email', '').lower()
+        email_exists = User.objects.filter(email=email_to_check).exists()
+        if email_exists:
+            user_info = User.objects.filter(email=email_to_check).first()
+            assign_role(user_info, "Student")
 
-        user_info = User.objects.create_user(**info)
-        assign_role(user_info, "Student")
+            user_info.email_verified = 1
+            user_info.corporate = self.context.get('user')
+            user_info.is_active = True
+            user_info.save()
 
-        user_info.role = User.Student
-        user_info.email_verified = 1
-        user_info.corporate = self.context.get('user')
-        user_info.is_active = True
-        user_info.save()
+        else:
+            info = { "first_name": validate_data.get('first_name'),"last_name": validate_data.get('last_name'), 'email': validate_data.get('email').lower(), 'password': password}
+
+            user_info = User.objects.create_user(**info)
+            assign_role(user_info, "Student")
+
+            user_info.role = User.Student
+            user_info.email_verified = 1
+            user_info.corporate = self.context.get('user')
+            user_info.is_active = True
+            user_info.save()
         
         url = settings.BASE_URL+"/login"
 

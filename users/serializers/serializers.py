@@ -277,8 +277,8 @@ class UserForgotPasswordSerializer(serializers.ModelSerializer):
     
     def validate(self, data):
         email = data.get('email')
-        if User.objects.filter(email = email).exists():
-            user = User.objects.get(email = email)
+        if User.objects.filter(email = email.lower()).exists():
+            user = User.objects.get(email = email.lower())
             uid = urlsafe_base64_encode(force_bytes(user.id))
             token = PasswordResetTokenGenerator().make_token(user)
             
@@ -314,8 +314,8 @@ class AdminForgotPasswordSerializer(serializers.ModelSerializer):
     
     def validate(self, data):
         email = data.get('email')
-        if User.objects.filter(email = email).exists():
-            user = User.objects.get(email = email)
+        if User.objects.filter(email = email.lower()).exists():
+            user = User.objects.get(email = email.lower())
             uid = urlsafe_base64_encode(force_bytes(user.id))
             token = PasswordResetTokenGenerator().make_token(user)
             

@@ -1552,7 +1552,7 @@ class GetStudentRegistrationReportPDFView(APIView):
     ordering_fields = ["id",'first_name',"last_name","email","is_active","created_at","category"] 
     def get(self, request, format=None):
         
-        topics = User.objects.filter(role = User.Student)
+        topics = User.objects.all()
         
         first_name = request.query_params.get('first_name')
         if first_name:
@@ -1625,6 +1625,8 @@ class GetStudentRegistrationReportPDFView(APIView):
         if not topics.ordered:
             topics = topics.order_by('-id')
 
+        topics = [user for user in topics if has_role(user, Student)]
+
         serializer = StudentRegistrationSerializer(topics, many=True)
 
         data = {
@@ -1676,7 +1678,7 @@ class GetStudentRegistrationReportExcelView(APIView):
     ordering_fields = ["id",'first_name',"last_name","email","is_active","created_at","category"] 
     def get(self, request, format=None):
         
-        topics = User.objects.filter(role = User.Student)
+        topics = User.objects.all()
         
         first_name = request.query_params.get('first_name')
         if first_name:
@@ -1749,6 +1751,8 @@ class GetStudentRegistrationReportExcelView(APIView):
         if not topics.ordered:
             topics = topics.order_by('-id')
 
+        topics = [user for user in topics if has_role(user, Student)]
+        
         serializer = StudentRegistrationSerializer(topics, many=True)
         
         lis = []
@@ -4103,23 +4107,26 @@ class CorporateUserListingView(APIView):
     ordering_fields = ['first_name', 'created_at', 'id', 'last_name',"email"] 
     def get(self, request, format=None):
         
-        plans = User.objects.filter(role = User.CorporateAdmin)
-        
+        # 1. Start with a pure Django QuerySet
+        plans = User.objects.all()
+
+        # 2. Apply all QuerySet filters (first_name, last_name, email)
         first_name = request.query_params.get('first_name')
         if first_name:
-            plans = plans.filter(first_name__icontains = first_name)
+            plans = plans.filter(first_name__icontains=first_name)
 
         last_name = request.query_params.get('last_name')
         if last_name:
-            plans = plans.filter(last_name__icontains = last_name)
+            plans = plans.filter(last_name__icontains=last_name)
 
         email = request.query_params.get('email')
         if email:
-            plans = plans.filter(email__icontains = email)
+            plans = plans.filter(email__icontains=email)
 
+        # 3. Apply Date Filters
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
-        
+
         if start_date:
             try:
                 start_datetime = datetime.fromisoformat(start_date)
@@ -4134,7 +4141,7 @@ class CorporateUserListingView(APIView):
             except ValueError:
                 raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
 
-
+        # 4. Apply DRF Search and Ordering Filters (Requires a QuerySet)
         search_filter = filters.SearchFilter()
         plans = search_filter.filter_queryset(request, plans, self)
 
@@ -4143,6 +4150,10 @@ class CorporateUserListingView(APIView):
 
         if not plans.ordered:
             plans = plans.order_by('-id')
+
+        # 5. NOW apply the custom Python role filter at the very end
+        # (This evaluates the QuerySet into a clean Python list)
+        plans = [user for user in plans if has_role(user, CorporateAdmin)]
 
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(plans, request, view=self)
@@ -4160,23 +4171,25 @@ class ExportPDFCorporateAdminUserListingView(APIView):
                         )]
     def get(self, request, format=None):
         
-        plans = User.objects.filter(role = User.CorporateAdmin)
-        
+        plans = User.objects.all()
+
+        # 2. Apply all QuerySet filters (first_name, last_name, email)
         first_name = request.query_params.get('first_name')
         if first_name:
-            plans = plans.filter(first_name__icontains = first_name)
+            plans = plans.filter(first_name__icontains=first_name)
 
         last_name = request.query_params.get('last_name')
         if last_name:
-            plans = plans.filter(last_name__icontains = last_name)
+            plans = plans.filter(last_name__icontains=last_name)
 
         email = request.query_params.get('email')
         if email:
-            plans = plans.filter(email__icontains = email)
+            plans = plans.filter(email__icontains=email)
 
+        # 3. Apply Date Filters
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
-        
+
         if start_date:
             try:
                 start_datetime = datetime.fromisoformat(start_date)
@@ -4191,7 +4204,7 @@ class ExportPDFCorporateAdminUserListingView(APIView):
             except ValueError:
                 raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
 
-
+        # 4. Apply DRF Search and Ordering Filters (Requires a QuerySet)
         search_filter = filters.SearchFilter()
         plans = search_filter.filter_queryset(request, plans, self)
 
@@ -4200,6 +4213,10 @@ class ExportPDFCorporateAdminUserListingView(APIView):
 
         if not plans.ordered:
             plans = plans.order_by('-id')
+
+        # 5. NOW apply the custom Python role filter at the very end
+        # (This evaluates the QuerySet into a clean Python list)
+        plans = [user for user in plans if has_role(user, CorporateAdmin)]
 
 
         serializer = CorproateUserListingSerializer(plans, many=True)
@@ -4250,23 +4267,25 @@ class ExportExcelCorporateAdminUserListingView(APIView):
                         )]
     def get(self, request, format=None):
         
-        plans = User.objects.filter(role = User.CorporateAdmin)
-        
+        plans = User.objects.all()
+
+        # 2. Apply all QuerySet filters (first_name, last_name, email)
         first_name = request.query_params.get('first_name')
         if first_name:
-            plans = plans.filter(first_name__icontains = first_name)
+            plans = plans.filter(first_name__icontains=first_name)
 
         last_name = request.query_params.get('last_name')
         if last_name:
-            plans = plans.filter(last_name__icontains = last_name)
+            plans = plans.filter(last_name__icontains=last_name)
 
         email = request.query_params.get('email')
         if email:
-            plans = plans.filter(email__icontains = email)
+            plans = plans.filter(email__icontains=email)
 
+        # 3. Apply Date Filters
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
-        
+
         if start_date:
             try:
                 start_datetime = datetime.fromisoformat(start_date)
@@ -4281,7 +4300,7 @@ class ExportExcelCorporateAdminUserListingView(APIView):
             except ValueError:
                 raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
 
-
+        # 4. Apply DRF Search and Ordering Filters (Requires a QuerySet)
         search_filter = filters.SearchFilter()
         plans = search_filter.filter_queryset(request, plans, self)
 
@@ -4290,6 +4309,10 @@ class ExportExcelCorporateAdminUserListingView(APIView):
 
         if not plans.ordered:
             plans = plans.order_by('-id')
+
+        # 5. NOW apply the custom Python role filter at the very end
+        # (This evaluates the QuerySet into a clean Python list)
+        plans = [user for user in plans if has_role(user, CorporateAdmin)]
 
 
         serializer = CorproateUserListingSerializer(plans, many=True)
@@ -4375,22 +4398,32 @@ class ExportExcelCorporateAdminUserListingView(APIView):
                 "course":"Total Assign Courses",
                 "created_at":'Created At',
             })
+        
         for order in serializer.data:
+            sub = order.get('active_suscription') or {}
+            counters = order.get('counters') or {}
+            plan_info = sub.get('plan_info') or {}
+
+            sub_status = sub.get('subscription_status')
+            status_label = OrderStatus(sub_status).label if sub_status is not None else "Inactive"
+
+            sub_type = sub.get('subscription_type')
+            type_label = PlanType(sub_type).label if sub_type is not None else "N/A"
 
             lis.append({
-                "first_name":order['first_name'],
-                "last_name":order['last_name'],
-                "email":order['email'],
-                "phone":order['active_suscription']['plan_info']['plan_name'],
-                "start_date":order['active_suscription']['start_date'],
-                "end_date":order['active_suscription']['next_due'],
-                "subscription_status":order['active_suscription']['end_date'],
-                "ordered_courses":order['counters']['license_used'],
-                "licenced":order['counters']['no_of_licences'],
-                "status":OrderStatus(order['active_suscription']['subscription_status']).label,
-                "type":PlanType(order['active_suscription']['subscription_type']).label,
-                "course":order['counters']['assigned_courses'],
-                "created_at":order['created_at'],
+                "first_name": order.get('first_name'),
+                "last_name": order.get('last_name'),
+                "email": order.get('email'),
+                "phone": plan_info.get('plan_name', 'No Active Plan'),
+                "start_date": sub.get('start_date', 'N/A'),
+                "end_date": sub.get('next_due', 'N/A'),
+                "subscription_status": sub.get('end_date', 'N/A'),
+                "ordered_courses": counters.get('license_used', 0),
+                "licenced": counters.get('no_of_licences', 0),
+                "status": status_label,
+                "type": type_label,
+                "course": counters.get('assigned_courses', 0),
+                "created_at": order.get('created_at'),
             })
 
         

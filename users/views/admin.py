@@ -348,31 +348,27 @@ class GetStudentListingView(APIView):
     ordering_fields = ['first_name',"last_name","email", 'date_joined', 'id', 'is_active',"phone1","category"] 
     def get(self, request, format=None):
         
-        users_list = User.objects.filter(role = User.Student)
+        users_list = User.objects.all()
 
         first_name = request.query_params.get('first_name')
         if first_name:
-            users_list = users_list.filter(first_name__icontains = first_name)
+            users_list = users_list.filter(first_name__icontains=first_name)
 
         last_name = request.query_params.get('last_name')
         if last_name:
-            users_list = users_list.filter(last_name__icontains = last_name)
+            users_list = users_list.filter(last_name__icontains=last_name)
 
         email = request.query_params.get('email')
         if email:
-            users_list = users_list.filter(email__icontains = email)
+            users_list = users_list.filter(email__icontains=email)
 
         phone1 = request.query_params.get('phone')
         if phone1:
-            users_list = users_list.filter(phone1__icontains = phone1)
+            users_list = users_list.filter(phone1__icontains=phone1)
 
         is_active = request.query_params.get('status')
         if is_active:
-            users_list = users_list.filter(is_active = is_active)
-
-        start_date = request.query_params.get('start_date')
-        end_date = request.query_params.get('end_date')
-        category = request.query_params.get('category')
+            users_list = users_list.filter(is_active=is_active)
 
         reference_ids_param = request.query_params.get('reference_id')
         if reference_ids_param:
@@ -386,15 +382,18 @@ class GetStudentListingView(APIView):
                 
                 users_list = users_list.filter(q_objects)
 
-
+        category = request.query_params.get('category')
         if category:
-            category = category.split(',')
-            users_list = users_list.filter(user__category__in = category)
+            category_list = category.split(',')
+            users_list = users_list.filter(user__category__in=category_list)
 
         student_type = request.query_params.get('student_type')
         if student_type:
-            student_type = student_type.split(',')
-            users_list = users_list.filter(user__student_type__in =student_type)
+            student_type_list = student_type.split(',')
+            users_list = users_list.filter(user__student_type__in=student_type_list)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
 
         if start_date:
             try:
@@ -411,7 +410,6 @@ class GetStudentListingView(APIView):
                 users_list = users_list.filter(created_at__lte=end_datetime_aware)
             except ValueError:
                 raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
-            
 
         search_filter = filters.SearchFilter()
         users_list = search_filter.filter_queryset(request, users_list, self)
@@ -421,6 +419,8 @@ class GetStudentListingView(APIView):
 
         if not users_list.ordered:
             users_list = users_list.order_by('-id')
+
+        users_list = [user for user in users_list if has_role(user, Student)]
 
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(users_list, request, view=self)

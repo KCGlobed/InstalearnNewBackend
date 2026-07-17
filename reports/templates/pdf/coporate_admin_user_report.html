@@ -121,17 +121,45 @@
                             <b>Created At</b>
                         </td>
                     </tr>
-                    {% for order_info in  order_data %}
-                        <tr>
-                            <td>{{order_info.first_name}} {{order_info.last_name}} <br>{{order_info.email}}</td>
-                            <td>{{order_info.active_suscription.plan_info.plan_name}}</td>
-                            <td>{{order_info.active_suscription.start_date}} / {{order_info.active_suscription.next_due}} / {{order_info.active_suscription.end_date}}</td>
-                            <td>{{order_info.counters.license_used}} / {{order_info.counters.no_of_licences}}</td>
-                            <td>{{order_info.active_suscription.subscription_status|subscription_status}} / {{order_info.active_suscription.subscription_type|subscription_type}}</td>
-                            <td>{{order_info.counters.assigned_courses}}</td>
-                            <td>{{order_info.created_at}}</td>
-                        </tr>
+                    {% for order_info in order_data %}
+                    <tr>
+                        <!-- User Info (Always present) -->
+                        <td>{{ order_info.first_name }} {{ order_info.last_name }} <br>{{ order_info.email }}</td>
                         
+                        <!-- Subscription Plan Name -->
+                        <td>
+                            {% if order_info.active_suscription %}
+                                {{ order_info.active_suscription.plan_info.plan_name }}
+                            {% else %}
+                                No Active Plan
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Subscription Dates -->
+                        <td>
+                            {% if order_info.active_suscription %}
+                                {{ order_info.active_suscription.start_date }} / {{ order_info.active_suscription.next_due }} / {{ order_info.active_suscription.end_date }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        
+                        <!-- License Counters (Always present in JSON) -->
+                        <td>{{ order_info.counters.license_used }} / {{ order_info.counters.no_of_licences }}</td>
+                        
+                        <!-- Subscription Status / Type -->
+                        <td>
+                            {% if order_info.active_suscription %}
+                                {{ order_info.active_suscription.subscription_status|subscription_status }} / {{ order_info.active_suscription.subscription_type|subscription_type }}
+                            {% else %}
+                                Inactive
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Assigned Courses & Created Date -->
+                        <td>{{ order_info.counters.assigned_courses }}</td>
+                        <td>{{ order_info.created_at }}</td>
+                    </tr>
                     {% endfor %}
                 </table>
             </div>
