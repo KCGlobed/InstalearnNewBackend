@@ -4471,3 +4471,356 @@ class ViewCorporateAdminUserDetailView(APIView):
             data=serializer.data,
             status_code=status.HTTP_200_OK
         )
+    
+
+class GetSubscriptionListingView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "corporate_subscription_report",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['first_name', "last_name","email"]
+    ordering_fields = ['first_name', "last_name","email",'created_at', 'id'] 
+    def get(self, request, format=None):
+        
+        plans = Order.objects.filter(subscription_status__in = [OrderStatus.Active , OrderStatus.Expired, OrderStatus.Cancelled, OrderStatus.Paused], payment_type = PaymentType.Subscription)
+        
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            plans = plans.filter(first_name__icontains =first_name)
+
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            plans = plans.filter(last_name__icontains =last_name)
+
+        
+        email = request.query_params.get('email')
+        if email:
+            plans = plans.filter(email__icontains =email)
+
+        subscription_status = request.query_params.get('subscription_status')
+        if subscription_status:
+            plans = plans.filter(subscription_status = subscription_status)
+
+        
+        subscription_type = request.query_params.get('subscription_type')
+        if subscription_type:
+            subscription_type = subscription_type.split(',')
+            plans = plans.filter(subscription_type__in = subscription_type)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                plans = plans.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                plans = plans.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+
+
+        search_filter = filters.SearchFilter()
+        plans = search_filter.filter_queryset(request, plans, self)
+
+        ordering_filter = filters.OrderingFilter()
+        plans = ordering_filter.filter_queryset(request, plans, self)
+
+        if not plans.ordered:
+            plans = plans.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(plans, request, view=self)
+        serializer = SubscriptionOrderDetailSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+class ExportPDFsubscriptionOrderListingView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "coporate_subscription_report_pdf",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['first_name', "last_name","email"]
+    ordering_fields = ['first_name', "last_name","email",'created_at', 'id'] 
+    def get(self, request, format=None):
+        
+        plans = Order.objects.filter(subscription_status__in = [OrderStatus.Active , OrderStatus.Expired, OrderStatus.Cancelled, OrderStatus.Paused], payment_type = PaymentType.Subscription)
+        
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            plans = plans.filter(first_name__icontains =first_name)
+
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            plans = plans.filter(last_name__icontains =last_name)
+
+        
+        email = request.query_params.get('email')
+        if email:
+            plans = plans.filter(email__icontains =email)
+
+        subscription_status = request.query_params.get('subscription_status')
+        if subscription_status:
+            plans = plans.filter(subscription_status = subscription_status)
+
+        
+        subscription_type = request.query_params.get('subscription_type')
+        if subscription_type:
+            subscription_type = subscription_type.split(',')
+            plans = plans.filter(subscription_type__in = subscription_type)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                plans = plans.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                plans = plans.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+
+
+        search_filter = filters.SearchFilter()
+        plans = search_filter.filter_queryset(request, plans, self)
+
+        ordering_filter = filters.OrderingFilter()
+        plans = ordering_filter.filter_queryset(request, plans, self)
+
+        if not plans.ordered:
+            plans = plans.order_by('-id')
+
+
+        serializer = SubscriptionOrderDetailSerializer(plans, many=True)
+        
+        data = {
+            "order_data":serializer.data
+        }
+
+
+        template = get_template('pdf/active_corporate_subscription_report.html')
+        html  = template.render(data)
+        # Use tempfile to create a temporary PDF file
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            html = html.encode('latin-1', 'replace').decode('latin-1')
+            pdf = pisa.CreatePDF(BytesIO(html.encode("ISO-8859-1")), dest=temp_file)
+
+            if pdf.err:
+                raise Exception("PDF generation error!")
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            report_name = "subscription_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            # Ensure the temporary file is deleted from the server's disk
+            os.remove(pdf_path)
+    
+
+
+class ExportExcelsubscriptionOrderListingView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "coporate_subscription_report_excel",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['first_name', "last_name","email"]
+    ordering_fields = ['first_name', "last_name","email",'created_at', 'id'] 
+    def get(self, request, format=None):
+        
+        plans = Order.objects.filter(subscription_status__in = [OrderStatus.Active , OrderStatus.Expired, OrderStatus.Cancelled, OrderStatus.Paused], payment_type = PaymentType.Subscription)
+        
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            plans = plans.filter(first_name__icontains =first_name)
+
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            plans = plans.filter(last_name__icontains =last_name)
+
+        
+        email = request.query_params.get('email')
+        if email:
+            plans = plans.filter(email__icontains =email)
+
+        subscription_status = request.query_params.get('subscription_status')
+        if subscription_status:
+            plans = plans.filter(subscription_status = subscription_status)
+
+        
+        subscription_type = request.query_params.get('subscription_type')
+        if subscription_type:
+            subscription_type = subscription_type.split(',')
+            plans = plans.filter(subscription_type__in = subscription_type)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                plans = plans.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                plans = plans.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+
+
+        search_filter = filters.SearchFilter()
+        plans = search_filter.filter_queryset(request, plans, self)
+
+        ordering_filter = filters.OrderingFilter()
+        plans = ordering_filter.filter_queryset(request, plans, self)
+
+        if not plans.ordered:
+            plans = plans.order_by('-id')
+
+
+        serializer = SubscriptionOrderDetailSerializer(plans, many=True)
+        
+        lis = []
+        
+        lis.append({
+                "first_name":"Subscription Report",
+                "last_name":'',
+                "email":'',
+                "phone":'',
+                "ordered_courses":'',
+                "total_amount":'',
+                "start_date":'',
+                "end_date":'',
+                "subscription_type":'',
+                "subscription_status":'',
+                
+                "created_at":'',
+            })
+        
+        lis.append({
+                "first_name":"",
+                "last_name":'',
+                "email":'',
+                "phone":'',
+                "ordered_courses":'',
+                "total_amount":'',
+                "start_date":'',
+                "end_date":'',
+                "subscription_type":'',
+                "subscription_status":'',
+                
+                "created_at":'',
+            })
+        
+        lis.append({
+                "first_name":"",
+                "last_name":'',
+                "email":'',
+                "phone":'',
+                "ordered_courses":'',
+                "total_amount":'',
+                "start_date":'',
+                "end_date":'',
+                "subscription_type":'',
+                "subscription_status":'',
+                
+                "created_at":'',
+            })
+        
+        lis.append({
+                "first_name":"First Name",
+                "last_name":'Last Name',
+                "email":'Email',
+                "phone":'Phone',
+                "ordered_courses":'Plan Name',
+                "total_amount":'Total Amount',
+                "start_date":'Start Date',
+                "end_date":'End Date',
+                "subscription_type":'Subscription Status',
+                "subscription_status":'Subsceiprion Type',
+                "created_at":'Created At',
+            })
+        for order in serializer.data:
+
+            plan_info = order.get('plan_info') or {}
+            
+            lis.append({
+                "first_name":order['first_name'],
+                "last_name":order['last_name'],
+                "email":order['email'],
+                "phone":order['phone'],
+                "ordered_courses":plan_info.get('plan_name', 'No Active Plan'),
+                "total_amount":order['total_amount'],
+                "start_date":order['start_date'],
+                "end_date":order['end_date'],
+                "subscription_type": OrderStatus(order['subscription_status']).label if order['subscription_status'] is not None else "Inactive",
+                "subscription_status":PlanType(order['subscription_type']).label  if order['subscription_type'] is not None else "N/A",
+                "created_at":order['created_at'],
+            })
+
+        
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            df = pd.DataFrame.from_dict(lis)
+            df.to_excel(pdf_path, header=False, index=False)
+        
+        try:
+            # GCS file naming logic
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            report_name = "subscription_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
+
+            # Upload the temporary file to GCS
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            # Ensure the temporary file is deleted
+            os.remove(pdf_path)

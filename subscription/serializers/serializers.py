@@ -460,6 +460,7 @@ class StartSubscriptionSerializer(serializers.ModelSerializer) :
             payment_type = PaymentType.Subscription,
             plan = subscription_plan,
             subscription_id = subscription_plan.id,
+            subscription_type = subscription_plan.plan_type,
             no_of_licence = subscription_plan.no_of_licence,
             amount = total_amount,
             gst_amount = tax,

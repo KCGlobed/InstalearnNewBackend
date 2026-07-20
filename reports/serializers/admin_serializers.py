@@ -266,6 +266,19 @@ class OrderInfoSerializer(serializers.ModelSerializer):
         model = Order
         fields = ["id",'start_date',"next_due","end_date","subscription_type","subscription_status","plan_info"]
 
+
+class SubscriptionOrderDetailSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    plan_info = serializers.SerializerMethodField('get_plan_info')
+    
+    def get_plan_info(self, obj):
+        return PlanInfoSerializer(obj.plan).data
+    
+    class Meta:
+        model = Order
+        fields = ["id","first_name","last_name","email","phone","total_amount","gst_amount","amount","start_date","next_due","end_date","subscription_type","subscription_status","created_at","plan_info"]
+
+
 class CorproateUserListingSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     counters = serializers.SerializerMethodField('get_counters')
