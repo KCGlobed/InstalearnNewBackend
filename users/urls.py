@@ -9,6 +9,7 @@ urlpatterns = [
     path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('get-roles/', GetRolesActiveView.as_view(), name="get-roles"),
+    path('get-user-role/', GetUserRolesView.as_view(), name="get-user-role"),
 
     path('login/', UserLoginView.as_view(), name="user-login"),
     path('social-login/', UserSocialLoginView.as_view(), name="social-login"),

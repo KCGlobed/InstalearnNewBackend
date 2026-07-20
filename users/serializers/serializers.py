@@ -217,6 +217,20 @@ class UserVerifyOTPSerializer(serializers.ModelSerializer):
     
 
 
+class GetUserRoleSerializer(serializers.ModelSerializer) :
+    user_id = serializers.EmailField(max_length = 255, required=True)
+    class Meta:
+        model = User
+        fields = ['user_id']
+
+    def validate(self, data):
+        user = User.objects.filter(id =data.get('user_id')).count()
+        if user == 0:
+            raise serializers.ValidationError("User Not found with this ID")
+        return data
+    
+    
+
 class UserVerificationOTPSerializer(serializers.ModelSerializer) :
     email = serializers.EmailField(max_length = 255, required=True)
     class Meta:

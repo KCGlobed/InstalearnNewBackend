@@ -62,4 +62,6 @@ urlpatterns = [
     path('get-user-courses-progress/', GetUserCoursesProgressView.as_view(), name="get-user-courses-progress"),
     path('reshare-user-login-detail/', ReshareUserLoginDetailView.as_view(), name="reshare-user-login-detail"),
 
+    path('assign-single-course-to-students/', AssignSingleCourseAccessView.as_view(), name="assign-single-course-to-students"),
+
 ]

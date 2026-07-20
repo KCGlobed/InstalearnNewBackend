@@ -923,15 +923,6 @@ class ShareCourseAccessSerializer(serializers.ModelSerializer) :
         if used_licences_count >= no_of_licences:
             raise serializers.ValidationError("You have used all the student seats available under this subscription. Please upgrade your plan or purchase additional licenses to add more users.")
         
-        email_to_check = data.get('email', '').lower()
-        current_user = self.context.get('user')
-
-        email_exists = User.objects.filter(email=email_to_check).exclude(id=current_user.id).exists()
-
-        if email_exists:
-            raise serializers.ValidationError("A user is already registered with this email.")
-
-    
         return data
 
 
@@ -1297,5 +1288,55 @@ class ReshareUserLoginDetailSerializer(serializers.ModelSerializer):
         )
 
         send_mail( subject, message, email_from, recipient_list,html_message=html_message )
+
+        return user_info
+    
+
+
+class AssignSingleCourseAccessSerializer(serializers.ModelSerializer) :
+    course_id = serializers.IntegerField(required=True)
+    user_id = serializers.ListField(required=True)
+    
+    class Meta:
+        model = Order
+        fields = ["user_id",'course_id']
+    
+    def validate_course_id(self, value):
+           
+        if not Course.objects.filter(id=value).exists():
+            raise serializers.ValidationError(
+                f"The following course ID do not exist: {list(value)}"
+            )
+        return value
+    
+    def validate(self, data):
+        user_info = User.objects.get(id__in = data.get('user_id'))
+        cart_items = Course.objects.filter(id=data.get('course_id'))
+        for user in user_info:
+            if UserCourses.objects.filter(user=user, course=cart_items).exists():
+                raise serializers.ValidationError(f"User have a already course access of x: {cart_items.name}")
+            
+        return data
+
+
+    def create(self , validate_data):
+
+        user_info = User.objects.get(id__in = validate_data.get('user_id'))
+        course_order = Order.objects.filter(
+            user_id=self.context.get('user').id, 
+            isPaid=True, 
+            payment_type=PaymentType.Subscription, 
+            subscription_status=OrderStatus.Active
+        ).order_by('-created_at').first()
+
+        cart_items = Course.objects.filter(id=validate_data.get('course_id'))
+        for user in user_info:
+            cart_order = UserCourses(
+                order = course_order,
+                course = cart_items,
+                user = user,
+                paid=True
+            )
+            cart_order.save()
 
         return user_info

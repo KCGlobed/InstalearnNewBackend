@@ -59,8 +59,6 @@ urlpatterns = [
     path('get-corporare-admin-user-report-excel/', ExportExcelCorporateAdminUserListingView.as_view(), name="get-corporare-admin-user-report-excel"),
 
     path('view-corporare-admin-user/<id>', ViewCorporateAdminUserDetailView.as_view(), name="view-corporare-admin-user"),
-
-
     path('get-subscription-listing/', GetSubscriptionListingView.as_view(), name="get-subscription-listing"),
     path('get-subscription-report-pdf/', ExportPDFsubscriptionOrderListingView.as_view(), name="get-subscription-report-pdf"),
     path('get-subscription-report-excel/', ExportExcelsubscriptionOrderListingView.as_view(), name="get-subscription-report-excel"),

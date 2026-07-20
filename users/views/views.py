@@ -227,6 +227,15 @@ class UserVerifyOTPView(APIView):
             
     
 
+class GetUserRolesView(APIView):
+    renderer_classes = [UserRenderer]
+    def post(self, request, format=None):
+        serializer = GetUserRoleSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user = User.objects.get(email=serializer.data.get('user_id'))
+            return success_response(message="Success", data={'user_role': get_user_role(user)}, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
 
 class UserSendVerificationOTPView(APIView):
     renderer_classes = [UserRenderer]
