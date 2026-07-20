@@ -218,7 +218,7 @@ class UserVerifyOTPSerializer(serializers.ModelSerializer):
 
 
 class GetUserRoleSerializer(serializers.ModelSerializer) :
-    user_id = serializers.EmailField(max_length = 255, required=True)
+    user_id = serializers.IntegerField(required=True)
     class Meta:
         model = User
         fields = ['user_id']
