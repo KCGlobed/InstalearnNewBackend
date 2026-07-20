@@ -61,7 +61,7 @@ urlpatterns = [
     path('get-user-study-progress/', GetUserStudyProgressView.as_view(), name="get-user-study-progress"),
     path('get-user-courses-progress/', GetUserCoursesProgressView.as_view(), name="get-user-courses-progress"),
     path('reshare-user-login-detail/', ReshareUserLoginDetailView.as_view(), name="reshare-user-login-detail"),
-
+    path('get-corporate-students-list/', GetCorporateStudentsListView.as_view(), name="get-corporate-students-list"),
     path('assign-single-course-to-students/', AssignSingleCourseAccessView.as_view(), name="assign-single-course-to-students"),
 
 ]
