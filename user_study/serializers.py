@@ -1310,8 +1310,8 @@ class AssignSingleCourseAccessSerializer(serializers.ModelSerializer) :
         return value
     
     def validate(self, data):
-        user_info = User.objects.get(id__in = data.get('user_id'))
-        cart_items = Course.objects.filter(id=data.get('course_id'))
+        user_info = User.objects.filter(id__in = data.get('user_id'))
+        cart_items = Course.objects.filter(id=data.get('course_id')).first()
         for user in user_info:
             if UserCourses.objects.filter(user=user, course=cart_items).exists():
                 raise serializers.ValidationError(f"User have a already course access of x: {cart_items.name}")
@@ -1321,7 +1321,7 @@ class AssignSingleCourseAccessSerializer(serializers.ModelSerializer) :
 
     def create(self , validate_data):
 
-        user_info = User.objects.get(id__in = validate_data.get('user_id'))
+        user_info = User.objects.filter(id__in = validate_data.get('user_id'))
         course_order = Order.objects.filter(
             user_id=self.context.get('user').id, 
             isPaid=True, 
@@ -1329,7 +1329,7 @@ class AssignSingleCourseAccessSerializer(serializers.ModelSerializer) :
             subscription_status=OrderStatus.Active
         ).order_by('-created_at').first()
 
-        cart_items = Course.objects.filter(id=validate_data.get('course_id'))
+        cart_items = Course.objects.filter(id=validate_data.get('course_id')).first()
         for user in user_info:
             cart_order = UserCourses(
                 order = course_order,

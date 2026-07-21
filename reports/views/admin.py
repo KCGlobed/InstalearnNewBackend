@@ -4151,8 +4151,6 @@ class CorporateUserListingView(APIView):
         if not plans.ordered:
             plans = plans.order_by('-id')
 
-        # 5. NOW apply the custom Python role filter at the very end
-        # (This evaluates the QuerySet into a clean Python list)
         plans = [user for user in plans if has_role(user, CorporateAdmin)]
 
         paginator = self.pagination_class()
@@ -4824,3 +4822,55 @@ class ExportExcelsubscriptionOrderListingView(APIView):
         finally:
             # Ensure the temporary file is deleted
             os.remove(pdf_path)
+
+
+class UpdateCorporateAdminUserStatusView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_corporate_user_status",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = User.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid User ID!")
+        
+        serializer = ChangeCorporateAdminUserStatusSerializer(category, data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Blog Status Updated Successfully", data=CorproateUserListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+class UpdateCorporateAdminUserView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_corporate_user",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, id=None, format=None):
+        user_info = User.objects.filter(id = id ).first()
+        if user_info is None:
+            raise ValidationError("Invalid User ID!")
+        
+        serializer = UpdateCoporateAdminUserSerializer(user_info ,data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="User Updated Successfully", data=CorproateUserListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class CreateCorporateAdminUserView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_corporate_user",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = CreateCorporateAdminUserSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="User Created Successfully", data=CorproateUserListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)

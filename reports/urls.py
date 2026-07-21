@@ -55,6 +55,9 @@ urlpatterns = [
     path('admin-dashboard-revenue-graph/<str:interval>', GetAdminDashboardRevenueGraphsView.as_view(), name="admin-dashboard-revenue-graph"),
 
     path('get-corporare-admin-user-listing/', CorporateUserListingView.as_view(), name="get-corporare-admin-user-listing"),
+    path('create-corporate-admin-user/', CreateCorporateAdminUserView.as_view(), name="create-corporate-admin-user"),
+    path('update-corporare-admin-user-status/<int:cid>', UpdateCorporateAdminUserStatusView.as_view(), name="update-corporare-admin-user-status"),
+    path('update-corporare-admin-user/<int:id>', UpdateCorporateAdminUserView.as_view(), name="update-corporare-admin-user"),
     path('get-corporare-admin-user-report-pdf/', ExportPDFCorporateAdminUserListingView.as_view(), name="get-corporare-admin-user-report-pdf"),
     path('get-corporare-admin-user-report-excel/', ExportExcelCorporateAdminUserListingView.as_view(), name="get-corporare-admin-user-report-excel"),
 
