@@ -5,7 +5,7 @@ from subscription.models import *
 from mini_lms.utils import *
 from itertools import chain
 import pytz
-from datetime import timedelta
+from datetime import timedelta, datetime
 from django.db.models import Q, Count
 from django.core.validators import FileExtensionValidator
 from django.core.mail import send_mail
@@ -541,3 +541,67 @@ class UpdateCoporateAdminUserSerializer(serializers.ModelSerializer):
         info.image = validate_data.get('image', info.image)
         info.save()
         return info
+    
+
+
+class AssignSubscriptiontoCorporateAdminUserSerializer(serializers.ModelSerializer) :
+    user_id = serializers.IntegerField(required=True)
+    plan_id = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = Order
+        fields = ['status']
+        
+    def validate(self, data):
+        plan_id = data.get('plan_id')
+        plan_count = SubscriptionPlans.objects.filter(id=plan_id).count()
+        if plan_count == 0:
+            raise serializers.ValidationError("Invalid Subscription Plan ID")
+        
+
+        course = Order.objects.filter(user = self.context.get('user'), isPaid = True, payment_type = PaymentType.Subscription, subscription_status=OrderStatus.Active).order_by('-created_at').first()
+
+        if course is not None:
+            raise serializers.ValidationError('You have a already active subscription')
+        
+        return data
+
+    def update(self , category, validate_data):
+
+        subscription_plan = SubscriptionPlans.objects.filter(id=validate_data.get('plan_id')).first()
+
+        current_year = datetime.now().year
+        count = Order.objects.all().count()
+        order_id = f"{current_year}-{str(count + 1).zfill(4)}"  
+
+
+        tax = subscription_plan.gst_amount
+        total_amount = subscription_plan.amount_without_gst
+        order_total_amount = subscription_plan.amount
+
+        book_order = Order(
+            orderID = order_id,
+            user = self.context.get('user'),
+            first_name = self.context.get('user').first_name,
+            last_name = self.context.get('user').last_name,
+            email = self.context.get('user').email,
+            phone = self.context.get('user').phone1,
+            payment_type = PaymentType.Subscription,
+            plan = subscription_plan,
+            subscription_id = subscription_plan.id,
+            subscription_type = subscription_plan.plan_type,
+            no_of_licence = subscription_plan.no_of_licence,
+            amount = total_amount,
+            gst_amount = tax,
+            total_amount = order_total_amount,
+            isPaid = True,
+            subscription_status = OrderStatus.Active,
+            payment_method = PaymentMethod.Offline
+        )
+        book_order.save()
+
+
+        category.is_active = validate_data.get('status', category.is_active)
+        category.save()
+
+        return self.context.get('user')

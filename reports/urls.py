@@ -60,6 +60,7 @@ urlpatterns = [
     path('update-corporare-admin-user/<int:id>', UpdateCorporateAdminUserView.as_view(), name="update-corporare-admin-user"),
     path('get-corporare-admin-user-report-pdf/', ExportPDFCorporateAdminUserListingView.as_view(), name="get-corporare-admin-user-report-pdf"),
     path('get-corporare-admin-user-report-excel/', ExportExcelCorporateAdminUserListingView.as_view(), name="get-corporare-admin-user-report-excel"),
+    path('assign-subscription-to-corporare-admin/<int:cid>', AssignSubscriptiontoCorporateAdminUserView.as_view(), name="assign-subscription-to-corporare-admin"),
 
     path('view-corporare-admin-user/<id>', ViewCorporateAdminUserDetailView.as_view(), name="view-corporare-admin-user"),
     path('get-subscription-listing/', GetSubscriptionListingView.as_view(), name="get-subscription-listing"),

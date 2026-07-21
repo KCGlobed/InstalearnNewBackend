@@ -4842,6 +4842,8 @@ class UpdateCorporateAdminUserStatusView(APIView):
             return success_response(message="Blog Status Updated Successfully", data=CorproateUserListingSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
+
+    
 class UpdateCorporateAdminUserView(APIView):
     renderer_classes = [ReportsRenderer]
     permission_classes = [IsAuthenticated, 
@@ -4873,4 +4875,24 @@ class CreateCorporateAdminUserView(APIView):
         if serializer.is_valid(raise_exception = True):
             user  = serializer.save()
             return success_response(message="User Created Successfully", data=CorproateUserListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class AssignSubscriptiontoCorporateAdminUserView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_corporate_user_subscription",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = User.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid User ID!")
+        
+        serializer = AssignSubscriptiontoCorporateAdminUserSerializer(category, data = request.data, context={'user':category})
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Blog Status Updated Successfully", data=CorproateUserListingSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)

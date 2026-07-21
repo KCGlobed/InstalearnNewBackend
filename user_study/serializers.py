@@ -1314,7 +1314,7 @@ class AssignSingleCourseAccessSerializer(serializers.ModelSerializer) :
         cart_items = Course.objects.filter(id=data.get('course_id')).first()
         for user in user_info:
             if UserCourses.objects.filter(user=user, course=cart_items).exists():
-                raise serializers.ValidationError(f"User have a already course access of x: {cart_items.name}")
+                raise serializers.ValidationError(f"User have a already course access of : {cart_items.name}")
             
         return data
 
