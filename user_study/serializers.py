@@ -1305,7 +1305,7 @@ class AssignSingleCourseAccessSerializer(serializers.ModelSerializer) :
            
         if not Course.objects.filter(id=value).exists():
             raise serializers.ValidationError(
-                f"The following course ID do not exist: {list(value)}"
+                f"The following course ID do not exist: {value}"
             )
         return value
     
