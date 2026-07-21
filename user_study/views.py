@@ -402,6 +402,8 @@ class ViewBookSignedUrlView(APIView):
         if chapter is None:
             raise ValidationError("Invalid Lecture ID!")
         
+        from datetime import timezone
+
         bucket_name, object_name = parse_gcs_url(chapter.ebook.book_file.url)
         expiration_time = datetime.now(timezone.utc) + timedelta(seconds=10)
         bucket = client.get_bucket(settings.GS_BUCKET_NAME_2)

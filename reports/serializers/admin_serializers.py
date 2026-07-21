@@ -600,8 +600,4 @@ class AssignSubscriptiontoCorporateAdminUserSerializer(serializers.ModelSerializ
         )
         book_order.save()
 
-
-        category.is_active = validate_data.get('status', category.is_active)
-        category.save()
-
         return self.context.get('user')
