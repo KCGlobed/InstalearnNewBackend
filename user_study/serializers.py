@@ -1340,3 +1340,29 @@ class AssignSingleCourseAccessSerializer(serializers.ModelSerializer) :
             cart_order.save()
 
         return user_info
+    
+
+
+class GetCourseAccessStudentsSerializer(serializers.ModelSerializer) :
+    course_id = serializers.IntegerField(required=True)
+    
+    class Meta:
+        model = UserCourses
+        fields = ['course_id']
+    
+    def validate_course_id(self, value):
+           
+        if not Course.objects.filter(id=value).exists():
+            raise serializers.ValidationError(
+                f"The following course ID do not exist: {value}"
+            )
+        return value
+    
+    def validate(self, data):
+        return data
+    
+
+class StudentBasicDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id','first_name','last_name', 'email']

@@ -57,6 +57,7 @@ urlpatterns = [
     path('get-corporate-users-list/', GetCorporateUsersListView.as_view(), name="get-corporate-users-list"),
     path('assign-course-to-students/', AssignCourseAccessView.as_view(), name="assign-course-to-students"),
     path('remove-course-to-students/', RemoveCourseAccessView.as_view(), name="remove-course-to-students"),
+    path('get-course-students/', GetCourseStudentsView.as_view(), name="get-course-students"),
     
     path('get-user-study-progress/', GetUserStudyProgressView.as_view(), name="get-user-study-progress"),
     path('get-user-courses-progress/', GetUserCoursesProgressView.as_view(), name="get-user-courses-progress"),

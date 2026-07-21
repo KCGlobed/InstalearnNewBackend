@@ -1049,6 +1049,23 @@ class AssignCourseAccessView(APIView):
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
+class GetCourseStudentsView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = GetCourseAccessStudentsSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            course_id = serializer.data.get('course_id')
+            usercourses = UserCourses.objects.filter(course_id = course_id, user__corporate_id = request.user.id).values_list("user",flat=True)
+            users = User.objects.filter(id__in = usercourses)
+            
+            return success_response(message="", data=StudentBasicDetailSerializer(users, many=True).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
 class RemoveCourseAccessView(APIView):
     renderer_classes = [UserStudyRenderer]
     permission_classes = [IsAuthenticated, 
