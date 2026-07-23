@@ -65,4 +65,8 @@ urlpatterns = [
     path('get-corporate-students-list/', GetCorporateStudentsListView.as_view(), name="get-corporate-students-list"),
     path('assign-single-course-to-students/', AssignSingleCourseAccessView.as_view(), name="assign-single-course-to-students"),
 
+    path('view-corporate-user-detail/<sid>', ViewCorporateUserDetailView.as_view(), name="view-corporate-user-detail"),
+    path('view-student-video-report/<int:id>/<int:sid>', GetStudentVideoReportView.as_view(), name="view-student-video-report"),
+    path('get-student-notes-listing/<int:id>/<int:cid>', GetStudentNotesListingView.as_view(), name="get-student-notes-listing"),
+    path('get-attempted-quiz-list/<int:id>/<int:cid>', GetAttemptedTestsListingView.as_view(), name="get-attempted-quiz-list"),
 ]

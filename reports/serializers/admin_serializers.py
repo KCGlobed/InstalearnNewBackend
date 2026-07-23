@@ -550,7 +550,7 @@ class AssignSubscriptiontoCorporateAdminUserSerializer(serializers.ModelSerializ
 
     class Meta:
         model = Order
-        fields = ['status']
+        fields = ['user_id',"plan_id"]
         
     def validate(self, data):
         plan_id = data.get('plan_id')

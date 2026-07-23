@@ -1263,3 +1263,63 @@ class GetCorporateStudentsListView(APIView):
         users_list = User.objects.filter(corporate = request.user)
         serializer = StudentListingSerializer(users_list, many=True)
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
+class ViewCorporateUserDetailView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin]
+                        )]
+    def get(self, request, sid=None):
+        users_list = User.objects.filter(corporate = request.user, id = sid).first()
+        if users_list is None:
+            raise ValidationError("Invalid User ID!")
+        
+        serializer = GetStudentDetailSerializer(users_list)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
+
+class GetStudentVideoReportView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin]
+                        )]
+    def get(self, request, id = None, sid=None):
+        
+        course_list = UserCourses.objects.filter(course_id = sid, paid = 1, user = id).count()
+        if course_list == 0:
+            return error_response(message="Invalid Course ID", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+
+        category = CourseChapters.objects.filter(course_id=sid)
+        serializer = CourseVideoReportSerializer(category, many=True, context={'user':id})
+        total_video_watched = UserLectureProgress.objects.filter( course_id = sid, user = id).count()
+        total_duration_video_watched = UserLectureProgress.objects.filter( course_id = sid, user = id).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+
+        return success_response(message="Success", data={"report_data":serializer.data, "total_video_watched":total_video_watched, "total_duration_video_watched":total_duration_video_watched}, status_code=status.HTTP_200_OK)
+
+
+class GetStudentNotesListingView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin]
+                        )]
+    def get(self, request, cid=None, id=None):
+        notes = Notes.objects.filter(user_id = id, course_id = cid)
+        serializer = GetUserNotesSerializer(notes, many= True, context={'user':id})
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
+class GetAttemptedTestsListingView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin]
+                        )]
+    def get(self, request, cid=None, id=None):
+        test = PracticeTests.objects.filter(course_id = cid, user = id).order_by("-id")
+        serializer = PracticeTestListingSerializer(test,many=True)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)

@@ -1366,3 +1366,90 @@ class StudentBasicDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id','first_name','last_name', 'email']
+
+
+class UserCoursesDetailSerializer(serializers.ModelSerializer):
+    course_detail = MyCourseDetailSerializer(source="course", read_only=True)
+    courses_progress = serializers.SerializerMethodField('get_courses_progress')
+    certificate = serializers.SerializerMethodField('get_certificate')
+            
+    def get_certificate(self, obj):
+        get_certificate = UserCertificates.objects.filter(user_id = obj.user.id, course_id = obj.course.id).first()
+        if get_certificate is not None:
+            return get_certificate.certificate_url
+        return None
+        
+    def get_courses_progress(self, obj):
+        total_video_duration = Course.objects.filter(id = obj.course.id).aggregate(Sum('total_video_duration')).get('total_video_duration__sum')  or 0
+
+        total_duration_video_watched = UserLectureProgress.objects.filter(course_id = obj.course.id, user_id = obj.user.id).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+        video_duration_progress = 0
+        if total_duration_video_watched > total_video_duration:
+            video_duration_progress =  100
+        else:
+            if total_video_duration > 0:
+                video_duration_progress =  math.ceil(total_duration_video_watched * 100 / total_video_duration)
+
+        return video_duration_progress
+    
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Pass the context to the nested serializer
+        if 'context' in kwargs:
+            self.fields['course_detail'].context.update(kwargs['context'])
+
+    class Meta:
+        model = UserCourses
+        fields = ["id", "course_detail","courses_progress","is_started","certificate"]
+
+
+class GetStudentDetailSerializer(serializers.ModelSerializer):
+    date_joined = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    courses = serializers.SerializerMethodField('get_courses')
+    
+    def get_courses(self, obj):
+        users_courses = UserCourses.objects.filter(user=obj, paid=True).select_related("course").order_by("-id")
+        return UserCoursesDetailSerializer(users_courses, many=True, context={"user": obj.id}).data
+    
+    class Meta:
+        model = User
+        fields = ['id','first_name','last_name', 'email','phone1',"is_active","date_joined","last_login","image","courses"]
+
+
+
+class GetChapterQuizListSerializer(serializers.ModelSerializer):
+    chapter = serializers.SerializerMethodField('get_chapter')
+    total_question = serializers.SerializerMethodField('get_total_question')
+    
+    def get_total_question(self, obj):
+        option = QuizQuestions.objects.filter(chapter_quiz_id=obj.id).count()
+        return option
+    
+    
+    def get_chapter(self, obj):
+        if obj.chapter is None:
+            return []
+        category = Chapters.objects.filter(id=obj.chapter.id).first()
+        return ChapterInfoSerializer(category).data
+    
+    class Meta:
+        model = ChapterQuizs
+        fields = ["id","name","description","thumbnail","chapter","status","pass_percentage","total_question","created_at"]
+
+
+class PracticeTestListingSerializer(serializers.ModelSerializer):
+    quiz = serializers.SerializerMethodField('get_quiz')
+    def get_quiz(self, obj):
+        users_courses = ChapterQuizs.objects.filter(id=obj.quiz.id).first()
+        return GetChapterQuizListSerializer(users_courses).data
+
+    result = serializers.SerializerMethodField('get_result')
+    def get_result(self, obj):
+        if obj.quiz.pass_percentage > obj.score:
+            return "Fail"
+        return "Pass"
+
+    class Meta:
+        model = PracticeTests
+        fields = ['id','start_time',"end_time",'status',"result","total_question","total_right_answer_given","total_wrong_answer_given","total_time_taken",'score',"created_at","quiz"]
