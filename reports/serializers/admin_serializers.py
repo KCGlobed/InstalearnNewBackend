@@ -559,17 +559,17 @@ class AssignSubscriptiontoCorporateAdminUserSerializer(serializers.ModelSerializ
             raise serializers.ValidationError("Invalid Subscription Plan ID")
         
 
-        course = Order.objects.filter(user = self.context.get('user'), isPaid = True, payment_type = PaymentType.Subscription, subscription_status=OrderStatus.Active).order_by('-created_at').first()
+        course = Order.objects.filter(user = data.get('user_id'), isPaid = True, payment_type = PaymentType.Subscription, subscription_status=OrderStatus.Active).order_by('-created_at').first()
 
         if course is not None:
             raise serializers.ValidationError('You have a already active subscription')
         
         return data
 
-    def update(self , category, validate_data):
+    def update(self , validate_data):
 
         subscription_plan = SubscriptionPlans.objects.filter(id=validate_data.get('plan_id')).first()
-
+        user = User.objects.filter(id = validate_data.get('user_id')).first()
         current_year = datetime.now().year
         count = Order.objects.all().count()
         order_id = f"{current_year}-{str(count + 1).zfill(4)}"  
@@ -581,11 +581,11 @@ class AssignSubscriptiontoCorporateAdminUserSerializer(serializers.ModelSerializ
 
         book_order = Order(
             orderID = order_id,
-            user = self.context.get('user'),
-            first_name = self.context.get('user').first_name,
-            last_name = self.context.get('user').last_name,
-            email = self.context.get('user').email,
-            phone = self.context.get('user').phone1,
+            user = user,
+            first_name = user.first_name,
+            last_name = user.last_name,
+            email = user.email,
+            phone = user.phone1,
             payment_type = PaymentType.Subscription,
             plan = subscription_plan,
             subscription_id = subscription_plan.id,
@@ -600,4 +600,4 @@ class AssignSubscriptiontoCorporateAdminUserSerializer(serializers.ModelSerializ
         )
         book_order.save()
 
-        return self.context.get('user')
+        return user
