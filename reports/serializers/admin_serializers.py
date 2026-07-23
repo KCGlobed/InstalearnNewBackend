@@ -566,7 +566,7 @@ class AssignSubscriptiontoCorporateAdminUserSerializer(serializers.ModelSerializ
         
         return data
 
-    def update(self , validate_data):
+    def create(self , validate_data):
 
         subscription_plan = SubscriptionPlans.objects.filter(id=validate_data.get('plan_id')).first()
         user = User.objects.filter(id = validate_data.get('user_id')).first()

@@ -4891,7 +4891,7 @@ class AssignSubscriptiontoCorporateAdminUserView(APIView):
         if category is None:
             raise ValidationError("Invalid User ID!")
         
-        serializer = AssignSubscriptiontoCorporateAdminUserSerializer(category, data = request.data, context={'user':category})
+        serializer = AssignSubscriptiontoCorporateAdminUserSerializer(data = request.data, context={'user':category})
         if serializer.is_valid(raise_exception = True):
             user  = serializer.save()
             return success_response(message="Blog Status Updated Successfully", data=CorproateUserListingSerializer(user).data, status_code=status.HTTP_200_OK)
