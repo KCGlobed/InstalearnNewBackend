@@ -4125,7 +4125,7 @@ class CorporateUserListingView(APIView):
 
         is_active = request.query_params.get('status')
         if is_active:
-            topics = topics.filter(is_active = is_active)
+            plans = plans.filter(is_active = is_active)
             
         # 3. Apply Date Filters
         start_date = request.query_params.get('start_date')
@@ -4194,7 +4194,7 @@ class ExportPDFCorporateAdminUserListingView(APIView):
 
         is_active = request.query_params.get('status')
         if is_active:
-            topics = topics.filter(is_active = is_active)
+            plans = plans.filter(is_active = is_active)
 
         # 3. Apply Date Filters
         start_date = request.query_params.get('start_date')
@@ -4298,7 +4298,7 @@ class ExportExcelCorporateAdminUserListingView(APIView):
 
         is_active = request.query_params.get('status')
         if is_active:
-            topics = topics.filter(is_active = is_active)
+            plans = plans.filter(is_active = is_active)
 
         # 3. Apply Date Filters
         start_date = request.query_params.get('start_date')
