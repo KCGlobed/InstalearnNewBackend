@@ -1453,3 +1453,11 @@ class PracticeTestListingSerializer(serializers.ModelSerializer):
     class Meta:
         model = PracticeTests
         fields = ['id','start_time',"end_time",'status',"result","total_question","total_right_answer_given","total_wrong_answer_given","total_time_taken",'score',"created_at","quiz"]
+
+
+class StudentLoginActivitySerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    
+    class Meta:
+        model = UserLoginActivity
+        fields = ["id","login_IP","device_id","country","device_type","created_at"]

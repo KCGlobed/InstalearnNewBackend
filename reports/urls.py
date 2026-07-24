@@ -67,4 +67,9 @@ urlpatterns = [
     path('get-subscription-report-pdf/', ExportPDFsubscriptionOrderListingView.as_view(), name="get-subscription-report-pdf"),
     path('get-subscription-report-excel/', ExportExcelsubscriptionOrderListingView.as_view(), name="get-subscription-report-excel"),
 
+    path('view-corporate-user-detail/<sid>', ViewCorporateUserDetailView.as_view(), name="view-corporate-user-detail"),
+    path('view-student-video-report/<int:id>/<int:sid>', GetStudentVideoReportView.as_view(), name="view-student-video-report"),
+    path('get-student-notes-listing/<int:id>/<int:cid>', GetStudentNotesListingView.as_view(), name="get-student-notes-listing"),
+    path('get-attempted-quiz-list/<int:id>/<int:cid>', GetAttemptedTestsListingView.as_view(), name="get-attempted-quiz-list"),
+    
 ]

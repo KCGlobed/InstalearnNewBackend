@@ -4103,8 +4103,8 @@ class CorporateUserListingView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['first_name','last_name',"email"]
-    ordering_fields = ['first_name', 'created_at', 'id', 'last_name',"email"] 
+    search_fields = ['first_name','last_name',"email","is_active"]
+    ordering_fields = ['first_name', 'created_at', 'id', 'last_name',"email","is_active"] 
     def get(self, request, format=None):
         
         # 1. Start with a pure Django QuerySet
@@ -4123,6 +4123,10 @@ class CorporateUserListingView(APIView):
         if email:
             plans = plans.filter(email__icontains=email)
 
+        is_active = request.query_params.get('status')
+        if is_active:
+            topics = topics.filter(is_active = is_active)
+            
         # 3. Apply Date Filters
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
@@ -4896,3 +4900,67 @@ class AssignSubscriptiontoCorporateAdminUserView(APIView):
             user  = serializer.save()
             return success_response(message="Blog Status Updated Successfully", data=CorproateUserListingSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+class ViewCorporateUserDetailView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "view_corporate_student_detail",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, sid=None):
+        users_list = User.objects.filter(corporate = request.user, id = sid).first()
+        if users_list is None:
+            raise ValidationError("Invalid User ID!")
+        
+        serializer = GetStudentDetailSerializer(users_list)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
+
+class GetStudentVideoReportView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "view_corporate_student_video_report",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, id = None, sid=None):
+        
+        course_list = UserCourses.objects.filter(course_id = sid, paid = 1, user = id).count()
+        if course_list == 0:
+            return error_response(message="Invalid Course ID", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+
+        category = CourseChapters.objects.filter(course_id=sid)
+        serializer = CourseVideoReportSerializer(category, many=True, context={'user':id})
+        total_video_watched = UserLectureProgress.objects.filter( course_id = sid, user = id).count()
+        total_duration_video_watched = UserLectureProgress.objects.filter( course_id = sid, user = id).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+
+        return success_response(message="Success", data={"report_data":serializer.data, "total_video_watched":total_video_watched, "total_duration_video_watched":total_duration_video_watched}, status_code=status.HTTP_200_OK)
+
+
+class GetStudentNotesListingView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "view_corporate_student_notes_listing",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, cid=None, id=None):
+        notes = Notes.objects.filter(user_id = id, course_id = cid)
+        serializer = GetUserNotesSerializer(notes, many= True, context={'user':id})
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
+class GetAttemptedTestsListingView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "view_corporate_student_quiz_detail",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, cid=None, id=None):
+        test = PracticeTests.objects.filter(course_id = cid, user = id).order_by("-id")
+        serializer = PracticeTestListingSerializer(test,many=True)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)

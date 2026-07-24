@@ -69,4 +69,5 @@ urlpatterns = [
     path('view-student-video-report/<int:id>/<int:sid>', GetStudentVideoReportView.as_view(), name="view-student-video-report"),
     path('get-student-notes-listing/<int:id>/<int:cid>', GetStudentNotesListingView.as_view(), name="get-student-notes-listing"),
     path('get-attempted-quiz-list/<int:id>/<int:cid>', GetAttemptedTestsListingView.as_view(), name="get-attempted-quiz-list"),
+    path('get-student-login-activity/<int:cid>', GetStudentActivityReportView.as_view(), name="get-student-login-activity"),
 ]

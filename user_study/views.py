@@ -1323,3 +1323,59 @@ class GetAttemptedTestsListingView(APIView):
         test = PracticeTests.objects.filter(course_id = cid, user = id).order_by("-id")
         serializer = PracticeTestListingSerializer(test,many=True)
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
+class GetStudentActivityReportView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                              RoleOrPermissionCheck.for_roles(
+                                [CorporateAdmin]
+                            )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['user__first_name',"user__last_name","user__email"]
+    ordering_fields = ['user__first_name','user__last_name',"user__email"]
+    def get(self, request, cid=None):
+        
+        topics = UserLoginActivity.objects.filter(user_id = cid)
+        
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            topics = topics.filter(user__first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            topics = topics.filter(user__last_name__icontains = last_name)
+
+
+        email = request.query_params.get('email')
+        if email:
+            topics = topics.filter(user__email__icontains = email)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                topics = topics.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                topics = topics.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        topics = search_filter.filter_queryset(request, topics, self)
+
+        if not topics.ordered:
+            topics = topics.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(topics, request, view=self)
+        serializer = StudentLoginActivitySerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
