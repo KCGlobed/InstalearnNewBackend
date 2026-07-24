@@ -599,7 +599,7 @@ class EditChapterQuizView(APIView):
         if test_question is None:
             raise serializers.ValidationError("Invalid Quiz ID!")
         
-        serializer = EditMCQSerializer(test_question, data = request.data, partial=True)
+        serializer = EditChaperQuizSerializer(test_question, data = request.data, partial=True)
         if serializer.is_valid(raise_exception = True):
             user = serializer.save()
             return success_response(message="Quiz Updated Successfully", data=ViewChapterQuizDetailSerializer(user).data, status_code=status.HTTP_200_OK)

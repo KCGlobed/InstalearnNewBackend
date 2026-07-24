@@ -346,7 +346,7 @@ class CreateChapterQuizSerializer(serializers.ModelSerializer) :
         return test_question
     
 
-class EditMCQSerializer(serializers.ModelSerializer):
+class EditChaperQuizSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length = 255, required=True)
     description = serializers.CharField(required=True)
     pass_percentage = serializers.IntegerField(required=True)
