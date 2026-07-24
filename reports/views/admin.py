@@ -4926,7 +4926,7 @@ class ViewCorporateUserDetailView(APIView):
                             [SuperAdmin]
                         )]
     def get(self, request, sid=None):
-        users_list = User.objects.filter(corporate = request.user, id = sid).first()
+        users_list = User.objects.filter(id = sid).first()
         if users_list is None:
             raise ValidationError("Invalid User ID!")
         
