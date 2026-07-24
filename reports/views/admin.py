@@ -4171,8 +4171,12 @@ class ExportPDFCorporateAdminUserListingView(APIView):
                               "corporate_admin_user_listing_pdf_report",
                             [SuperAdmin]
                         )]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['first_name','last_name',"email","is_active"]
+    ordering_fields = ['first_name', 'created_at', 'id', 'last_name',"email","is_active"] 
     def get(self, request, format=None):
         
+        # 1. Start with a pure Django QuerySet
         plans = User.objects.all()
 
         # 2. Apply all QuerySet filters (first_name, last_name, email)
@@ -4187,6 +4191,10 @@ class ExportPDFCorporateAdminUserListingView(APIView):
         email = request.query_params.get('email')
         if email:
             plans = plans.filter(email__icontains=email)
+
+        is_active = request.query_params.get('status')
+        if is_active:
+            topics = topics.filter(is_active = is_active)
 
         # 3. Apply Date Filters
         start_date = request.query_params.get('start_date')
@@ -4267,8 +4275,12 @@ class ExportExcelCorporateAdminUserListingView(APIView):
                               "corporate_admin_user_listing_excel_report",
                             [SuperAdmin]
                         )]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['first_name','last_name',"email","is_active"]
+    ordering_fields = ['first_name', 'created_at', 'id', 'last_name',"email","is_active"] 
     def get(self, request, format=None):
         
+        # 1. Start with a pure Django QuerySet
         plans = User.objects.all()
 
         # 2. Apply all QuerySet filters (first_name, last_name, email)
@@ -4283,6 +4295,10 @@ class ExportExcelCorporateAdminUserListingView(APIView):
         email = request.query_params.get('email')
         if email:
             plans = plans.filter(email__icontains=email)
+
+        is_active = request.query_params.get('status')
+        if is_active:
+            topics = topics.filter(is_active = is_active)
 
         # 3. Apply Date Filters
         start_date = request.query_params.get('start_date')
