@@ -4980,3 +4980,426 @@ class GetAttemptedTestsListingView(APIView):
         test = PracticeTests.objects.filter(course_id = cid, user = id).order_by("-id")
         serializer = PracticeTestListingSerializer(test,many=True)
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
+class GetNotesListingReportPDFView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "view_corporate_student_quiz_detail",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, cid=None, id=None):
+        
+        notes = Notes.objects.filter(user_id = id, course_id = cid)
+        serializer = GetUserNotesSerializer(notes, many= True, context={'user':id})
+        user_info = User.objects.filter(id = id).first()
+        course = Course.objects.filter(id = cid).first()
+        data = {
+                    "user_data":serializer.data,
+                    'username':user_info.first_name +' '+user_info.last_name,
+                    'user_id':user_info.email,
+                    'course':course.name,
+                }
+        
+
+        template = get_template('pdf/student_notes_listing_report.html')
+        html  = template.render(data)
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            html = html.encode('latin-1', 'replace').decode('latin-1')
+            pdf = pisa.CreatePDF(BytesIO(html.encode("ISO-8859-1")), dest=temp_file)
+
+            if pdf.err:
+                raise Exception("PDF generation error!")
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "notes_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+    
+
+
+class GetNotesListingReportExcelView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "view_corporate_student_quiz_detail",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, cid=None, id=None):
+            
+        notes = Notes.objects.filter(user_id = id, course_id = cid)
+        serializer = GetUserNotesSerializer(notes, many= True, context={'user':id})
+        user_info = User.objects.filter(id = id).first()
+        course = Course.objects.filter(id = cid).first()
+        data = {
+                    "user_data":serializer.data,
+                    'username':user_info.first_name +' '+user_info.last_name,
+                    'user_id':user_info.email,
+                    'course':course.name,
+                }
+
+        lis = []
+        
+        lis.append({
+                "name":"Notes Detail Report",
+                "last_name":"",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+
+        lis.append({
+                "name":"",
+                "last_name":"",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+        
+        lis.append({
+                "name":"Name",
+                "last_name":user_info.first_name +' '+user_info.last_name,
+                "email":'',
+                "phone":'User ID',
+                "category":user_info.email,
+                "type":'',
+                "reference":'Course',
+                "course":course.name,
+                "count":''
+            })
+
+        lis.append({
+            "name":"",
+            "last_name":"",
+            "email":'',
+            "phone":'',
+            "category":'',
+            "type":'',
+            "reference":'',
+            "course":'',
+            "count":''
+        })
+
+        lis.append({
+                "name":"Lecture Name",
+                "last_name":"Note Detail",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+        
+        
+        for chapter_data in serializer.data:
+            lecture_info = chapter_data.get('lecture_info', {})
+            video_info = lecture_info.get('video_info', {})
+            ebook_info = lecture_info.get('ebook_info', {})
+
+            if video_info and video_info.get('name'):
+                chapter_data['display_title'] = video_info['name']
+            elif ebook_info and ebook_info.get('name'):
+                chapter_data['display_title'] = ebook_info['name']
+            else:
+                chapter_data['display_title'] = "No Title Available"
+                
+            lis.append({
+                "name":chapter_data['display_title'],
+                "last_name":chapter_data['note_content'],
+                "email":"",
+                "phone":"",
+                "category":"",
+                "type":"",
+                "reference":"",
+                "course":"",
+                "count":""
+            })
+
+            
+            
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            df = pd.DataFrame.from_dict(lis)
+            df.to_excel(pdf_path, header=False, index=False)
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "notes_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+
+
+class DownloadStudentVideoReportView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "view_corporate_student_quiz_detail",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, cid = None, id=None):
+        course_list = UserCourses.objects.filter(course_id = cid, paid = 1,user_id = id).count()
+        if course_list == 0:
+            return error_response(message="Invalid Course ID", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+        
+        course_info = UserCourses.objects.filter(course_id = cid, paid = 1,user_id = id).first()
+        course = Course.objects.get(id = cid)
+        user_info = User.objects.get(id = id)
+        if course_info.trail == True:
+            chapters = TrailCourseChapters.objects.filter(trail_course__course_id = cid).values_list("chapter", flat=True)
+            category = CourseChapters.objects.filter(course_id=cid, chapter_id__in = chapters)
+            serializer = DashboardCourseChapterListingSerializer(category, many=True, context={'user':user_info})
+
+        else:
+            category = CourseChapters.objects.filter(course_id=cid)
+            serializer = CourseVideoReportSerializer(category, many=True, context={'user':user_info})
+
+        total_video_watched = UserLectureProgress.objects.filter( course_id = cid, user = user_info).count()
+        total_duration_video_watched = UserLectureProgress.objects.filter( course_id = cid, user = user_info).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+
+        
+        result = {
+                'video_report': serializer.data,
+                'username':user_info.first_name +' '+user_info.last_name,
+                'user_id':user_info.email,
+                "total_video_watched":total_video_watched,
+                "total_duration_video_watched":total_duration_video_watched,
+                'course':course.name,
+            }
+
+        template = get_template('pdf/video_progress_report.html')
+        html  = template.render(result)
+
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            html = html.encode('latin-1', 'replace').decode('latin-1')
+            pdf = pisa.CreatePDF(BytesIO(html.encode("ISO-8859-1")), dest=temp_file)
+
+            if pdf.err:
+                raise Exception("PDF generation error!")
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "video_progress_report"
+            gcs_folder_name = "media/lms_2/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+    
+    
+
+
+class DownloadStudentVideoReportCSVView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "view_corporate_student_quiz_detail",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, cid = None,  id=None):
+        
+        course_list = UserCourses.objects.filter(course_id = cid, paid = 1,user_id = id).count()
+        if course_list == 0:
+            return error_response(message="Invalid Course ID", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+        
+        course_info = UserCourses.objects.filter(course_id = cid, paid = 1,user_id = id).first()
+        course = Course.objects.get(id = cid)
+        user_info = User.objects.get(id = id)
+        if course_info.trail == True:
+            chapters = TrailCourseChapters.objects.filter(trail_course__course_id = cid).values_list("chapter", flat=True)
+            category = CourseChapters.objects.filter(course_id=cid, chapter_id__in = chapters)
+            serializer = DashboardCourseChapterListingSerializer(category, many=True, context={'user':user_info})
+
+        else:
+            category = CourseChapters.objects.filter(course_id=cid)
+            serializer = CourseVideoReportSerializer(category, many=True, context={'user':user_info})
+
+        total_video_watched = UserLectureProgress.objects.filter( course_id = cid, user = user_info).count()
+        total_duration_video_watched = UserLectureProgress.objects.filter( course_id = cid, user = user_info).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+
+
+        lis = []
+        
+        lis.append({
+                "name":"Video Report",
+                "email":'',
+                "subject":'',
+                "Chapter":'',
+                "Topic":'',
+                "total_videos":'',
+                "total_watched_videos":'',
+                "total_time_spend":''
+            })
+
+        lis.append({
+                "name":"Name:",
+                "email":user_info.first_name +' '+user_info.last_name,
+                "subject":'',
+                "Chapter":'',
+                "Topic":'',
+                "total_videos":'',
+                "total_watched_videos":'',
+                "total_time_spend":''
+            })
+        lis.append({
+                "name":"User ID:",
+                "email":user_info.email,
+                "subject":'',
+                "Chapter":'',
+                "Topic":'',
+                "total_videos":'',
+                "total_watched_videos":'',
+                "total_time_spend":''
+            })
+        lis.append({
+                "name":"Course:",
+                "email":course.name,
+                "subject":'',
+                "Chapter":'',
+                "Topic":'',
+                "total_videos":'',
+                "total_watched_videos":'',
+                "total_time_spend":''
+            })
+        
+        lis.append({
+                "name":"",
+                "email":'',
+                "subject":'',
+                "Chapter":'',
+                "Topic":'',
+                "total_videos":'',
+                "total_watched_videos":'',
+                "total_time_spend":''
+            })
+        lis.append({
+                "name":"Hours Watched",
+                "email":convert(total_duration_video_watched),
+                "subject":'',
+                "Chapter":'',
+                "Topic":'',
+                "total_videos":'',
+                "total_watched_videos":'',
+                "total_time_spend":''
+            })
+        lis.append({
+                "name":"Video Watched",
+                "email":total_video_watched,
+                "subject":'',
+                "Chapter":'',
+                "Topic":'',
+                "total_videos":'',
+                "total_watched_videos":'',
+                "total_time_spend":''
+            })
+        lis.append({
+                "name":"",
+                "email":'',
+                "subject":'',
+                "Chapter":'',
+                "Topic":'',
+                "total_videos":'',
+                "total_watched_videos":'',
+                "total_time_spend":''
+            })
+        lis.append({
+                "name":"Chapter Name",
+                "email":'Total Videos',
+                "subject":'Videos Watched',
+                "Chapter":'Watch Time',
+                "Topic":'Watch Time',
+                "total_videos":'',
+                "total_watched_videos":'',
+                "total_time_spend":''
+            })
+        
+        
+        for info in serializer.data:
+            if info['video_watched'] is not None:
+                video_watched = convert_minutes(info['video_watched'])
+            else :
+                video_watched = "0s"
+
+            lis.append({
+                "name":info['chapter_info']['name'],
+                "email":info['chapter_info']['no_of_videos'],
+                "subject":info['total_video_watched'],
+                "Chapter":video_watched,
+                "Topic":"",
+                "total_videos":"",
+                "total_watched_videos":"",
+                "total_time_spend":""
+            })
+
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            df = pd.DataFrame.from_dict(lis)
+            df.to_excel(pdf_path, header=False, index=False)
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "video_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)

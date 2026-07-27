@@ -753,3 +753,43 @@ class GetUserNotesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notes
         fields = "__all__"
+
+
+
+class ChapterInfoSerializer(serializers.ModelSerializer) :
+    class Meta:
+        model = Chapters
+        fields = ["id",'name',"no_of_videos","no_of_videos_duration"]
+
+
+class DashboardCourseChapterListingSerializer(serializers.ModelSerializer) :
+    chapter_info = serializers.SerializerMethodField()
+    progress = serializers.SerializerMethodField('get_progress')
+    video_watched = serializers.SerializerMethodField('get_video_watched')
+    total_video_watched = serializers.SerializerMethodField('get_total_video_watched')
+
+    def get_total_video_watched(self, parent):
+        total_video_watched = UserLectureProgress.objects.filter(course_chapters_id = parent.id, course_id = parent.course.id, user = self.context.get('user')).count()
+        return total_video_watched
+
+    def get_video_watched(self, parent):
+        total_video_watched = UserLectureProgress.objects.filter(course_chapters_id = parent.id, course_id = parent.course.id, user = self.context.get('user')).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+        return total_video_watched
+    
+    def get_progress(self, parent):
+        total_video_watched = UserLectureProgress.objects.filter(course_chapters_id = parent.id, course_id = parent.course.id, user = self.context.get('user')).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+        if total_video_watched > parent.chapter.no_of_videos_duration:
+            return 100
+        else:
+            if parent.chapter.no_of_videos_duration == 0:
+                return 0
+            return math.ceil(total_video_watched * 100 / parent.chapter.no_of_videos_duration)
+
+    
+    def get_chapter_info(self, parent):
+        info = Chapters.objects.get(id = parent.chapter.id)
+        return ChapterInfoSerializer(info).data
+
+    class Meta:
+        model = CourseChapters
+        fields = ['id','chapter_info',"progress","video_watched","total_video_watched"]

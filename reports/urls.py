@@ -71,5 +71,10 @@ urlpatterns = [
     path('view-student-video-report/<int:id>/<int:sid>', GetStudentVideoReportView.as_view(), name="view-student-video-report"),
     path('get-student-notes-listing/<int:id>/<int:cid>', GetStudentNotesListingView.as_view(), name="get-student-notes-listing"),
     path('get-attempted-quiz-list/<int:id>/<int:cid>', GetAttemptedTestsListingView.as_view(), name="get-attempted-quiz-list"),
-    
-]
+
+    path('download-student-video-report-pdf/<int:id>/<int:cid>', DownloadStudentVideoReportView.as_view(), name="download-student-video-report"),
+    path('download-student-video-report-csv/<int:id>/<int:cid>', DownloadStudentVideoReportCSVView.as_view(), name="download-student-video-report-csv"),
+
+    path('get-notes-listing-report-pdf/<int:id>/<int:cid>', GetNotesListingReportPDFView.as_view(), name="get-notes-listing-report"),
+    path('get-notes-listing-report-excel/<int:id>/<int:cid>', GetNotesListingReportExcelView.as_view(), name="get-notes-listing-report-excel"),
+]   
