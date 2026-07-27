@@ -74,4 +74,7 @@ urlpatterns = [
     path('download-student-video-report-pdf/<int:id>/<int:cid>', DownloadStudentVideoReportView.as_view(), name="download-student-video-report"),
     path('download-student-video-report-csv/<int:id>/<int:cid>', DownloadStudentVideoReportCSVView.as_view(), name="download-student-video-report-csv"),
 
+    path('get-notes-listing-report-pdf/<int:id>/<int:cid>', GetNotesListingReportPDFView.as_view(), name="get-notes-listing-report"),
+    path('get-notes-listing-report-excel/<int:id>/<int:cid>', GetNotesListingReportExcelView.as_view(), name="get-notes-listing-report-excel"),
+
 ]

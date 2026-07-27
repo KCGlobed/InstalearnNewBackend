@@ -600,6 +600,26 @@ class AssignSubscriptiontoCorporateAdminUserSerializer(serializers.ModelSerializ
         )
         book_order.save()
 
+        from django.utils import timezone
+        from dateutil.relativedelta import relativedelta
+        start_date = timezone.now()  # Or timezone.now().date() if you only use DateField
+    
+        # 2. Calculate end_date based on plan_type
+        if subscription_plan.plan_type == PlanType.Monthly:
+            end_date = start_date + relativedelta(months=1)
+            
+        elif subscription_plan.plan_type == PlanType.Half_Yearly:
+            end_date = start_date + relativedelta(months=6)
+            
+        elif subscription_plan.plan_type == PlanType.Yearly:
+            end_date = start_date + relativedelta(years=1)
+            
+        else:
+            end_date = start_date
+
+        book_order.next_due = end_date
+        book_order.end_date = end_date
+        book_order.save()
         return user
 
 
