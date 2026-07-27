@@ -70,4 +70,8 @@ urlpatterns = [
     path('get-student-notes-listing/<int:id>/<int:cid>', GetStudentNotesListingView.as_view(), name="get-student-notes-listing"),
     path('get-attempted-quiz-list/<int:id>/<int:cid>', GetAttemptedTestsListingView.as_view(), name="get-attempted-quiz-list"),
     path('get-student-login-activity/<int:cid>', GetStudentActivityReportView.as_view(), name="get-student-login-activity"),
+
+    path('download-student-video-report-pdf/<int:id>/<int:cid>', DownloadStudentVideoReportView.as_view(), name="download-student-video-report"),
+    path('download-student-video-report-csv/<int:id>/<int:cid>', DownloadStudentVideoReportCSVView.as_view(), name="download-student-video-report-csv"),
+
 ]
