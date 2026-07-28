@@ -1840,3 +1840,38 @@ class DownloadStudentVideoReportCSVView(APIView):
             )
         finally:
             os.remove(pdf_path)
+
+
+class GetCorporateStudentsActivityLogLatestListView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin]
+                        )]
+    def get(self, request, format=None):
+        users_list = User.objects.filter(corporate = request.user).values_list("id",flat=True)
+        activity_log = ActivityLog.objects.filter(
+                user_id__in=users_list
+            ).order_by('-created_at')[:10]
+        serializer = ActivityLogListingSerializer(activity_log, many=True)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
+class GetCorporateStudentsActivityLogListView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    def get(self, request, format=None):
+        
+        users_list = User.objects.filter(corporate = request.user).values_list("id",flat=True)
+        activity_log = ActivityLog.objects.filter(
+                        user_id__in=users_list
+                    ).order_by('-created_at')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(activity_log, request, view=self)
+        serializer = ActivityLogListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)

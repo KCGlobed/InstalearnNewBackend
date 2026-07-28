@@ -15,7 +15,7 @@ import random, string
 import razorpay
 from django.db.models import Sum, Avg, Count
 from mini_lms.utils import *
-
+from django.contrib.humanize.templatetags.humanize import naturaltime
 
 
 class CourseProgressSerializer(serializers.ModelSerializer):
@@ -1519,3 +1519,17 @@ class StudentLoginActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = UserLoginActivity
         fields = ["id","login_IP","device_id","country","device_type","created_at"]
+
+
+
+class ActivityLogListingSerializer(serializers.ModelSerializer):
+    time_ago = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ActivityLog
+        fields = ["id", "action", "entity_type", "metadata", "created_at", "time_ago"]
+
+    def get_time_ago(self, obj):
+        if obj.created_at:
+            return naturaltime(obj.created_at)
+        return None
