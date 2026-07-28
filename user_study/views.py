@@ -410,10 +410,10 @@ class ViewBookSignedUrlView(APIView):
         blob = bucket.blob(object_name)
 
         log_activity(
-            user=self.context.get('user'),
+            user=request.user,
             action=ActivityLog.ActionType.LESSON_STARTED,
             entity_type='Course',
-            metadata=request.first_name+" "+request.last_name + "started reading ebook "+ chapter.ebook.name+"."
+            metadata=request.user.first_name+" "+request.user.last_name + "started reading ebook "+ chapter.ebook.name+"."
         )
         
         return success_response(message="Success", data=blob.generate_signed_url(expiration=expiration_time), status_code=status.HTTP_200_OK)
