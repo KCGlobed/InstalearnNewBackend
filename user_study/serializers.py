@@ -438,7 +438,7 @@ class CreateNoteSerializer(serializers.ModelSerializer) :
             action=ActivityLog.ActionType.NOTE_CREATED,
             entity_type='Course',
             entity_id = validate_data.get('lecture_id'),
-            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + " note created in"+ content_name+"."
+            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + " note created in "+ content_name+"."
         )
 
         return chap
@@ -469,7 +469,7 @@ class EditNoteSerializer(serializers.ModelSerializer) :
             action=ActivityLog.ActionType.NOTE_UPDATED,
             entity_type='Course',
             entity_id = category.chapter_lecture.id,
-            metadata=category.user.first_name+" "+category.user.last_name + " note updated in"+ content_name+"."
+            metadata=category.user.first_name+" "+category.user.last_name + " note updated in "+ content_name+"."
         )
 
         return category
