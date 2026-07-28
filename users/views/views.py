@@ -108,7 +108,7 @@ class UserLoginView(APIView):
                     user=user,
                     action=ActivityLog.ActionType.USER_LOGIN,
                     entity_type='System',
-                    metadata=user.first_name+" "+user.last_name + "Logged In the system!"
+                    metadata=user.first_name+" "+user.last_name + " Logged In the system!"
                 )
                             
                 return success_response(message="Login Success", data={'token': token, 'user_role': get_user_role(user), "user_id":user.id,"email":user.email,"first_name":user.first_name,"last_name":user.last_name,"phone":user.phone1,"image":image_url}, status_code=status.HTTP_200_OK)
@@ -199,7 +199,7 @@ class UserSocialLoginView(APIView):
                     user=user,
                     action=ActivityLog.ActionType.USER_LOGIN,
                     entity_type='System',
-                    metadata=user.first_name+" "+user.last_name + "Logged In the system via "+ user.social_type+"!"
+                    metadata=user.first_name+" "+user.last_name + " Logged In the system via "+ user.social_type+"!"
                 )
 
                 return success_response(message="Login Success", data={'token': token, 'user_role': get_user_role(user), "user_id":user.id,"email":user.email,"first_name":user.first_name,"last_name":user.last_name,"phone":user.phone1,"image":image_url}, status_code=status.HTTP_200_OK)

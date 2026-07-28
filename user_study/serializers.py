@@ -34,7 +34,7 @@ class CourseProgressSerializer(serializers.ModelSerializer):
             action=ActivityLog.ActionType.PROGRESS,
             entity_type='Course',
             entity_id = obj.id,
-            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + " reached "+ video_duration_progress+"% in "+ obj.name +"!"
+            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + " reached "+ str(video_duration_progress)+"% in "+ obj.name +"!"
         )
         return video_duration_progress
 
