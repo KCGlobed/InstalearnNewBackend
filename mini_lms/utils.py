@@ -413,3 +413,33 @@ def calculate_video_duration_and_questions():
 
 def difficulty_level(value):
     return Level(value).label
+
+from datetime import timedelta
+from django.utils import timezone
+
+def log_activity(user, action, entity_type=None, entity_id=None, metadata=None):
+    if not user or not user.is_authenticated:
+        return None
+
+    one_hour_ago = timezone.now() - timedelta(hours=1)
+    
+    str_entity_id = str(entity_id) if entity_id is not None else None
+
+    exists = ActivityLog.objects.filter(
+        user=user,
+        action=action,
+        entity_type=entity_type,
+        entity_id=str_entity_id,
+        created_at__gte=one_hour_ago 
+    ).exists()
+
+    if exists:
+        return None  # Skip creation
+
+    return ActivityLog.objects.create(
+        user=user,
+        action=action,
+        entity_type=entity_type,
+        entity_id=str_entity_id,
+        metadata=metadata or None,
+    )

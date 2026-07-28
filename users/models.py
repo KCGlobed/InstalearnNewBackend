@@ -314,3 +314,32 @@ class PasswordChangeLog(models.Model):
     def __str__(self):
         return f'{self.user.first_name} {self.user.last_name} changed password on {self.change_date.strftime("%Y-%m-%d %H:%M:%S")}'
     
+
+class ActivityLog(models.Model):
+    class ActionType(models.TextChoices):
+        USER_LOGIN = 'USER_LOGIN', 'User Logged In'
+        USER_LOGOUT = 'USER_LOGOUT', 'User Logged Out'
+        COURSE_STARTED = 'COURSE_STARTED', 'Course Started'
+        COURSE_COMPLETED = 'COURSE_COMPLETED', 'Course Completed'
+        LESSON_STARTED = 'LESSON_STARTED', 'Lesson Started'
+        LESSON_COMPLETED = 'LESSON_COMPLETED', 'Lesson Completed'
+        NOTE_CREATED = 'NOTE_CREATED', 'Note Created'
+        NOTE_UPDATED = 'NOTE_UPDATED', 'Note Updated'
+        NOTE_DELETED = 'NOTE_DELETED', 'Note Deleted'
+        PROGRESS = 'PROGRESS', 'Progress'
+        CERTIFICATE_GENERATED = 'CERTIFICATE_GENERATED',"Certificate Generated"
+
+    user = models.ForeignKey('User', null=True, blank=True, on_delete=models.CASCADE)
+    action = models.CharField(max_length=50, choices=ActionType.choices, db_index=True)
+    entity_type = models.CharField(max_length=50, blank=True, null=True)
+    entity_id = models.CharField(max_length=50, blank=True, null=True)    
+    metadata = models.TextField(blank=True, null=True)                
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add = True)
+    updated_at = models.DateTimeField(auto_now = True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user} - {self.action} at {self.created_at}"

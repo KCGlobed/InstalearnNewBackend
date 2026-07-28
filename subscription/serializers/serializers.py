@@ -832,13 +832,16 @@ class UpgradeSubscriptionSerializer(serializers.ModelSerializer) :
                 client = razorpay.Client(auth=(setting.live_public_key, setting.live_secret_key))
             subscriptionId = order.subscription_id
 
-            client.subscription.update(subscriptionId, {
+            client.subscription.edit(subscriptionId, {
                 "plan_id": subscription_plan.plan_id,
                 "customer_notify":True,
                 "schedule_change_at":"now"
             })
+        except razorpay.errors.BadRequestError as error:
+            raise serializers.ValidationError(f"Razorpay Error: {str(error)}")
+
         except Exception as error:
-            raise serializers.ValidationError("Unale to verify your Payment")
+            raise serializers.ValidationError("Unable to verify your payment.")
         
         order.subscription_status = OrderStatus.Active
         order.no_of_licence = subscription_plan.no_of_licence

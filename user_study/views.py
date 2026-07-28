@@ -408,6 +408,13 @@ class ViewBookSignedUrlView(APIView):
         expiration_time = datetime.now(timezone.utc) + timedelta(seconds=10)
         bucket = client.get_bucket(settings.GS_BUCKET_NAME_2)
         blob = bucket.blob(object_name)
+
+        log_activity(
+            user=self.context.get('user'),
+            action=ActivityLog.ActionType.LESSON_STARTED,
+            entity_type='Course',
+            metadata=request.first_name+" "+request.last_name + "started reading ebook "+ chapter.ebook.name+"."
+        )
         
         return success_response(message="Success", data=blob.generate_signed_url(expiration=expiration_time), status_code=status.HTTP_200_OK)
     
@@ -476,7 +483,23 @@ class DeleteNoteView(APIView):
     def delete(self, request, cid=None, format=None):
         try:
             note = Notes.objects.get(id = cid)
+
+            if note.chapter_lecture.lecture_type == 1:
+                content_name = note.chapter_lecture.video.name
+            else:
+                content_name = note.chapter_lecture.ebook.name
+                
+            log_activity(
+                user=note.user,
+                action=ActivityLog.ActionType.NOTE_DELETED,
+                entity_type='Course',
+                entity_id = note.note_content.id,
+                metadata=note.user.first_name+" "+note.user.last_name + " note deleted in"+ content_name+"."
+            )
+
             note.delete()
+
+            
             return success_response(message="Note Deleted Successfully!", data={}, status_code=status.HTTP_200_OK)
         except MyList.DoesNotExist:
             return error_response(message="Note not found!", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
@@ -519,6 +542,14 @@ class PerformaceReportView(APIView):
             "class_viewed":video_duration_progress,
             "chapter_wise_report":serializer.data
         }
+
+        log_activity(
+            user=request.user,
+            action=ActivityLog.ActionType.PROGRESS,
+            entity_type='Course',
+            entity_id = id,
+            metadata=request.user.first_name+" "+request.user.last_name + " reached "+ video_duration_progress+"% in "+ course.name +"!"
+        )
         return Response({"status":"success",'message':'',"data":data}, status = status.HTTP_200_OK)
     
 
@@ -601,6 +632,15 @@ class GetCourseCertificateView(APIView):
                 certificate_url=blob.public_url
             )
             chap.save()
+
+            log_activity(
+                user=request.user,
+                action=ActivityLog.ActionType.CERTIFICATE_GENERATED,
+                entity_type='Course',
+                entity_id = chap.id,
+                metadata=request.user.first_name+" "+request.user.last_name + " has completed the course & generated the certificate for "+ course.name+"."
+            )
+
             return Response({"status":"success",'message':'',"data":blob.public_url}, status = status.HTTP_200_OK)
         
         else:

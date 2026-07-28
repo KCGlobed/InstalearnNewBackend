@@ -28,6 +28,14 @@ class CourseProgressSerializer(serializers.ModelSerializer):
         else:
             if obj.total_video_duration > 0:
                     video_duration_progress =  math.ceil(total_duration_video_watched * 100 / obj.total_video_duration)
+
+        log_activity(
+            user=self.context.get('user'),
+            action=ActivityLog.ActionType.PROGRESS,
+            entity_type='Course',
+            entity_id = obj.id,
+            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + " reached "+ video_duration_progress+"% in "+ obj.name +"!"
+        )
         return video_duration_progress
 
     class Meta:
@@ -368,6 +376,14 @@ class MarkCourseStartedSerializer(serializers.ModelSerializer) :
             course_id=validate_data.get('course_id')
         )
         user_courses.update(is_started=True)
+
+        log_activity(
+            user=self.context.get('user'),
+            action=ActivityLog.ActionType.COURSE_STARTED,
+            entity_type='Course',
+            entity_id=validate_data.get('course_id'),
+            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "started course "+ user_courses.course.name+"."
+        )
         return True
 
 
@@ -411,6 +427,20 @@ class CreateNoteSerializer(serializers.ModelSerializer) :
             duration = validate_data.get('duration'),
         )
         chap.save()
+
+        if chapter_lecture.lecture_type == 1:
+            content_name = chapter_lecture.video.name
+        else:
+            content_name = chapter_lecture.ebook.name
+
+        log_activity(
+            user=self.context.get('user'),
+            action=ActivityLog.ActionType.NOTE_CREATED,
+            entity_type='Course',
+            entity_id = validate_data.get('lecture_id'),
+            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + " note created in"+ content_name+"."
+        )
+
         return chap
     
 
@@ -428,6 +458,19 @@ class EditNoteSerializer(serializers.ModelSerializer) :
         category.note_content = validate_data.get('note_content', category.note_content)
         category.duration = validate_data.get('duration', category.duration)
         category.save()
+
+        if category.chapter_lecture.lecture_type == 1:
+            content_name = category.chapter_lecture.video.name
+        else:
+            content_name = category.chapter_lecture.ebook.name
+            
+        log_activity(
+            user=category.user,
+            action=ActivityLog.ActionType.NOTE_UPDATED,
+            entity_type='Course',
+            entity_id = category.chapter_lecture.id,
+            metadata=category.user.first_name+" "+category.user.last_name + " note updated in"+ content_name+"."
+        )
 
         return category
     
@@ -472,10 +515,25 @@ class WatchVideoSerializer(serializers.ModelSerializer) :
         watch_video_info.user = self.context.get('user')
         watch_video_info.video = category.video
 
+        log_activity(
+            user=self.context.get('user'),
+            action=ActivityLog.ActionType.LESSON_STARTED,
+            entity_type='Course',
+            entity_id = validate_data.get('lecture_id'),
+            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "started lecture "+ category.video.name+"."
+        )
+
         if validate_data.get('duration') >= category.video.video_duration:
             watch_video_info.total_duration = validate_data.get('duration')
             watch_video_info.end_time = datetime.now()
             watch_video_info.completed = 1
+            log_activity(
+                user=self.context.get('user'),
+                action=ActivityLog.ActionType.LESSON_COMPLETED,
+                entity_type='Course',
+                entity_id = validate_data.get('lecture_id'),
+                metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "completed lecture "+ category.video.name+"."
+            )
       
         watch_video_info.save()
 
