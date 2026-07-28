@@ -493,7 +493,7 @@ class DeleteNoteView(APIView):
                 user=note.user,
                 action=ActivityLog.ActionType.NOTE_DELETED,
                 entity_type='Course',
-                entity_id = note.note_content.id,
+                entity_id = note.id,
                 metadata=note.user.first_name+" "+note.user.last_name + " note deleted in"+ content_name+"."
             )
 
