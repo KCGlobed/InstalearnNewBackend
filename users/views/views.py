@@ -110,8 +110,20 @@ class UserLoginView(APIView):
                     entity_type='System',
                     metadata=user.first_name+" "+user.last_name + " Logged In the system!"
                 )
+
+                course_order = Order.objects.filter(
+                    user_id=user.id, 
+                    isPaid=True, 
+                    payment_type=PaymentType.Subscription, 
+                    subscription_status=OrderStatus.Active
+                ).order_by('-created_at').first()
+
+                subscription_status = False
+                if course_order is not None:
+                    subscription_status = True
+
                             
-                return success_response(message="Login Success", data={'token': token, 'user_role': get_user_role(user), "user_id":user.id,"email":user.email,"first_name":user.first_name,"last_name":user.last_name,"phone":user.phone1,"image":image_url}, status_code=status.HTTP_200_OK)
+                return success_response(message="Login Success", data={'token': token, 'user_role': get_user_role(user), "user_id":user.id,"email":user.email,"first_name":user.first_name,"last_name":user.last_name,"phone":user.phone1,"image":image_url,"subscription_status":subscription_status}, status_code=status.HTTP_200_OK)
             else:
                 return error_response(message="failed", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
         
@@ -202,7 +214,18 @@ class UserSocialLoginView(APIView):
                     metadata=user.first_name+" "+user.last_name + " Logged In the system via "+ user.social_type+"!"
                 )
 
-                return success_response(message="Login Success", data={'token': token, 'user_role': get_user_role(user), "user_id":user.id,"email":user.email,"first_name":user.first_name,"last_name":user.last_name,"phone":user.phone1,"image":image_url}, status_code=status.HTTP_200_OK)
+                course_order = Order.objects.filter(
+                    user_id=user.id, 
+                    isPaid=True, 
+                    payment_type=PaymentType.Subscription, 
+                    subscription_status=OrderStatus.Active
+                ).order_by('-created_at').first()
+
+                subscription_status = False
+                if course_order is not None:
+                    subscription_status = True
+
+                return success_response(message="Login Success", data={'token': token, 'user_role': get_user_role(user), "user_id":user.id,"email":user.email,"first_name":user.first_name,"last_name":user.last_name,"phone":user.phone1,"image":image_url,"subscription_status":subscription_status}, status_code=status.HTTP_200_OK)
             else:
                 return error_response(message="failed", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
         
