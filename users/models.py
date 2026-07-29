@@ -319,10 +319,13 @@ class ActivityLog(models.Model):
     class ActionType(models.TextChoices):
         USER_LOGIN = 'USER_LOGIN', 'User Logged In'
         USER_LOGOUT = 'USER_LOGOUT', 'User Logged Out'
+        PROFILE_UPDATED = 'PROFILE_UPDATED', 'Profile Updated'
         COURSE_STARTED = 'COURSE_STARTED', 'Course Started'
         COURSE_COMPLETED = 'COURSE_COMPLETED', 'Course Completed'
         LESSON_STARTED = 'LESSON_STARTED', 'Lesson Started'
         LESSON_COMPLETED = 'LESSON_COMPLETED', 'Lesson Completed'
+        QUIZ_STARTED = 'QUIZ_STARTED', 'Quiz Started'
+        QUIZ_COMPLETED = 'QUIZ_COMPLETED', 'Quiz Completed'
         NOTE_CREATED = 'NOTE_CREATED', 'Note Created'
         NOTE_UPDATED = 'NOTE_UPDATED', 'Note Updated'
         NOTE_DELETED = 'NOTE_DELETED', 'Note Deleted'

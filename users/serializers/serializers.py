@@ -509,6 +509,14 @@ class UpdateUserProfileSerializer(serializers.ModelSerializer):
         user.country = data.get('country')
         user.pincode = data.get('pincode')
         user.save()
+
+        log_activity(
+            user=self.context.get('user'),
+            action=ActivityLog.ActionType.PROFILE_UPDATED,
+            entity_type='Course',
+            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "updated his profile"
+        )
+
         return data
 
 
@@ -523,6 +531,14 @@ class UpdateUserProfileImageSerializer(serializers.ModelSerializer):
         user = self.context.get('user')
         user.image = data.get('image')
         user.save()
+
+        log_activity(
+                    user=self.context.get('user'),
+                    action=ActivityLog.ActionType.PROFILE_UPDATED,
+                    entity_type='Course',
+                    metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "updated his profile image"
+                )
+        
         return data
     
 
@@ -537,6 +553,14 @@ class RemoveUserProfileSerializer(serializers.ModelSerializer):
         user = self.context.get('user')
         user.image = ''
         user.save()
+
+        log_activity(
+                    user=self.context.get('user'),
+                    action=ActivityLog.ActionType.PROFILE_UPDATED,
+                    entity_type='Course',
+                    metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "removed his profile image"
+                )
+        
         return data
     
 
@@ -550,4 +574,11 @@ class UpdateUserBannerImageSerializer(serializers.ModelSerializer):
         user = self.context.get('user')
         user.banner_image = data.get('banner_image')
         user.save()
+
+        log_activity(
+                    user=self.context.get('user'),
+                    action=ActivityLog.ActionType.PROFILE_UPDATED,
+                    entity_type='Course',
+                    metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "updated his profile banner image"
+                )
         return data

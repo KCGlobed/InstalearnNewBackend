@@ -466,6 +466,12 @@ class StartPracticeTestSerializer(serializers.ModelSerializer):
                 )
             info.save()
 
+        log_activity(
+            user=self.context.get('user'),
+            action=ActivityLog.ActionType.QUIZ_STARTED,
+            entity_type='Course',
+            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "started a Quiz "+ quiz_info.name+"."
+        )
 
         return practice_test
     
@@ -622,6 +628,13 @@ class SubmitPracticeTestAnswerSerializer(serializers.ModelSerializer):
             if test_info.total_question == results1['total_question'] or validate_data.get("is_completed", False):
                 test_info.status = True
                 test_info.end_time = datetime.now()
+
+                log_activity(
+                    user=self.context.get('user'),
+                    action=ActivityLog.ActionType.QUIZ_COMPLETED,
+                    entity_type='Course',
+                    metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "completed a Quiz "+ question.practice_test.quiz.name+" and final score is."+custom_round(mcq_score)+"%"
+                )
 
             test_info.save()
 

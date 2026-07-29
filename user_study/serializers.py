@@ -812,6 +812,13 @@ class UpdateUserNotificationSettingSerializer(serializers.ModelSerializer):
         noti.new_login = validate_data.get('new_login')
         noti.save()
 
+        log_activity(
+                    user=self.context.get('user'),
+                    action=ActivityLog.ActionType.PROFILE_UPDATED,
+                    entity_type='Course',
+                    metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "updated his notification setting"
+                )
+        
         return noti
     
 
