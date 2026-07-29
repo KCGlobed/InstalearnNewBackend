@@ -5043,16 +5043,10 @@ class GetCorporateStudentsActivityLogListView(APIView):
     pagination_class = CustomPageNumberPagination
     def get(self, request, id=None):
 
-        if id is not None:
-            activity_log = ActivityLog.objects.filter(
+        activity_log = ActivityLog.objects.filter(
                                     user_id=id
                                 ).order_by('-created_at')
-        else:
-            users_list = User.objects.filter(corporate = request.user).values_list("id",flat=True)
-            activity_log = ActivityLog.objects.filter(
-                        user_id__in=users_list
-                    ).order_by('-created_at')
-
+        
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(activity_log, request, view=self)
         serializer = ActivityLogListingSerializer(page, many=True)
