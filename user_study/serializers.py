@@ -34,7 +34,7 @@ class CourseProgressSerializer(serializers.ModelSerializer):
             action=ActivityLog.ActionType.PROGRESS,
             entity_type='Course',
             entity_id = obj.id,
-            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + " reached "+ str(video_duration_progress)+"% in "+ obj.name +"!"
+            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + " progress reached "+ str(video_duration_progress)+"% in "+ obj.name +"!"
         )
         return video_duration_progress
 
@@ -376,13 +376,13 @@ class MarkCourseStartedSerializer(serializers.ModelSerializer) :
             course_id=validate_data.get('course_id')
         )
         user_courses.update(is_started=True)
-
+        course_info = user_courses.first()
         log_activity(
             user=self.context.get('user'),
             action=ActivityLog.ActionType.COURSE_STARTED,
             entity_type='Course',
             entity_id=validate_data.get('course_id'),
-            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "started course "+ user_courses.course.name+"."
+            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "started course "+ course_info.course.name+"."
         )
         return True
 
@@ -438,7 +438,7 @@ class CreateNoteSerializer(serializers.ModelSerializer) :
             action=ActivityLog.ActionType.NOTE_CREATED,
             entity_type='Course',
             entity_id = validate_data.get('lecture_id'),
-            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + " note created in "+ content_name+"."
+            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + " created note in "+ content_name+"."
         )
 
         return chap

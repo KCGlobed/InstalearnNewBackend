@@ -80,5 +80,9 @@ urlpatterns = [
     path('get-corporate-students-activity-log-latest/', GetCorporateStudentsActivityLogLatestListView.as_view(), name="get-corporate-students-activity-log-latest"),
     path('get-corporate-students-activity-log/', GetCorporateStudentsActivityLogListView.as_view(), name="get-corporate-students-activity-log"),
     path('get-corporate-students-activity-log/<int:id>', GetCorporateStudentsActivityLogListView.as_view(), name="get-corporate-students-activity-log"),
+    path('export-corporate-students-activity-log-pdf/', GetCorporateStudentsActivityLogPDFReportView.as_view(), name="export-corporate-students-activity-log-pdf"),
+    path('export-corporate-students-activity-log-excel/', GetCorporateStudentsActivityLogExcelReportView.as_view(), name="export-corporate-students-activity-log-excel"),
+    path('export-corporate-students-activity-log-pdf/<int:id>', GetCorporateStudentsActivityLogPDFReportView.as_view(), name="export-corporate-students-activity-log-pdf"),
+    path('export-corporate-students-activity-log-excel/<int:id>', GetCorporateStudentsActivityLogExcelReportView.as_view(), name="export-corporate-students-activity-log-excel"),
 
 ]
