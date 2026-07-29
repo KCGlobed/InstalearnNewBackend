@@ -10,6 +10,7 @@ from django.db.models import Q, Count
 from django.core.validators import FileExtensionValidator
 from django.core.mail import send_mail
 from django.template import loader
+from django.contrib.humanize.templatetags.humanize import naturaltime
 
 
 class StaffUserListSerializer(serializers.ModelSerializer):
@@ -793,3 +794,17 @@ class DashboardCourseChapterListingSerializer(serializers.ModelSerializer) :
     class Meta:
         model = CourseChapters
         fields = ['id','chapter_info',"progress","video_watched","total_video_watched"]
+
+
+
+class ActivityLogListingSerializer(serializers.ModelSerializer):
+    time_ago = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ActivityLog
+        fields = ["id", "action", "entity_type", "metadata", "created_at", "time_ago"]
+
+    def get_time_ago(self, obj):
+        if obj.created_at:
+            return naturaltime(obj.created_at)
+        return None

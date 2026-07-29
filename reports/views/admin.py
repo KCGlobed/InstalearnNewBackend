@@ -5033,6 +5033,201 @@ class GetNotesListingReportPDFView(APIView):
             os.remove(pdf_path)
     
 
+class GetCorporateStudentsActivityLogListView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                            RoleOrPermissionCheck.for_permission_or_roles(
+                                "view_student_activity",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    def get(self, request, id=None):
+
+        if id is not None:
+            activity_log = ActivityLog.objects.filter(
+                                    user_id=id
+                                ).order_by('-created_at')
+        else:
+            users_list = User.objects.filter(corporate = request.user).values_list("id",flat=True)
+            activity_log = ActivityLog.objects.filter(
+                        user_id__in=users_list
+                    ).order_by('-created_at')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(activity_log, request, view=self)
+        serializer = ActivityLogListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class GetCorporateStudentsActivityLogPDFReportView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                            RoleOrPermissionCheck.for_permission_or_roles(
+                                "export_student_activity_pdf_report",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, id=None):
+
+        users_list = User.objects.filter(id = id).first()
+        activity_log = ActivityLog.objects.filter(
+                user_id=id
+            ).order_by('-created_at')
+        serializer = ActivityLogListingSerializer(activity_log, many=True)
+        data = {
+                    "user_data":serializer.data,
+                    'username':users_list.first_name +' '+users_list.last_name,
+                    'user_id':users_list.email,
+                }
+        
+        template = get_template('pdf/student_activity_log_listing_report.html')
+        html  = template.render(data)
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            html = html.encode('latin-1', 'replace').decode('latin-1')
+            pdf = pisa.CreatePDF(BytesIO(html.encode("ISO-8859-1")), dest=temp_file)
+
+            if pdf.err:
+                raise Exception("PDF generation error!")
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "activity_log_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+    
+
+
+class GetCorporateStudentsActivityLogExcelReportView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                            RoleOrPermissionCheck.for_permission_or_roles(
+                                "export_student_activity_pdf_report",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, id=None):
+        user_info = User.objects.filter(id = id).first()
+        activity_log = ActivityLog.objects.filter(
+                user_id=id
+            ).order_by('-created_at')
+        serializer = ActivityLogListingSerializer(activity_log, many=True)
+        
+            
+        lis = []
+        
+        lis.append({
+                "name":"Student Activity Log Report",
+                "last_name":"",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+
+        lis.append({
+                "name":"",
+                "last_name":"",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+
+        if id is not None:
+            lis.append({
+                    "name":"Name",
+                    "last_name":user_info.first_name +' '+user_info.last_name,
+                    "email":'',
+                    "phone":'User ID',
+                    "category":user_info.email,
+                    "type":'',
+                    "reference":'',
+                    "course":"",
+                    "count":''
+                })
+
+            lis.append({
+                "name":"",
+                "last_name":"",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+
+        lis.append({
+                "name":"Activity",
+                "last_name":"Time",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+        
+        
+        for chapter_data in serializer.data:
+            lis.append({
+                "name":chapter_data['metadata'],
+                "last_name":chapter_data['time_ago'],
+                "email":"",
+                "phone":"",
+                "category":"",
+                "type":"",
+                "reference":"",
+                "course":"",
+                "count":""
+            })
+
+            
+            
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            df = pd.DataFrame.from_dict(lis)
+            df.to_excel(pdf_path, header=False, index=False)
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "activity_log_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+
 
 class GetNotesListingReportExcelView(APIView):
     renderer_classes = [ReportsRenderer]
@@ -5236,7 +5431,6 @@ class DownloadStudentVideoReportView(APIView):
             os.remove(pdf_path)
     
     
-
 
 class DownloadStudentVideoReportCSVView(APIView):
     renderer_classes = [ReportsRenderer]
