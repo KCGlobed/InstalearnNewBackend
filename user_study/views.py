@@ -944,6 +944,14 @@ class DeleteRemindersView(APIView):
         
         try:
             course = LearningReminders.objects.get(id = cid)
+            log_activity(
+                    user=course.user,
+                    action=ActivityLog.ActionType.NOTE_DELETED,
+                    entity_type='Course',
+                    entity_id = course.id,
+                    metadata=course.user.first_name+" "+course.user.last_name + " reminder deleted in "+ course.course.name+"."
+                )
+    
             course.delete()
             return success_response(message="Reminder Deleted Successfully!", data={}, status_code=status.HTTP_200_OK)
         except LearningReminders.DoesNotExist:

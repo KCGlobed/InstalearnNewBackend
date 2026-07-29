@@ -329,6 +329,9 @@ class ActivityLog(models.Model):
         NOTE_CREATED = 'NOTE_CREATED', 'Note Created'
         NOTE_UPDATED = 'NOTE_UPDATED', 'Note Updated'
         NOTE_DELETED = 'NOTE_DELETED', 'Note Deleted'
+        REMINDER_CREATED = 'REMINDER_CREATED', 'Reminder Created'
+        REMINDER_UPDATED = 'REMINDER_UPDATED', 'Reminder Updated'
+        REMINDER_DELETED = 'REMINDER_DELETED', 'Reminder Deleted'
         PROGRESS = 'PROGRESS', 'Progress'
         CERTIFICATE_GENERATED = 'CERTIFICATE_GENERATED',"Certificate Generated"
 

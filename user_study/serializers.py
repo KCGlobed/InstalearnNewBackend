@@ -885,6 +885,14 @@ class CreateRemindersSerializer(serializers.ModelSerializer) :
         )
         categ.save()
 
+        log_activity(
+                user=self.context.get('user'),
+                action=ActivityLog.ActionType.REMINDER_CREATED,
+                entity_type='Course',
+                entity_id = categ.id,
+                metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + " created reminder in "+ course_info.name+"."
+            )
+
         return categ
     
 
@@ -922,6 +930,14 @@ class UpdateReminderSerializer(serializers.ModelSerializer) :
         reminder.date = validate_data.get('date')
         reminder.days = validate_data.get('days')
         reminder.save()
+
+        log_activity(
+                        user=self.context.get('user'),
+                        action=ActivityLog.ActionType.REMINDER_UPDATED,
+                        entity_type='Course',
+                        entity_id = validate_data.get('reminder_id'),
+                        metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + " updated reminder in "+ course_info.name+"."
+                    )
 
         return reminder
     
