@@ -1892,7 +1892,7 @@ class GetCorporateStudentsActivityLogPDFReportView(APIView):
     def get(self, request, id=None):
 
         if id is not None:
-            users_list = User.objects.filter(id = request.user).first()
+            users_list = User.objects.filter(id = id).first()
             activity_log = ActivityLog.objects.filter(
                     user_id=id
                 ).order_by('-created_at')
@@ -1953,7 +1953,7 @@ class GetCorporateStudentsActivityLogExcelReportView(APIView):
     def get(self, request, cid=None, id=None):
         user_info = None
         if id is not None:
-            user_info = User.objects.filter(id = request.user).first()
+            user_info = User.objects.filter(id = id).first()
             activity_log = ActivityLog.objects.filter(
                     user_id=id
                 ).order_by('-created_at')
