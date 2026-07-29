@@ -79,5 +79,6 @@ urlpatterns = [
 
     path('get-corporate-students-activity-log-latest/', GetCorporateStudentsActivityLogLatestListView.as_view(), name="get-corporate-students-activity-log-latest"),
     path('get-corporate-students-activity-log/', GetCorporateStudentsActivityLogListView.as_view(), name="get-corporate-students-activity-log"),
+    path('get-corporate-students-activity-log/<int:id>', GetCorporateStudentsActivityLogListView.as_view(), name="get-corporate-students-activity-log"),
 
 ]
