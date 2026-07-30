@@ -1271,6 +1271,29 @@ class GetUserCoursesProgressView(APIView):
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
 
 
+class GetCoursesWiseUserProgressView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [
+        IsAuthenticated, 
+        RoleOrPermissionCheck.for_roles([CorporateAdmin])
+    ]
+
+    def get(self, request, format=None):
+        corporate_users = User.objects.filter(corporate=request.user)
+        users_id = list(corporate_users.values_list("id", flat=True))
+        user_courses_list = UserCourses.objects.filter(user_id__in = users_id).values_list("course",flat=True)
+        
+        category = Course.objects.filter(id__in=user_courses_list)
+        
+        name = request.query_params.get('name')
+        if name:
+            category = category.filter(name__icontains = name)
+
+        serializer = GetUserCoursewiseProgressSerializer(category, many=True, context={'user':request.user,"users_id":users_id})
+
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
 class ReshareUserLoginDetailView(APIView):
     renderer_classes = [UserStudyRenderer]
     permission_classes = [IsAuthenticated, 

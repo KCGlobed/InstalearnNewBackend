@@ -1326,6 +1326,58 @@ class GetUserProgressSerializer(serializers.ModelSerializer):
 
 
 
+class UserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id","first_name","last_name"]
+
+
+class UserCoursesSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField('get_user')
+    avg_progress = serializers.SerializerMethodField('get_avg_progress')
+    
+    def get_avg_progress(self, obj):
+        total_duration_watched_group = UserLectureProgress.objects.filter(
+            course_id=obj.course.id, 
+            user_id=obj.user.id
+        ).aggregate(total=Sum('total_duration')).get('total') or 0
+
+        if total_duration_watched_group == 0:
+            return 0
+        
+        if total_duration_watched_group >= obj.course.total_video_duration:
+            overall_progress = 100
+        else:
+            overall_progress = math.ceil(
+                (total_duration_watched_group * 100) / obj.course.total_video_duration
+            )
+
+        return overall_progress
+
+    def get_user(self, obj):
+        user_course =  User.objects.filter(id= obj.user.id).first()
+        return UserDetailSerializer(user_course).data
+    
+    class Meta:
+        model = UserCourses
+        fields = ["id","course","user","avg_progress"]
+
+
+
+class GetUserCoursewiseProgressSerializer(serializers.ModelSerializer):
+    user_courses = serializers.SerializerMethodField('get_user_courses')
+    
+    def get_user_courses(self, obj):
+        user_course =  UserCourses.objects.filter(user_id__in= self.context.get('users_id'), course_id = obj.id)
+        return UserCoursesSerializer(user_course, many=True).data
+
+    class Meta:
+        model = Course
+        fields = ['id',"name","user_courses"]
+
+
+
+
 class ReshareUserLoginDetailSerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField(required=True)
     
