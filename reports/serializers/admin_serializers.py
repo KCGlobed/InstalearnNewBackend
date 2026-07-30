@@ -157,7 +157,7 @@ class JobApplicationsListSerializer(serializers.ModelSerializer):
 
 
 class ContactListSerializer(serializers.ModelSerializer):
-    created_at = serializers.DateTimeField(read_only=True, format="%Y-%m-%d")
+    created_at = serializers.DateTimeField(read_only=True, format="%Y-%m-%d %H:%M:%S")
     
     class Meta:
         model = ContactUs
