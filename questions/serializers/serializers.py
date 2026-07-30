@@ -633,7 +633,7 @@ class SubmitPracticeTestAnswerSerializer(serializers.ModelSerializer):
                     user=self.context.get('user'),
                     action=ActivityLog.ActionType.QUIZ_COMPLETED,
                     entity_type='Course',
-                    metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "completed a Quiz "+ question.practice_test.quiz.name+" and final score is."+custom_round(mcq_score)+"%"
+                    metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "completed a Quiz "+ question.practice_test.quiz.name+" and final score is."+ str(custom_round(mcq_score))+"%"
                 )
 
             test_info.save()
