@@ -126,6 +126,11 @@ class CourseListSerializer(serializers.ModelSerializer):
         model = Course
         fields = ["id",'name']
 
+class CouponListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Coupon
+        fields = ["id",'name']
+
 
 class StudentRegistrationSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
@@ -137,6 +142,13 @@ class StudentRegistrationSerializer(serializers.ModelSerializer):
 class OrderDetailAdminSerializer(serializers.ModelSerializer):
     ordered_courses = serializers.SerializerMethodField('get_ordered_courses')
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    coupons = serializers.SerializerMethodField('get_coupons')
+    
+    def get_coupons(self, obj):
+        if obj.coupon is not None:
+            category = Coupon.objects.filter(id=obj.coupon.id).first()
+            return CouponListSerializer(category).data
+        return {}
 
     def get_ordered_courses(self, obj):
         category = Course.objects.filter(usercourses__user_id=obj.user.id).distinct()
@@ -145,7 +157,7 @@ class OrderDetailAdminSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Order
-        fields = ["id","first_name","last_name","email","phone","total_amount","start_date","next_due","end_date","subscription_type","subscription_status","created_at","ordered_courses","trail_mode"]
+        fields = ["id","first_name","last_name","email","phone","total_amount","start_date","next_due","end_date","subscription_type","subscription_status","created_at","ordered_courses","trail_mode","coupons","discount_amount"]
 
 
 class JobApplicationsListSerializer(serializers.ModelSerializer):
