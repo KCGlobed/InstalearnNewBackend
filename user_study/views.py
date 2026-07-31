@@ -825,7 +825,7 @@ class GetUserNotificationSettingView(APIView):
     renderer_classes = [UserStudyRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_roles(
-                            [Student]
+                            [Student, CorporateAdmin]
                         )]
     def get(self, request, format=None):
         notification = UserNotificationSetting.objects.filter(user_id = request.user.id).first()
@@ -839,7 +839,7 @@ class UpdateUserNotificationSettingView(APIView):
     renderer_classes = [UserStudyRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_roles(
-                            [Student]
+                            [Student, CorporateAdmin]
                         )]
     def post(self, request, format=None):
         serializer = UpdateUserNotificationSettingSerializer(data = request.data, context={'user':request.user})
@@ -853,7 +853,7 @@ class GetUserNotificationView(APIView):
     renderer_classes = [UserStudyRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_roles(
-                            [Student]
+                            [Student, CorporateAdmin]
                         )]
     def get(self, request, sid = None, format=None):
         category = UserNotifications.objects.filter(user=request.user, status = False).order_by("-id")
@@ -865,7 +865,7 @@ class GetAllNotificationView(APIView):
     renderer_classes = [UserStudyRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_roles(
-                            [Student]
+                            [Student, CorporateAdmin]
                         )]
     def get(self, request, sid = None, format=None):
         category = UserNotifications.objects.filter(user=request.user).order_by("-id")
@@ -877,7 +877,7 @@ class ChangeNotificationStatusView(APIView):
     renderer_classes = [UserStudyRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_roles(
-                            [Student]
+                            [Student, CorporateAdmin]
                         )]
     def post(self, request,  format=None):
         serializer = ChangeNotificationSerializer(data = request.data)

@@ -798,6 +798,9 @@ class CancelSubscriptionSerializer(serializers.ModelSerializer) :
         order.isPaid = False
         order.save()
 
+        user_courses = UserCourses.objects.filter(order_id=order.id)
+        updated_count = user_courses.update(paid=False)
+        
         return order
     
 

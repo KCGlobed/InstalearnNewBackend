@@ -129,7 +129,7 @@ class CourseListSerializer(serializers.ModelSerializer):
 class CouponListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Coupon
-        fields = ["id",'name']
+        fields = ["id",'code']
 
 
 class StudentRegistrationSerializer(serializers.ModelSerializer):
