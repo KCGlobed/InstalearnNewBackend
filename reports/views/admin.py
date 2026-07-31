@@ -3423,7 +3423,7 @@ class GetStudentNotesReportlistingView(APIView):
         topics = ordering_filter.filter_queryset(request, topics, self)
 
         if not topics.ordered:
-            topics = topics.order_by('-id')
+            topics = topics.order_by('-course__name')
 
 
         topics = topics.values('user','user__first_name','user__last_name','user__email','user__category','user__phone1','user__reference_id', "user__student_type",'course','course__name').annotate(
