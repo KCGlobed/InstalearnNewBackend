@@ -3073,6 +3073,34 @@ class UpdateCoursesReviewRatingStatusView(APIView):
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
+class DeleteCoursReviewRatingView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "delete_course_review_rating",
+                            [SuperAdmin]
+                        )]
+    def delete(self, request, cid, format=None):
+        try:
+            course = CourseReviewRating.objects.get(id = cid)
+            course_id = course.course_id
+            course.delete()
+
+            stats = CourseReviewRating.objects.filter(course_id=course_id,approved = 1, status = 1).aggregate(
+                    avg_rating=Avg('rating'),
+                    review_count=Count('id')
+                )
+            
+            Course.objects.filter(id=info.course_id).update(
+                avg_rating=stats['avg_rating'] or 0,
+                total_reviews=stats['review_count']
+            )
+    
+            return success_response(message="Review deleted successfully", data={}, status_code=status.HTTP_200_OK)
+            
+        except CourseReviewRating.DoesNotExist: 
+            return error_response(message="No Record Found!", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
+        
 
 class CouponsListingView(APIView):
     renderer_classes = [CourseRenderer]

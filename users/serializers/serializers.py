@@ -536,7 +536,7 @@ class UpdateUserProfileImageSerializer(serializers.ModelSerializer):
                     user=self.context.get('user'),
                     action=ActivityLog.ActionType.PROFILE_UPDATED,
                     entity_type='Course',
-                    metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "updated his profile image"
+                    metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + " updated his profile image"
                 )
         
         return data

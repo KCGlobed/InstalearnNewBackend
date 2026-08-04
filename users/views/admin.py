@@ -419,7 +419,7 @@ class GetStudentListingView(APIView):
 
         if not users_list.ordered:
             users_list = users_list.order_by('-id')
-
+        
         users_list = [user for user in users_list if has_role(user, Student)]
 
         paginator = self.pagination_class()

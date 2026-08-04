@@ -264,18 +264,20 @@ class GetAdminDashboardCountersView(APIView):
         current_year = now.year
         current_month = now.month
 
-
-        user_counts = User.objects.aggregate(
-            total_students=Count('id', filter=Q(role=User.Student)),
-            new_students_current_month=Count('id', filter=Q(
-                role=User.Student,
-                date_joined__year=current_year,
-                date_joined__month=current_month
-            ))
+        students = [user for user in User.objects.all() if has_role(user, Student)]
+        total_students = len(students)
+        new_students_current_month = sum(
+            1 for user in students
+            if user.date_joined.year == current_year and user.date_joined.month == current_month
         )
 
+        corporate = [user for user in User.objects.all() if has_role(user, CorporateAdmin)]
+        total_corporate = len(corporate)
+
+        
         subscription_counts = Order.objects.aggregate(
-            total_active_orders=Count('id', filter=Q(subscription_status=OrderStatus.Active)),
+            total_active_orders=Count('id', filter=Q(subscription_status=OrderStatus.Active, payment_type=PaymentType.Course)),
+            total_active_subscription=Count('id', filter=Q(subscription_status=OrderStatus.Active, payment_type=PaymentType.Subscription)),
         )
         
         total_duration = Videos.objects.filter(is_completed=True).aggregate(
@@ -287,11 +289,13 @@ class GetAdminDashboardCountersView(APIView):
         )['total_duration']
         
         info = {
-            "total_students": user_counts['total_students'],
+            "total_students": total_students,
             "total_duration_watched": total_duration_watched,
             "total_duration": total_duration,
             "total_active_orders" : subscription_counts['total_active_orders'],
-            "new_students_current_month":user_counts['new_students_current_month']
+            "total_active_subscription" : subscription_counts['total_active_subscription'],
+            "new_students_current_month":new_students_current_month,
+            "total_corporate_admins":total_corporate
         }
 
         return success_response(message="", data=info, status_code=status.HTTP_200_OK)
@@ -310,13 +314,14 @@ class GetAdminDashboardStudentGraphsView(APIView):
                 target_year = current_year - (4 - i) 
                 start_date = datetime(target_year, 1, 1)
                 end_date = datetime(target_year, 12, 31)
+
+                students = [user for user in User.objects.filter(date_joined__range=(start_date, end_date)) if has_role(user, Student)]
+                total_students = len(students)
                 
                 date_list.append({
                     'start_date': start_date.strftime("%Y-%m-%d"),
                     "end_date":end_date.strftime("%Y-%m-%d"),
-                    'total_student_registered': User.objects.filter(
-                                                role=User.Student,
-                                            date_joined__range=(start_date, end_date)).count()
+                    'total_student_registered': total_students
                 })
 
 
@@ -333,12 +338,13 @@ class GetAdminDashboardStudentGraphsView(APIView):
                 else:
                     next_month_start = current_month_start - relativedelta(months=i-1)
                     month_end = next_month_start - timedelta(days=1)
+
+                students = [user for user in User.objects.filter(date_joined__range=(month_start, month_end)) if has_role(user, Student)]
+                total_students = len(students)
                 date_list.append({
                     'start_date': month_start.strftime("%Y-%m-%d"),
                     "end_date":month_end.strftime("%Y-%m-%d"),
-                    'total_student_registered': User.objects.filter(
-                                                role=User.Student,
-                                            date_joined__range=(month_start, month_end)).count()
+                    'total_student_registered': students
                 })
 
         elif interval == "week":
@@ -348,24 +354,107 @@ class GetAdminDashboardStudentGraphsView(APIView):
                 end_date = now - timedelta(weeks=week)
                 start_date = end_date - timedelta(days=6)
 
+                students = [user for user in User.objects.filter(date_joined__range=(start_date, end_date)) if has_role(user, Student)]
+                total_students = len(students)
+                
                 date_list.append({
                     'start_date': start_date.strftime("%Y-%m-%d"),
                     "end_date":end_date.strftime("%Y-%m-%d"),
-                    'total_student_registered': User.objects.filter(
-                                                role=User.Student,
-                                            date_joined__range=(start_date, end_date)).count()
+                    'total_student_registered': total_students
                 })
         else:
             today = timezone.now().date()
             date_list = []
             for i in range(7):
                 past_date = today - timedelta(days=i)
+
+                students = [user for user in User.objects.filter(date_joined=past_date) if has_role(user, Student)]
+                total_students = len(students)
+                
                 date_list.append({
                     "start_date":past_date.strftime("%Y-%m-%d"),
                     "end_date":None,
-                    'total_student_registered': User.objects.filter(
-                                                role=User.Student,
-                                            date_joined=past_date).count()
+                    'total_student_registered': total_students
+                }) 
+        
+        return success_response(message="", data=date_list, status_code=status.HTTP_200_OK)
+
+
+
+class GetAdminDashboardCorporateAdminGraphsView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, interval=None):
+
+        if interval == "year":
+            current_year = timezone.now().year
+    
+            date_list = []
+            for i in range(5):
+                target_year = current_year - (4 - i) 
+                start_date = datetime(target_year, 1, 1)
+                end_date = datetime(target_year, 12, 31)
+
+                corporate = [user for user in User.objects.filter(date_joined__range=(start_date, end_date)) if has_role(user, CorporateAdmin)]
+                total_corporate = len(corporate)
+                
+                date_list.append({
+                    'start_date': start_date.strftime("%Y-%m-%d"),
+                    "end_date":end_date.strftime("%Y-%m-%d"),
+                    'total_corporate_registered': total_corporate
+                })
+
+
+        elif interval == "month":
+            now = timezone.now().date()
+            current_month_start = now.replace(day=1)
+            
+            date_list = []
+            for i in range(12):
+                month_start = current_month_start - relativedelta(months=i)
+                
+                if i == 0:
+                    month_end = now
+                else:
+                    next_month_start = current_month_start - relativedelta(months=i-1)
+                    month_end = next_month_start - timedelta(days=1)
+
+                corporate = [user for user in User.objects.filter(date_joined__range=(month_start, month_end)) if has_role(user, CorporateAdmin)]
+                total_corporate = len(corporate)
+                date_list.append({
+                    'start_date': month_start.strftime("%Y-%m-%d"),
+                    "end_date":month_end.strftime("%Y-%m-%d"),
+                    'total_corporate_registered': total_corporate
+                })
+
+        elif interval == "week":
+            now = datetime.now()
+            date_list = []
+            for week in range(4):
+                end_date = now - timedelta(weeks=week)
+                start_date = end_date - timedelta(days=6)
+
+                corporate = [user for user in User.objects.filter(date_joined__range=(start_date, end_date)) if has_role(user, CorporateAdmin)]
+                total_corporate = len(corporate)
+                
+                date_list.append({
+                    'start_date': start_date.strftime("%Y-%m-%d"),
+                    "end_date":end_date.strftime("%Y-%m-%d"),
+                    'total_corporate_registered': total_corporate
+                })
+        else:
+            today = timezone.now().date()
+            date_list = []
+            for i in range(7):
+                past_date = today - timedelta(days=i)
+
+                corporate = [user for user in User.objects.filter(date_joined=past_date) if has_role(user, CorporateAdmin)]
+                total_corporate = len(corporate)
+                
+                date_list.append({
+                    "start_date":past_date.strftime("%Y-%m-%d"),
+                    "end_date":None,
+                    'total_corporate_registered': total_corporate
                 }) 
         
         return success_response(message="", data=date_list, status_code=status.HTTP_200_OK)
@@ -522,7 +611,7 @@ class GetAdminDashboardRevenueGraphsView(APIView):
                 date_list.append({
                     'start_date': start_date.strftime("%Y-%m-%d"),
                     "end_date":end_date.strftime("%Y-%m-%d"),
-                    'total_amount': Order.objects.filter(isPaid=True, created_at__range=(start_date, end_date)).aggregate(total_amount=Sum('total_amount'))['total_amount']
+                    'total_amount': Order.objects.filter(isPaid=True, payment_type = PaymentType.Course, created_at__range=(start_date, end_date)).aggregate(total_amount=Sum('total_amount'))['total_amount']
                 })
 
 

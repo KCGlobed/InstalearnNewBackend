@@ -382,7 +382,7 @@ class MarkCourseStartedSerializer(serializers.ModelSerializer) :
             action=ActivityLog.ActionType.COURSE_STARTED,
             entity_type='Course',
             entity_id=validate_data.get('course_id'),
-            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "started course "+ course_info.course.name+"."
+            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + " started course "+ course_info.course.name+"."
         )
         return True
 
@@ -520,7 +520,7 @@ class WatchVideoSerializer(serializers.ModelSerializer) :
             action=ActivityLog.ActionType.LESSON_STARTED,
             entity_type='Course',
             entity_id = validate_data.get('lecture_id'),
-            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "started lecture "+ category.video.name+"."
+            metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + " started lecture "+ category.video.name+"."
         )
 
         if validate_data.get('duration') >= category.video.video_duration:
