@@ -2105,7 +2105,7 @@ class GetStudentReminderListingView(APIView):
     renderer_classes = [UserStudyRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_roles(
-                            [CorporateAdmin]
+                            [CorporateAdmin, SuperAdmin]
                         )]
     def get(self, request, cid=None, id=None):
         notes = LearningReminders.objects.filter(user_id = id, course_id = cid)
@@ -2118,7 +2118,7 @@ class GetStudentReminderListingReportPDFView(APIView):
     renderer_classes = [UserStudyRenderer]
     permission_classes = [IsAuthenticated, 
                             RoleOrPermissionCheck.for_roles(
-                            [CorporateAdmin]
+                            [CorporateAdmin, SuperAdmin]
                         )]
     def get(self, request, cid=None, id=None):
         
@@ -2147,7 +2147,7 @@ class GetStudentReminderListingReportPDFView(APIView):
         
         try:
             timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
-            report_name = "notes_report"
+            report_name = "learning_reminder_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
 
@@ -2169,7 +2169,7 @@ class GetStudentReminderListingReportExcelView(APIView):
     renderer_classes = [UserStudyRenderer]
     permission_classes = [IsAuthenticated, 
                             RoleOrPermissionCheck.for_roles(
-                            [CorporateAdmin]
+                            [CorporateAdmin, SuperAdmin]
                         )]
     def get(self, request, cid=None, id=None):
             
@@ -2177,17 +2177,11 @@ class GetStudentReminderListingReportExcelView(APIView):
         serializer = GetLearningRemindersSerializer(notes, many= True, context={'user':id})
         user_info = User.objects.filter(id = id).first()
         course = Course.objects.filter(id = cid).first()
-        data = {
-                    "user_data":serializer.data,
-                    'username':user_info.first_name +' '+user_info.last_name,
-                    'user_id':user_info.email,
-                    'course':course.name,
-                }
-
+       
         lis = []
         
         lis.append({
-                "name":"Notes Detail Report",
+                "name":"Learning Reminder Detail Report",
                 "last_name":"",
                 "email":'',
                 "phone":'',
@@ -2234,41 +2228,43 @@ class GetStudentReminderListingReportExcelView(APIView):
             "count":''
         })
 
-        lis.append({
-                "name":"Lecture Name",
-                "last_name":"Note Detail",
-                "email":'',
-                "phone":'',
-                "category":'',
-                "type":'',
-                "reference":'',
-                "course":'',
-                "count":''
-            })
-        
-        
-        for chapter_data in serializer.data:
-            lecture_info = chapter_data.get('lecture_info', {})
-            video_info = lecture_info.get('video_info', {})
-            ebook_info = lecture_info.get('ebook_info', {})
+        FREQUENCY_MAP = {
+            1: "Daily",
+            2: "Weekly",
+            3: "Once"
+        }
 
-            if video_info and video_info.get('name'):
-                chapter_data['display_title'] = video_info['name']
-            elif ebook_info and ebook_info.get('name'):
-                chapter_data['display_title'] = ebook_info['name']
-            else:
-                chapter_data['display_title'] = "No Title Available"
-                
+        lis.append({
+            "name": "Title",
+            "last_name": "Frequency",
+            "email": "Time",
+            "phone": "Date/Days",
+            "category": "",
+            "type": "",
+            "reference": "",
+            "course": "",
+            "count": ""
+        })
+
+        for item in serializer.data:
+            frequency_label = FREQUENCY_MAP.get(item.get("frequency"), "")
+
+            date_or_days = ""
+            if item.get("date"):
+                date_or_days = str(item.get("date"))
+            elif item.get("days"):
+                date_or_days = item.get("days").title()
+
             lis.append({
-                "name":chapter_data['display_title'],
-                "last_name":chapter_data['note_content'],
-                "email":"",
-                "phone":"",
-                "category":"",
-                "type":"",
-                "reference":"",
-                "course":"",
-                "count":""
+                "name": item.get("title", ""),
+                "last_name": frequency_label,
+                "email": item.get("time", ""),
+                "phone": date_or_days,
+                "category": "",
+                "type": "",
+                "reference": "",
+                "course": "",
+                "count": ""
             })
 
             
@@ -2281,7 +2277,7 @@ class GetStudentReminderListingReportExcelView(APIView):
         
         try:
             timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
-            report_name = "notes_report"
+            report_name = "learning_reminder_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
 
