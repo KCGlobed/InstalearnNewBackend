@@ -631,7 +631,7 @@ class GetAdminDashboardRevenueGraphsView(APIView):
                 date_list.append({
                     'start_date': month_start.strftime("%Y-%m-%d"),
                     "end_date":month_end.strftime("%Y-%m-%d"),
-                    'total_amount': Order.objects.filter(isPaid=True, created_at__range=(month_start, month_end)).aggregate(total_amount=Sum('total_amount'))['total_amount']
+                    'total_amount': Order.objects.filter(isPaid=True, payment_type = PaymentType.Course,created_at__range=(month_start, month_end)).aggregate(total_amount=Sum('total_amount'))['total_amount']
                 })
 
         elif interval == "week":
@@ -644,7 +644,7 @@ class GetAdminDashboardRevenueGraphsView(APIView):
                 date_list.append({
                     'start_date': start_date.strftime("%Y-%m-%d"),
                     "end_date":end_date.strftime("%Y-%m-%d"),
-                    'total_amount': Order.objects.filter(isPaid=True, created_at__range=(start_date, end_date)).aggregate(total_amount=Sum('total_amount'))['total_amount']
+                    'total_amount': Order.objects.filter(isPaid=True, payment_type = PaymentType.Course,created_at__range=(start_date, end_date)).aggregate(total_amount=Sum('total_amount'))['total_amount']
                 })
         else:
             today = timezone.now().date()
@@ -654,7 +654,7 @@ class GetAdminDashboardRevenueGraphsView(APIView):
                 date_list.append({
                     "start_date":past_date.strftime("%Y-%m-%d"),
                     "end_date":None,
-                    'total_amount': Order.objects.filter(isPaid=True, created_at__date=past_date).aggregate(total_amount=Sum('total_amount'))['total_amount']
+                    'total_amount': Order.objects.filter(isPaid=True, payment_type = PaymentType.Course,created_at__date=past_date).aggregate(total_amount=Sum('total_amount'))['total_amount']
                 }) 
         
         return success_response(message="", data=date_list, status_code=status.HTTP_200_OK)
