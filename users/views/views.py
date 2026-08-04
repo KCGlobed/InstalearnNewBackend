@@ -207,6 +207,8 @@ class UserSocialLoginView(APIView):
 
                 image_url = user.image.url if user.image else None
 
+                new_alert_login(user, get_client_ip(request))
+
                 log_activity(
                     user=user,
                     action=ActivityLog.ActionType.USER_LOGIN,
