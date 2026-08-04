@@ -3083,7 +3083,7 @@ class DeleteCoursReviewRatingView(APIView):
     def delete(self, request, cid, format=None):
         try:
             course = CourseReviewRating.objects.get(id = cid)
-            course_id = course.course_id
+            course_id = course.course.id
             course.delete()
 
             stats = CourseReviewRating.objects.filter(course_id=course_id,approved = 1, status = 1).aggregate(
@@ -3091,7 +3091,7 @@ class DeleteCoursReviewRatingView(APIView):
                     review_count=Count('id')
                 )
             
-            Course.objects.filter(id=info.course_id).update(
+            Course.objects.filter(id=course_id).update(
                 avg_rating=stats['avg_rating'] or 0,
                 total_reviews=stats['review_count']
             )

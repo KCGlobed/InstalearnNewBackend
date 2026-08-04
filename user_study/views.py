@@ -2099,3 +2099,200 @@ class GetCorporateStudentsActivityLogExcelReportView(APIView):
             )
         finally:
             os.remove(pdf_path)
+
+
+class GetStudentReminderListingView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin]
+                        )]
+    def get(self, request, cid=None, id=None):
+        notes = LearningReminders.objects.filter(user_id = id, course_id = cid)
+        serializer = GetLearningRemindersSerializer(notes, many= True, context={'user':id})
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
+
+class GetStudentReminderListingReportPDFView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                            RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin]
+                        )]
+    def get(self, request, cid=None, id=None):
+        
+        notes = LearningReminders.objects.filter(user_id = id, course_id = cid)
+        serializer = GetLearningRemindersSerializer(notes, many= True, context={'user':id})
+        user_info = User.objects.filter(id = id).first()
+        course = Course.objects.filter(id = cid).first()
+        data = {
+                    "user_data":serializer.data,
+                    'username':user_info.first_name +' '+user_info.last_name,
+                    'user_id':user_info.email,
+                    'course':course.name,
+                }
+        
+
+        template = get_template('pdf/student_reminder_listing_report.html')
+        html  = template.render(data)
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            html = html.encode('latin-1', 'replace').decode('latin-1')
+            pdf = pisa.CreatePDF(BytesIO(html.encode("ISO-8859-1")), dest=temp_file)
+
+            if pdf.err:
+                raise Exception("PDF generation error!")
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "notes_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+    
+
+
+class GetStudentReminderListingReportExcelView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                            RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin]
+                        )]
+    def get(self, request, cid=None, id=None):
+            
+        notes = LearningReminders.objects.filter(user_id = id, course_id = cid)
+        serializer = GetLearningRemindersSerializer(notes, many= True, context={'user':id})
+        user_info = User.objects.filter(id = id).first()
+        course = Course.objects.filter(id = cid).first()
+        data = {
+                    "user_data":serializer.data,
+                    'username':user_info.first_name +' '+user_info.last_name,
+                    'user_id':user_info.email,
+                    'course':course.name,
+                }
+
+        lis = []
+        
+        lis.append({
+                "name":"Notes Detail Report",
+                "last_name":"",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+
+        lis.append({
+                "name":"",
+                "last_name":"",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+        
+        lis.append({
+                "name":"Name",
+                "last_name":user_info.first_name +' '+user_info.last_name,
+                "email":'',
+                "phone":'User ID',
+                "category":user_info.email,
+                "type":'',
+                "reference":'Course',
+                "course":course.name,
+                "count":''
+            })
+
+        lis.append({
+            "name":"",
+            "last_name":"",
+            "email":'',
+            "phone":'',
+            "category":'',
+            "type":'',
+            "reference":'',
+            "course":'',
+            "count":''
+        })
+
+        lis.append({
+                "name":"Lecture Name",
+                "last_name":"Note Detail",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+        
+        
+        for chapter_data in serializer.data:
+            lecture_info = chapter_data.get('lecture_info', {})
+            video_info = lecture_info.get('video_info', {})
+            ebook_info = lecture_info.get('ebook_info', {})
+
+            if video_info and video_info.get('name'):
+                chapter_data['display_title'] = video_info['name']
+            elif ebook_info and ebook_info.get('name'):
+                chapter_data['display_title'] = ebook_info['name']
+            else:
+                chapter_data['display_title'] = "No Title Available"
+                
+            lis.append({
+                "name":chapter_data['display_title'],
+                "last_name":chapter_data['note_content'],
+                "email":"",
+                "phone":"",
+                "category":"",
+                "type":"",
+                "reference":"",
+                "course":"",
+                "count":""
+            })
+
+            
+            
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            df = pd.DataFrame.from_dict(lis)
+            df.to_excel(pdf_path, header=False, index=False)
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "notes_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)

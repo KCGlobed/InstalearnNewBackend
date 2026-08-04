@@ -88,4 +88,8 @@ urlpatterns = [
     path('export-corporate-students-activity-log-pdf/<int:id>', GetCorporateStudentsActivityLogPDFReportView.as_view(), name="export-corporate-students-activity-log-pdf"),
     path('export-corporate-students-activity-log-excel/<int:id>', GetCorporateStudentsActivityLogExcelReportView.as_view(), name="export-corporate-students-activity-log-excel"),
 
+    path('get-student-reminder-listing/<int:id>/<int:cid>', GetStudentReminderListingView.as_view(), name="get-student-reminder-listing"),
+    path('get-student-reminder-listing-report-pdf/<int:id>/<int:cid>', GetStudentReminderListingReportPDFView.as_view(), name="get-student-reminder-listing-report"),
+    path('get-student-reminder-listing-report-excel/<int:id>/<int:cid>', GetStudentReminderListingReportExcelView.as_view(), name="get-student-reminder-listing-report-excel"),
+
 ]

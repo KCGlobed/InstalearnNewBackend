@@ -1608,3 +1608,9 @@ class ActivityLogListingSerializer(serializers.ModelSerializer):
         if obj.created_at:
             return naturaltime(obj.created_at)
         return None
+
+
+class GetLearningRemindersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LearningReminders
+        fields = "__all__"
