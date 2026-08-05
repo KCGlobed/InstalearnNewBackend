@@ -344,7 +344,7 @@ class GetAdminDashboardStudentGraphsView(APIView):
                 date_list.append({
                     'start_date': month_start.strftime("%Y-%m-%d"),
                     "end_date":month_end.strftime("%Y-%m-%d"),
-                    'total_student_registered': students
+                    'total_student_registered': total_students
                 })
 
         elif interval == "week":
