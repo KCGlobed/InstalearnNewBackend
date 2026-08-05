@@ -5680,3 +5680,26 @@ class DownloadStudentVideoReportCSVView(APIView):
             )
         finally:
             os.remove(pdf_path)
+
+
+
+class GetAdminDashboardRecentStudentsView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, format=None):
+
+        students = [user for user in User.objects.order_by("-id") if has_role(user, Student)][:10]
+        serializer = StudentSerializer(students, many=True)
+
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
+class GetAdminDashboardRecentCorporateAdminView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, format=None):
+
+        students = [user for user in User.objects.order_by("-id") if has_role(user, CorporateAdmin)][:10]
+        serializer = StudentSerializer(students, many=True)
+
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)

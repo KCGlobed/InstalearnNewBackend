@@ -54,6 +54,8 @@ urlpatterns = [
     path('admin-dashboard-students-video-lecture-graph/<str:interval>', GetAdminDashboardStudentVideoLectureGraphsView.as_view(), name="admin-dashboard-students-video-lecture-graph"),
     path('admin-dashboard-students-order-graph/<str:interval>', GetAdminDashboardStudentOrderGraphsView.as_view(), name="admin-dashboard-students-order-graph"),
     path('admin-dashboard-revenue-graph/<str:interval>', GetAdminDashboardRevenueGraphsView.as_view(), name="admin-dashboard-revenue-graph"),
+    path('admin-dashboard-recent-students/', GetAdminDashboardRecentStudentsView.as_view(), name="admin-dashboard-recent-students"),
+    path('admin-dashboard-recent-corporate-admin/', GetAdminDashboardRecentCorporateAdminView.as_view(), name="admin-dashboard-recent-corporate-admin"),
 
     path('get-corporare-admin-user-listing/', CorporateUserListingView.as_view(), name="get-corporare-admin-user-listing"),
     path('create-corporate-admin-user/', CreateCorporateAdminUserView.as_view(), name="create-corporate-admin-user"),
