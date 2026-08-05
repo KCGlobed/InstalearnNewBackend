@@ -1573,6 +1573,9 @@ class GetChapterQuizListSerializer(serializers.ModelSerializer):
 
 class PracticeTestListingSerializer(serializers.ModelSerializer):
     quiz = serializers.SerializerMethodField('get_quiz')
+    start_time = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    end_time = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    
     def get_quiz(self, obj):
         users_courses = ChapterQuizs.objects.filter(id=obj.quiz.id).first()
         return GetChapterQuizListSerializer(users_courses).data

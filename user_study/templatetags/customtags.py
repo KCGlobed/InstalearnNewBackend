@@ -137,3 +137,28 @@ def calculate_discount_with_sign(price, ttoal):
         return "%s%s" % (intcomma(int(dollars)), ("%0.2f" % dollars)[-3:])
     else:
         return 0
+
+
+@register.filter
+def format_duration(value):
+    try:
+        seconds = int(value)
+    except (ValueError, TypeError):
+        return "0s"
+
+    if seconds == 0:
+        return "0s"
+
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    secs = seconds % 60
+    
+    parts = []
+    if hours > 0:
+        parts.append(f"{hours}h")
+    if minutes > 0:
+        parts.append(f"{minutes}m")
+    if secs > 0 or not parts:
+        parts.append(f"{secs}s")
+        
+    return " ".join(parts)

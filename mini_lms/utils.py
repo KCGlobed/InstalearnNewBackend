@@ -19,6 +19,7 @@ from courses.models import *
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.conf import settings
+from datetime import datetime
 
 
 CHUNK_SIZE = 1024 * 1024 * 10
@@ -433,3 +434,36 @@ def log_activity(user, action, entity_type=None, entity_id=None, metadata=None):
         entity_id=str_entity_id,
         metadata=metadata or None,
     )
+
+def format_seconds(seconds):
+    try:
+        secs = int(seconds or 0)
+    except (ValueError, TypeError):
+        return "0s"
+
+    if secs == 0:
+        return "0s"
+
+    hours = secs // 3600
+    minutes = (secs % 3600) // 60
+    remaining_secs = secs % 60
+
+    parts = []
+    if hours > 0:
+        parts.append(f"{hours}h")
+    if minutes > 0:
+        parts.append(f"{minutes}m")
+    if remaining_secs > 0 or not parts:
+        parts.append(f"{remaining_secs}s")
+
+    return " ".join(parts)
+
+
+def format_iso_time(iso_str):
+    if not iso_str:
+        return "N/A"
+    try:
+        dt = datetime.fromisoformat(str(iso_str))
+        return dt.strftime("%d %b %Y, %I:%M %p")
+    except (ValueError, TypeError):
+        return str(iso_str)

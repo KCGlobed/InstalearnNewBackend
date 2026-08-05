@@ -437,7 +437,7 @@ class CorproateUserDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ["id",'first_name',"last_name","email","is_active","created_at","counters","active_suscription","student_lists"]
+        fields = ["id",'first_name',"last_name","email","image","is_active","created_at","counters","active_suscription","student_lists"]
 
 
 

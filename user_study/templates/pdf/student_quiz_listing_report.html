@@ -1,0 +1,152 @@
+{% load reports_tags %}
+{% load customtags %}
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <title>User Quiz Report</title>
+        <style type="text/css">
+           
+            body {
+                font-weight: 200;
+                font-size: 11.5px;
+            }
+            .header {
+                font-size: 20px;
+                font-weight: 100;
+                text-align: center;
+                color: #007cae;
+            }
+            .title {
+                font-size: 22px;
+                font-weight: 100;
+               /* text-align: right;*/
+               padding: 10px 20px 0px 20px;  
+            }
+            .title span {
+                color: #007cae;
+            }
+            .details {
+                padding: 10px 20px 0px 20px;
+                text-align: left !important;
+                /*margin-left: 40%;*/
+            }
+            .hrItem {
+                border: none;
+                height: 1px;
+                /* Set the hr color */
+                color: #333; /* old IE */
+                background-color: #fff; /* Modern Browsers */
+            }
+            table {
+                border-collapse: collapse;
+                border-spacing: 0;
+                width: 100%;
+                border: 1px solid #ddd;
+                }
+
+                th, td {
+                text-align: left;
+                padding: 3px;
+                }
+
+                tr:nth-child(even) {
+                    background-color: #f2f2f2;
+                }
+                .card {
+                    
+                    background-color: #eaecee;
+                    border:white 10px solid;
+                }
+        </style>
+    </head>
+    <body>
+        <style>
+            #header,
+            #footer {
+              padding: 0 !important;
+            }
+          </style>
+          <table style="width: 100%; padding-left: 0px; padding-right: 0px; padding-top: 5px;padding-bottom: 8px;margin: 0px!important;font-size: 15px; border:0;">
+            <tr>
+              <td style="text-align:left; width:25%!important;">
+                <div>
+                    <img height="42" src="https://storage.googleapis.com/instalearn-public-bucket/media/landing/instalogo.png" alt="">
+                </div>
+              </td>
+              <td style="text-align:center; width:50%!important;font-size: 17px; color: #007cae;">
+                <div>
+                    <p class='title'>Student Quiz Report </p>
+                </div>
+              </td>
+              <td style="text-align:right; width:25%!important;font-size: 14px">
+                <div>
+                    {{report_date|report_date}}
+                </div>
+              </td>
+            </tr>
+          </table>
+            
+            <div class='wrapper' style="margin-bottom: 20px;">
+                
+            <div>
+           
+            <div class='wrapper'>
+                <h2 style="font-weight: 100;"><b>Name:</b> {{username}} <br> <b>User ID:</b> {{user_id}}<br> <b>Course:</b> {{course}}</h2>
+            <div>
+        <div class='details'>
+            <div>
+                <table style="padding-top: 70px;">
+                    <!-- Table Header -->
+                    <thead>
+                        <tr>
+                            <th>Quiz Name</th>
+                            <th>Chapter Name</th>
+                            <th>Total Questions</th>
+                            <th>Right Answer / Wrong Answer</th>
+                            <th>Total Time Taken</th>
+                            <th>Start Time / End Time</th>
+                            <th>Score</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+
+                    <!-- Table Body -->
+                    <tbody>
+                        {% for attempt in user_data %}
+                        <tr>
+                            <td>{{ attempt.quiz.name|default:"N/A" }}</td>
+                            <td>{{ attempt.quiz.chapter.name|default:"N/A" }}</td>
+                            <td>{{ attempt.total_question }}</td>
+                            <td>
+                                <span style="color: green;">{{ attempt.total_right_answer_given }}</span> / 
+                                <span style="color: red;">{{ attempt.total_wrong_answer_given }}</span>
+                            </td>
+                            <td>
+                                {% if attempt.total_time_taken %}
+                                    {{ attempt.total_time_taken|format_duration }}
+                                {% else %}
+                                    0s
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div><b>Start:</b> {{ attempt.start_time }}</div>
+                                <div><b>End:</b> {% if attempt.end_time %}{{ attempt.end_time }}{% else %}N/A{% endif %}</div>
+                            </td>
+                            <td>{{ attempt.score }}%</td>
+                            <td>{{ attempt.result }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8">No quiz attempts found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        
+
+    </div>
+    </body>
+</html>

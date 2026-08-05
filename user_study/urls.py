@@ -92,4 +92,7 @@ urlpatterns = [
     path('get-student-reminder-listing-report-pdf/<int:id>/<int:cid>', GetStudentReminderListingReportPDFView.as_view(), name="get-student-reminder-listing-report"),
     path('get-student-reminder-listing-report-excel/<int:id>/<int:cid>', GetStudentReminderListingReportExcelView.as_view(), name="get-student-reminder-listing-report-excel"),
 
+    path('get-student-quiz-listing-report-pdf/<int:id>/<int:cid>', GetStudentQuizListingReportPDFView.as_view(), name="get-student-quiz-listing-report"),
+    path('get-student-quiz-listing-report-excel/<int:id>/<int:cid>', GetStudentQuizListingReportExcelView.as_view(), name="get-student-quiz-listing-report-excel"),
+
 ]

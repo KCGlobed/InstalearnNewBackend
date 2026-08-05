@@ -2292,3 +2292,187 @@ class GetStudentReminderListingReportExcelView(APIView):
             )
         finally:
             os.remove(pdf_path)
+
+
+
+class GetStudentQuizListingReportPDFView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                            RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin, SuperAdmin]
+                        )]
+    def get(self, request, cid=None, id=None):
+        
+        test = PracticeTests.objects.filter(course_id = cid, user = id).order_by("-id")
+        serializer = PracticeTestListingSerializer(test,many=True)
+        user_info = User.objects.filter(id = id).first()
+        course = Course.objects.filter(id = cid).first()
+        data = {
+                    "user_data":serializer.data,
+                    'username':user_info.first_name +' '+user_info.last_name,
+                    'user_id':user_info.email,
+                    'course':course.name,
+                }
+        
+
+        template = get_template('pdf/student_quiz_listing_report.html')
+        html  = template.render(data)
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            html = html.encode('latin-1', 'replace').decode('latin-1')
+            pdf = pisa.CreatePDF(BytesIO(html.encode("ISO-8859-1")), dest=temp_file)
+
+            if pdf.err:
+                raise Exception("PDF generation error!")
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "quiz_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+    
+
+
+class GetStudentQuizListingReportExcelView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                            RoleOrPermissionCheck.for_roles(
+                            [CorporateAdmin, SuperAdmin]
+                        )]
+    def get(self, request, cid=None, id=None):
+            
+        test = PracticeTests.objects.filter(course_id = cid, user = id).order_by("-id")
+        serializer = PracticeTestListingSerializer(test,many=True)
+        user_info = User.objects.filter(id = id).first()
+        course = Course.objects.filter(id = cid).first()
+       
+        lis = []
+        
+        lis.append({
+                "name":"Student Quiz Detail Report",
+                "last_name":"",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+
+        lis.append({
+                "name":"",
+                "last_name":"",
+                "email":'',
+                "phone":'',
+                "category":'',
+                "type":'',
+                "reference":'',
+                "course":'',
+                "count":''
+            })
+        
+        lis.append({
+                "name":"Name",
+                "last_name":user_info.first_name +' '+user_info.last_name,
+                "email":'',
+                "phone":'User ID',
+                "category":user_info.email,
+                "type":'',
+                "reference":'Course',
+                "course":course.name,
+                "count":''
+            })
+
+        lis.append({
+            "name":"",
+            "last_name":"",
+            "email":'',
+            "phone":'',
+            "category":'',
+            "type":'',
+            "reference":'',
+            "course":'',
+            "count":''
+        })
+
+        
+        lis.append({
+            "name": "Quiz Name",
+            "last_name": "Chapter Name",
+            "email": "Total Questions",
+            "phone": "Right Answer / Wrong Answer",
+            "category": "Total Time Taken",
+            "type": "Start Time / End Time",
+            "reference": "Score",
+            "course": "Result",
+            "count": "",
+        })
+
+        for item in serializer.data:
+            quiz = item.get("quiz") or {}
+            chapter = quiz.get("chapter") or {}
+
+            # Extract right/wrong answers
+            right_ans = item.get("total_right_answer_given", 0)
+            wrong_ans = item.get("total_wrong_answer_given", 0)
+            right_wrong_str = f"{right_ans} / {wrong_ans}"
+
+            # Extract and format time/duration
+            time_taken_str = format_seconds(item.get("total_time_taken"))
+
+            # Extract and format start/end timestamps
+            start_str = format_iso_time(item.get("start_time"))
+            end_str = format_iso_time(item.get("end_time"))
+            time_range_str = f"{start_str} - {end_str}"
+
+            lis.append({
+                "name": quiz.get("name", "N/A"),
+                "last_name": chapter.get("name", "N/A"),
+                "email": item.get("total_question", 0),
+                "phone": right_wrong_str,
+                "category": time_taken_str,
+                "type": time_range_str,
+                "reference": item.get("score", 0),
+                "course": item.get("result", "N/A"),
+                "count": "",
+            })
+
+            
+            
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            df = pd.DataFrame.from_dict(lis)
+            df.to_excel(pdf_path, header=False, index=False)
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "learning_reminder_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
