@@ -150,3 +150,41 @@ class LearningReminders(models.Model):
         
     def __str__(self):
         return '%s' % self.id
+
+
+
+class UserCurrentCourseLearning(models.Model):
+    user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
+    course = models.ForeignKey('courses.Course', null=True, blank=True, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'User Current Course Learning'
+        verbose_name_plural = 'User Current Course Learning'
+        
+    def __str__(self):
+        return '%s' % self.id
+
+
+class LearningTargets(models.Model):
+    user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
+    course = models.ForeignKey('courses.Course', null=True, blank=True, on_delete=models.CASCADE)
+    monday = models.BooleanField(default=False)
+    tuesday = models.BooleanField(default=False)
+    wednesday = models.BooleanField(default=False)
+    thursday = models.BooleanField(default=False)
+    friday = models.BooleanField(default=False)
+    saturday = models.BooleanField(default=False)
+    sunday = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True) 
+
+    @property
+    def total_target_days(self) -> int:
+        return sum([
+            self.monday, self.tuesday, self.wednesday, 
+            self.thursday, self.friday, self.saturday, self.sunday
+        ])
+
+    def __str__(self):
+        return f"{self.user.first_name} {self.user.last_name}'s Learning Target ({self.total_target_days} days)"

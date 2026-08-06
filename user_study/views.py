@@ -39,8 +39,38 @@ class PurchasedCoursesView(APIView):
         serializer = OrderCoursesSerializer(category, many=True, context={'user':request.user})
 
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
+class GetCurrentCoursesView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def get(self, request,format=None):
+        
+        course_list = UserCurrentCourseLearning.objects.filter(user = request.user).first()
+        if course_list is not None:
+            category = Course.objects.get(id=course_list.course.id)
+            serializer = UserCurrentCourseInfoSerializer(category, context={'user':request.user})
+            return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+        return success_response(message="Success", data=[], status_code=status.HTTP_200_OK)
     
 
+class UpdateLearningDaysView(APIView):
+    renderer_classes = [UserStudyRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_roles(
+                            [Student]
+                        )]
+    def post(self, request, format=None):
+        serializer = UpdateLearningDaysSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Learning Days Updated successfully", data={}, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+
+    
 class MarkCourseStartedView(APIView):
     renderer_classes = [UserStudyRenderer]
     permission_classes = [IsAuthenticated, 
@@ -86,6 +116,13 @@ class DashboardCourseChaptersView(APIView):
             return error_response(message="Invalid Course ID", data = [], status_code=status.HTTP_400_BAD_REQUEST)
         
         course_info = UserCourses.objects.filter(course_id = id, paid = 1,user = request.user).first()
+
+        UserCurrentCourseLearning.objects.update_or_create(
+            user=request.user,
+            defaults={
+                'course_id': id,
+            }
+        )
 
         if course_info.trail == True:
             chapters = TrailCourseChapters.objects.filter(trail_course__course_id = id).values_list("chapter", flat=True)

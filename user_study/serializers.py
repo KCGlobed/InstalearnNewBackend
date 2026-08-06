@@ -17,7 +17,47 @@ from django.db.models import Sum, Avg, Count
 from mini_lms.utils import *
 from django.contrib.humanize.templatetags.humanize import naturaltime
 
+class UpdateLearningDaysSerializer(serializers.ModelSerializer):
+    course_id = serializers.IntegerField(required=True)
+    monday = serializers.BooleanField(required=False, default=False)
+    tuesday = serializers.BooleanField(required=False, default=False)
+    wednesday = serializers.BooleanField(required=False, default=False)
+    thursday = serializers.BooleanField(required=False, default=False)
+    friday = serializers.BooleanField(required=False, default=False)
+    saturday = serializers.BooleanField(required=False, default=False)
+    sunday = serializers.BooleanField(required=False, default=False)
 
+    class Meta:
+        model = LearningTargets
+        fields = [
+            'course_id',
+            'monday',
+            'tuesday',
+            'wednesday',
+            'thursday',
+            'friday',
+            'saturday',
+            'sunday',
+        ]
+
+    def validate_course_id(self, value):
+        if not Course.objects.filter(id=value).exists():
+            raise serializers.ValidationError("Course does not exist.")
+        return value
+
+    def create(self, validated_data):
+        user = self.context.get('request').user if 'request' in self.context else self.context.get('user')
+        course_id = validated_data.pop('course_id')
+        day_defaults = validated_data
+        instance, created = LearningTargets.objects.update_or_create(
+            user=user,
+            course_id=course_id,
+            defaults=day_defaults
+        )
+
+        return instance
+
+    
 class CourseProgressSerializer(serializers.ModelSerializer):
     progress = serializers.SerializerMethodField('get_progress')
     def get_progress(self, obj):
@@ -1617,3 +1657,59 @@ class GetLearningRemindersSerializer(serializers.ModelSerializer):
     class Meta:
         model = LearningReminders
         fields = "__all__"
+
+
+class LearningTargetSerializer(serializers.ModelSerializer):
+    target_days_count = serializers.IntegerField(source='total_target_days', read_only=True)
+    time_ago = serializers.SerializerMethodField()
+    
+    def get_time_ago(self, obj):
+        if obj.created_at:
+            return naturaltime(obj.updated_at)
+        return None
+
+    class Meta:
+        model = LearningTargets
+        fields = [
+            'id',
+            'monday',
+            'tuesday',
+            'wednesday',
+            'thursday',
+            'friday',
+            'saturday',
+            'sunday',
+            'target_days_count',
+            'updated_at',
+            "time_ago"
+        ]
+
+
+class UserCurrentCourseInfoSerializer(serializers.ModelSerializer):
+    progress = serializers.SerializerMethodField('get_progress')
+    course_started = serializers.SerializerMethodField('get_course_started')
+    learning_target = serializers.SerializerMethodField('get_learning_target')
+    
+    def get_learning_target(self, obj):
+        user_course =  LearningTargets.objects.filter(user= self.context.get('user'), course_id = obj.id).first()
+        if user_course is None:
+            return {}
+        return LearningTargetSerializer(user_course).data
+
+    def get_course_started(self, obj):
+        user_course =  UserCourses.objects.filter(user= self.context.get('user'), course_id = obj.id).first()
+        return user_course.is_started
+    
+    def get_progress(self, obj):
+        total_duration_video_watched = UserLectureProgress.objects.filter(course_id = obj.id, user = self.context.get('user')).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+        video_duration_progress = 0
+        if total_duration_video_watched > obj.total_video_duration:
+            video_duration_progress =  100
+        else:
+            if obj.total_video_duration > 0:
+                    video_duration_progress =  math.ceil(total_duration_video_watched * 100 / obj.total_video_duration)
+        return video_duration_progress
+
+    class Meta:
+        model = Course
+        fields = ['id',"name","short_description","image","avg_rating","total_reviews","updated_at","progress","course_started","learning_target"]

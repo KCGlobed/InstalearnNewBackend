@@ -407,3 +407,98 @@ class PromotionalBannerCampaign(models.Model):
 
     def __str__(self):
         return f"{self.title}"
+
+
+
+class CommunityCategories(models.Model):
+    title = models.CharField(max_length=255, null=True, blank=True)
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    image = models.FileField(upload_to="landing/", null=True, blank=True)
+    status = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Community Categories'
+        verbose_name_plural = 'Community Categories'
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old_title = CommunityCategories.objects.get(pk=self.pk).title
+            if self.title != old_title:
+                self.slug = None
+
+        if not self.slug:
+            original_slug = slugify(self.title)
+            queryset = CommunityCategories.objects.all()
+            next_num = 1
+            slug = original_slug
+            
+            # Loop until a unique slug is found
+            while queryset.filter(slug=slug).exists():
+                slug = f"{original_slug}-{next_num}"
+                next_num += 1
+                
+            self.slug = slug
+            
+        super().save(*args, **kwargs)
+        
+    def __str__(self):
+        return '%s' % self.title
+    
+
+
+class CommunityPosts(models.Model):
+    category = models.ForeignKey('CommunityCategories', null=True, blank=True, on_delete=models.CASCADE)
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
+    title = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    status = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Help Support Article'
+        verbose_name_plural = 'Help Support Article'
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old_title = CommunityPosts.objects.get(pk=self.pk).title
+            if self.title != old_title:
+                self.slug = None
+
+        if not self.slug:
+            original_slug = slugify(self.title)
+            queryset = CommunityPosts.objects.all()
+            next_num = 1
+            slug = original_slug
+            
+            # Loop until a unique slug is found
+            while queryset.filter(slug=slug).exists():
+                slug = f"{original_slug}-{next_num}"
+                next_num += 1
+                
+            self.slug = slug
+            
+        super().save(*args, **kwargs)
+        
+    def __str__(self):
+        return '%s' % self.title
+
+
+
+class CommunityPostComments(models.Model):
+    user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
+    post = models.ForeignKey('CommunityPosts', null=True, blank=True, on_delete=models.CASCADE)
+    comment = models.TextField(null=True, blank=True)
+    status = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Community Post Comments'
+        verbose_name_plural = 'Community Post Comments'
+
+    def __str__(self):
+        return '%s' % self.id
