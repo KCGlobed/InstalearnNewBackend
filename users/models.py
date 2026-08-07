@@ -349,3 +349,21 @@ class ActivityLog(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.action} at {self.created_at}"
+
+
+
+class SearchHistory(models.Model):
+    user = models.ForeignKey('User', null=True, blank=True, on_delete=models.CASCADE)
+    course = models.ForeignKey('courses.Course', null=True, blank=True, on_delete=models.CASCADE)
+    query = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add = True)
+    updated_at = models.DateTimeField(auto_now = True)
+    
+    class Meta:
+            verbose_name = 'Search History'
+            verbose_name_plural = 'Search History'
+            
+    def __str__(self):
+        return '%s' % self.id
+
+    
