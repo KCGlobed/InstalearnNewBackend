@@ -1640,7 +1640,7 @@ class CommunitPostListingView(APIView):
 
         category = request.query_params.get('category')
         if category:
-            category = category.filter(category__title__icontains=main_topic)
+            category = category.filter(category__title__icontains=category)
 
         active = request.query_params.get('status')
         if active:
