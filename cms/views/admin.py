@@ -1487,3 +1487,263 @@ class DeletePromotionalBannerView(APIView):
             return success_response(message="Promotional Banner Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
         except PromotionalBannerCampaign.DoesNotExist:
             return error_response(message="Promotional Banner not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+
+
+
+class CommunityCategoryListingView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "community_category_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title']
+    ordering_fields = ['title', 'created_at', 'id', 'status'] 
+    def get(self, request, format=None):
+        category = CommunityCategories.objects.all()
+        
+        title = request.query_params.get('title')
+        if title:
+            category = category.filter(title__icontains=title)
+
+        description = request.query_params.get('description')
+        if description:
+            category = category.filter(description__icontains=description)
+        
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
+
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                category = category.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                category = category.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        category = search_filter.filter_queryset(request, category, self)
+
+        ordering_filter = filters.OrderingFilter()
+        category = ordering_filter.filter_queryset(request, category, self)
+
+        if not category.ordered:
+            category = category.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(category, request, view=self)
+        serializer = CommunityCategoryListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+class CreateCommunityCategoryView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_community_category",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = CreateCommunityCategoriesSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Community Category Created Successfully", data=CommunityCategoryListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class EditCommunityCategoryView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_community_category",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = CommunityCategories.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Community Category ID!")
+        
+        serializer = EditCommunityCategoriesSerializer(category, data = request.data, partial=True)
+        if serializer.is_valid(raise_exception = True):
+            user= serializer.save()
+            return success_response(message="Community Category Updated Successfully", data=CommunityCategoryListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class UpdateCommunityCategoryStatusView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_community_category_status",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = CommunityCategories.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Community Category ID!")
+        
+        serializer = ChangeCommunityCategoriesStatusSerializer(category, data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Community Category Status Updated Successfully", data=CommunityCategoryListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class DeleteCommunityCategoryView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "delete_community_category",
+                            [SuperAdmin]
+                        )]
+    def delete(self, request, cid, format=None):
+        try:
+            course = CommunityCategories.objects.get(id = cid)
+            course.delete()
+            return success_response(message="Community Category Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
+        except CommunityCategories.DoesNotExist:
+            return error_response(message="Community Category not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)
+
+
+
+class CommunitPostListingView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "community_post_listing",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title']
+    ordering_fields = ['title', 'created_at', 'id', 'status'] 
+    def get(self, request, format=None):
+        category = CommunityPosts.objects.all()
+        
+        title = request.query_params.get('title')
+        if title:
+            category = category.filter(title__icontains=title)
+
+        category = request.query_params.get('category')
+        if category:
+            category = category.filter(category__title__icontains=main_topic)
+
+        active = request.query_params.get('status')
+        if active:
+            category = category.filter(status=active)
+
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                category = category.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                category = category.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        category = search_filter.filter_queryset(request, category, self)
+
+        ordering_filter = filters.OrderingFilter()
+        category = ordering_filter.filter_queryset(request, category, self)
+
+        if not category.ordered:
+            category = category.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(category, request, view=self)
+        serializer = CommunityPostsListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+
+class CreateCommunitPostView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_community_post",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = CreateCommunityPostsSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Community Post Created Successfully", data=CommunityPostsListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class EditCommunitPostView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_community_post",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = CommunityPosts.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Community Post ID!")
+        
+        serializer = EditCommunityPostsserializer(category, data = request.data, partial=True)
+        if serializer.is_valid(raise_exception = True):
+            user= serializer.save()
+            return success_response(message="Community Post Updated Successfully", data=CommunityPostsListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class UpdateCommunitPostStatusView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_community_post_status",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = CommunityPosts.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Community Post ID!")
+        
+        serializer = ChangeCommunityPostsstatusSerializer(category, data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Community Post Status Updated Successfully", data=CommunityPostsListingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
+
+class DeleteCommunitPostView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "delete_community_post",
+                            [SuperAdmin]
+                        )]
+    def delete(self, request, cid, format=None):
+        try:
+            course = CommunityPosts.objects.get(id = cid)
+            course.delete()
+            return success_response(message="Community Post Deleted Successfully", data={"id":cid}, status_code=status.HTTP_200_OK)
+        except CommunityPosts.DoesNotExist:
+            return error_response(message="Community Post not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)

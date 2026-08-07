@@ -108,4 +108,17 @@ urlpatterns = [
 
     path('get-promotional-banner/', PromotionalBannerListView.as_view(), name="get-promotional-banner"), 
 
+    path('get-community-category-listing/', CommunityCategoryListingView.as_view(), name="get-community-category-listing"), 
+    path('create-community-category/', CreateCommunityCategoryView.as_view(), name="create-community-category"),
+    path('edit-community-category/<int:cid>', EditCommunityCategoryView.as_view(), name="edit-community-category"),
+    path('update-community-category-status/<int:cid>', UpdateCommunityCategoryStatusView.as_view(), name="update-community-category-status"),
+    path('delete-community-category/<int:cid>', DeleteCommunityCategoryView.as_view(), name="delete-community-category"),
+
+
+    path('get-community-post-listing/', CommunitPostListingView.as_view(), name="get-community-post-listing"), 
+    path('create-community-post/', CreateCommunitPostView.as_view(), name="create-community-post"),
+    path('edit-community-post/<int:cid>', EditCommunitPostView.as_view(), name="edit-community-post"),
+    path('update-community-post-status/<int:cid>', UpdateCommunitPostStatusView.as_view(), name="update-community-post-status"),
+    path('delete-community-post/<int:cid>', DeleteCommunitPostView.as_view(), name="delete-community-post"),
+    
 ]   

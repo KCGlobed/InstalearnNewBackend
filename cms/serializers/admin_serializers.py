@@ -993,3 +993,158 @@ class ChangePromotionalBannerStatusSerializer(serializers.ModelSerializer) :
         category.save()
 
         return category
+
+
+class CommunityCategoryListingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommunityCategories
+        fields = "__all__"
+
+
+class CreateCommunityCategoriesSerializer(serializers.ModelSerializer) :
+    title = serializers.CharField(max_length = 255, required=True)
+    description = serializers.CharField(required=True)
+    image = serializers.FileField(required=True,validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
+    
+    class Meta:
+        model = CommunityCategories
+        fields = ['title',"description","image"]
+        
+    def validate(self, data):
+        name_count = CommunityCategories.objects.filter(title = data.get('title')).count()
+        if name_count > 0:
+            raise serializers.ValidationError("Title Already Exists!")
+
+        return data
+
+    def create(self , validate_data):
+        topic = CommunityCategories(
+            title = validate_data.get('title'),
+            description = validate_data.get('description'),
+            image = validate_data.get('image'),
+            status = True
+        )
+        topic.save()
+
+        return topic
+    
+
+
+class EditCommunityCategoriesSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(max_length = 255, required=True)
+    description = serializers.CharField(required=False, allow_blank=True)
+    image = serializers.FileField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
+
+    class Meta:
+        model = CommunityCategories
+        fields = ['title',"description","image"]
+        
+    def validate(self, data):
+        return data
+
+
+    def update(self , category, validate_data):
+        category.title = validate_data.get('title', category.title)
+        category.description = validate_data.get('description', category.description)
+        category.image = validate_data.get('image', category.image)
+        category.save()
+
+        return category
+    
+
+class ChangeCommunityCategoriesStatusSerializer(serializers.ModelSerializer) :
+    status = serializers.BooleanField(required=True)
+    class Meta:
+        model = CommunityCategories
+        fields = ['status']
+        
+    def validate(self, data):
+        return data
+
+    def update(self , category, validate_data):
+        category.status = validate_data.get('status', category.status)
+        category.save()
+
+        return category
+
+
+
+class CommunityPostsListingSerializer(serializers.ModelSerializer):
+    category = serializers.SerializerMethodField()
+    
+    def get_category(self, parent):
+        info = CommunityCategories.objects.get(id = parent.category.id)
+        return CommunityCategoryListingSerializer(info).data
+    
+    class Meta:
+        model = CommunityPosts
+        fields = ['id',"slug","title","description","status","category","created_at"]
+
+
+class CreateCommunityPostsSerializer(serializers.ModelSerializer) :
+    title = serializers.CharField(max_length = 255, required=True)
+    category = serializers.IntegerField(required=True)
+    description = serializers.CharField(required=False, allow_blank=True)
+    
+    class Meta:
+        model = CommunityPosts
+        fields = ['title',"category","description"]
+        
+    def validate(self, data):
+        name_count = CommunityPosts.objects.filter(title = data.get('title')).count()
+        if name_count > 0:
+            raise serializers.ValidationError("Title Already Exists!")
+
+        return data
+
+    def create(self , validate_data):
+        topic = CommunityPosts(
+            title = validate_data.get('title'),
+            description = validate_data.get('description'),
+            category = CommunityCategories.objects.filter(id = validate_data.get('category')).first(),
+            status = True
+        )
+        topic.save()
+
+        return topic
+    
+
+
+class EditCommunityPostsserializer(serializers.ModelSerializer):
+    title = serializers.CharField(max_length = 255, required=True)
+    main_topic = serializers.IntegerField(required=True)
+    sub_topic = serializers.IntegerField(required=True)
+    description = serializers.CharField(required=False, allow_blank=True)
+
+    class Meta:
+        model = CommunityPosts
+        fields = ['title',"main_topic","sub_topic","description"]
+        
+    def validate(self, data):
+        return data
+
+
+    def update(self , category, validate_data):
+        category.title = validate_data.get('title', category.title)
+        category.description = validate_data.get('description', category.description)
+        category.main_topic = HelpSupportTopics.objects.filter(id = validate_data.get('main_topic')).first()
+        category.sub_topic = HelpSupportSubTopics.objects.filter(id = validate_data.get('sub_topic')).first()
+        category.save()
+
+        return category
+    
+
+class ChangeCommunityPostsstatusSerializer(serializers.ModelSerializer) :
+    status = serializers.BooleanField(required=True)
+    class Meta:
+        model = CommunityPosts
+        fields = ['status']
+        
+    def validate(self, data):
+        return data
+
+    def update(self , category, validate_data):
+        category.status = validate_data.get('status', category.status)
+        category.save()
+
+        return category
