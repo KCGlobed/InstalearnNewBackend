@@ -1112,8 +1112,7 @@ class CreateCommunityPostsSerializer(serializers.ModelSerializer) :
 
 class EditCommunityPostsserializer(serializers.ModelSerializer):
     title = serializers.CharField(max_length = 255, required=True)
-    main_topic = serializers.IntegerField(required=True)
-    sub_topic = serializers.IntegerField(required=True)
+    category = serializers.IntegerField(required=True)
     description = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
@@ -1124,14 +1123,13 @@ class EditCommunityPostsserializer(serializers.ModelSerializer):
         return data
 
 
-    def update(self , category, validate_data):
-        category.title = validate_data.get('title', category.title)
-        category.description = validate_data.get('description', category.description)
-        category.main_topic = HelpSupportTopics.objects.filter(id = validate_data.get('main_topic')).first()
-        category.sub_topic = HelpSupportSubTopics.objects.filter(id = validate_data.get('sub_topic')).first()
-        category.save()
+    def update(self , info, validate_data):
+        info.title = validate_data.get('title', info.title)
+        info.description = validate_data.get('description', info.description)
+        info.category = CommunityCategories.objects.filter(id = validate_data.get('category')).first()
+        info.save()
 
-        return category
+        return info
     
 
 class ChangeCommunityPostsstatusSerializer(serializers.ModelSerializer) :
