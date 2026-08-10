@@ -82,6 +82,11 @@ class GeneralSettings(models.Model):
     allowed_desktop = models.IntegerField(null=True, blank=True, default=1)
     allowed_tablet = models.IntegerField(null=True, blank=True, default=1)
     allowed_phone = models.IntegerField(null=True, blank=True, default=1)
+    facebook_url = models.CharField(max_length=255, null=True, blank=True)
+    instagram_url = models.CharField(max_length=255, null=True, blank=True)
+    linkedin_url = models.CharField(max_length=255, null=True, blank=True)
+    twitter_url = models.CharField(max_length=255, null=True, blank=True)
+    youtube_url = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now = True)
     

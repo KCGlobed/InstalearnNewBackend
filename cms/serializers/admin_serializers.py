@@ -505,11 +505,16 @@ class UpdateSettingSerializer(serializers.ModelSerializer):
     allowed_desktop = serializers.IntegerField(required=False, allow_null=True)
     allowed_tablet = serializers.IntegerField(required=False, allow_null=True)
     allowed_phone = serializers.IntegerField(required=False, allow_null=True)
+    facebook_url = serializers.CharField(max_length = 255, required=False)
+    instagram_url = serializers.CharField(max_length = 255, required=False)
+    linkedin_url = serializers.CharField(max_length = 255, required=False)
+    twitter_url = serializers.CharField(max_length = 255, required=False)
+    youtube_url = serializers.CharField(max_length = 255, required=False)
     
     
     class Meta:
         model = GeneralSettings
-        fields =  ["payment_type","test_public_key","test_secret_key","live_public_key","live_secret_key","no_days_trail","try_for_free","allow_device_restriction","allowed_desktop","allowed_tablet","allowed_phone"]
+        fields =  ["payment_type","test_public_key","test_secret_key","live_public_key","live_secret_key","no_days_trail","try_for_free","allow_device_restriction","allowed_desktop","allowed_tablet","allowed_phone","facebook_url","instagram_url","linkedin_url","twitter_url","youtube_url"]
         
     def validate(self, data):
         return data
@@ -530,6 +535,11 @@ class UpdateSettingSerializer(serializers.ModelSerializer):
         setting.allowed_tablet = validate_data.get('allowed_tablet', setting.allowed_tablet)
         setting.allowed_phone = validate_data.get('allowed_phone', setting.try_for_free)
         setting.allowed_desktop = validate_data.get('allowed_desktop', setting.allowed_desktop)
+        setting.facebook_url = validate_data.get('facebook_url', setting.facebook_url)
+        setting.instagram_url = validate_data.get('instagram_url', setting.instagram_url)
+        setting.linkedin_url = validate_data.get('linkedin_url', setting.linkedin_url)
+        setting.twitter_url = validate_data.get('twitter_url', setting.twitter_url)
+        setting.youtube_url = validate_data.get('youtube_url', setting.youtube_url)
         setting.save()
 
         return setting
