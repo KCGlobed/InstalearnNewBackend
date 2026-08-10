@@ -769,11 +769,6 @@ class DeleteFaqView(APIView):
 
 class GetSettingView(APIView):
     renderer_classes = [CMSRenderer]
-    permission_classes = [IsAuthenticated, 
-                          RoleOrPermissionCheck.for_permission_or_roles(
-                              "manage_setting",
-                            [SuperAdmin]
-                        )]
     def get(self, request, cid=None):
         setting = GeneralSettings.objects.all().first()
         if setting is None:
