@@ -212,6 +212,27 @@ class CMSPages(models.Model):
         verbose_name = 'CMS Pages'
         verbose_name_plural = 'CMS Pages'
 
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old_title = CMSPages.objects.get(pk=self.pk).title
+            if self.title != old_title:
+                self.slug = None
+                
+        if not self.slug:
+            original_slug = slugify(self.title)
+            queryset = CMSPages.objects.all()
+            next_num = 1
+            slug = original_slug
+            
+            # Loop until a unique slug is found
+            while queryset.filter(slug=slug).exists():
+                slug = f"{original_slug}-{next_num}"
+                next_num += 1
+                
+            self.slug = slug
+            
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.title
 
