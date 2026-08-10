@@ -220,4 +220,23 @@ class SubmitApplicationFormSerializer(serializers.ModelSerializer) :
         course_category.save()
 
         return course_category
+
+
+
+
+class CommunityCategoriesListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommunityCategories
+        fields = ['id',"title","slug","description","image"]
+
+
+class CommunityPostsListSerializer(serializers.ModelSerializer):
+    category = serializers.SerializerMethodField()
     
+    def get_category(self, parent):
+        info = CommunityCategories.objects.get(id = parent.category.id)
+        return CommunityCategoriesListSerializer(info).data
+    
+    class Meta:
+        model = CommunityPosts
+        fields = ['id',"slug","title","description","status","category","created_at"]

@@ -582,3 +582,46 @@ class UpdateUserBannerImageSerializer(serializers.ModelSerializer):
                     metadata=self.context.get('user').first_name+" "+self.context.get('user').last_name + "updated his profile banner image"
                 )
         return data
+
+
+
+class UpdateUserSearchHistorySerializer(serializers.ModelSerializer):
+    course_id = serializers.IntegerField(required=False, allow_null=True)
+    query = serializers.CharField(
+        max_length=255, 
+        required=False, 
+        allow_blank=True,
+        allow_null=True
+    )
+
+    class Meta:
+        model = SearchHistory
+        fields = ['course_id', 'query']
+
+    def validate(self, attrs):
+        course = attrs.get('course_id')
+        query = attrs.get('query')
+
+        if not course and not (query and query.strip()):
+            raise serializers.ValidationError(
+                "Either 'course' or 'query' must be provided."
+            )
+        return attrs
+
+    def create(self, validated_data):
+        user = self.context.get('user')
+        return SearchHistory.objects.create(user=user, **validated_data)
+
+
+
+class CourseMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ['id', 'name', 'image', 'avg_rating']
+
+class UserDashboardSearchHistorySerializer(serializers.Serializer):
+    recently_viewed = CourseMinimalSerializer(many=True)
+    similar_to_activity = CourseMinimalSerializer(many=True)
+    recent_searches = serializers.ListField(
+        child=serializers.CharField()
+    )

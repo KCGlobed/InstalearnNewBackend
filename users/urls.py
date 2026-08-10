@@ -33,6 +33,8 @@ urlpatterns = [
     path('update-profile-image/', UpdateUserProfileImageView.as_view(), name="update-profile-image"),
     path('remove-profile-image/', RemoveUserProfileImageView.as_view(), name="remove-profile-image"),
     path('update-banner-image/', UpdateUserBannerImageView.as_view(), name="update-banner-image"),
+    path('update-search-history/', UpdateUserSearchHistoryView.as_view(), name="update-search-history"),
+    path('get-search-history/', GetUserSearchHistoryView.as_view(), name="get-search-history"),
     
     
 

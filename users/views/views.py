@@ -414,3 +414,61 @@ class UpdateUserBannerImageView(APIView):
         if serializer.is_valid(raise_exception = True):
             return success_response(message="Banner Image Updated Successfully", data={}, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+
+class UpdateUserSearchHistoryView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+    def post(self, request, format=None):
+        serializer = UpdateUserSearchHistorySerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            serializer.save()
+            return success_response(message="History Updated Successfully", data={}, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+
+class GetUserSearchHistoryView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, format=None):
+        user = request.user
+
+        recent_course_ids = (
+            SearchHistory.objects.filter(user=user, course__isnull=False)
+            .order_by('-created_at')
+            .values_list('course_id', flat=True)
+            .distinct()[:4]
+        )
+        recently_viewed_qs = Course.objects.filter(id__in=recent_course_ids)
+
+        user_category_ids = CourseCategories.objects.filter(
+            course_id__in=recent_course_ids
+        ).values_list('category_id', flat=True).distinct()
+
+        similar_courses_qs = (
+            Course.objects.filter(
+                coursecategories__category_id__in=user_category_ids
+            )
+            .exclude(id__in=recent_course_ids)
+            .distinct()
+            .order_by('-avg_rating')[:4]
+        )
+
+        recent_searches = list(
+            SearchHistory.objects.filter(user=user, query__isnull=False)
+            .exclude(query="")
+            .order_by('-created_at')
+            .values_list('query', flat=True)
+            .distinct()[:4]
+        )
+
+        recently_viewed_data = CourseMinimalSerializer(recently_viewed_qs, many=True).data
+        similar_courses_data = CourseMinimalSerializer(similar_courses_qs, many=True).data
+
+        return Response({
+            "recently_viewed": recently_viewed_data,
+            "similar_to_activity": similar_courses_data,
+            "recent_searches": recent_searches
+        }, status=status.HTTP_200_OK)

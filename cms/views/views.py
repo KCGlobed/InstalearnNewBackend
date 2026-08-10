@@ -203,3 +203,50 @@ class PromotionalBannerListView(APIView):
                         ).first()
         serializer = PromotionalBannerListingSerializer(category)
         return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
+
+class CommunityCategoryListView(APIView):
+    renderer_classes = [CMSRenderer]
+    def get(self, request):
+        category = CommunityCategories.objects.filter(status =True)
+        serializer = CommunityCategoriesListSerializer(category, many =True)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
+
+class CommunityPostListView(APIView):
+    renderer_classes = [CMSRenderer]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title']
+    ordering_fields = ['title', 'created_at', 'id', 'status'] 
+
+    def get(self, request, slug=None):
+        queryset = CommunityPosts.objects.filter(status=True)
+
+        if slug:
+            queryset = queryset.filter(category__slug=slug)
+
+        title_param = request.query_params.get('title')
+        if title_param:
+            queryset = queryset.filter(title__icontains=title_param)
+
+        category_param = request.query_params.get('category')
+        if category_param:
+            queryset = queryset.filter(category__title__icontains=category_param)
+
+        search_filter = filters.SearchFilter()
+        queryset = search_filter.filter_queryset(request, queryset, self)
+
+        ordering_filter = filters.OrderingFilter()
+        queryset = ordering_filter.filter_queryset(request, queryset, self)
+
+        if queryset is not None and hasattr(queryset, 'ordered') and not queryset.ordered:
+            queryset = queryset.order_by('-id')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset or [], request, view=self)
+        serializer = CommunityPostsListSerializer(page, many=True)
+        
+        return paginator.get_paginated_response(serializer.data)
