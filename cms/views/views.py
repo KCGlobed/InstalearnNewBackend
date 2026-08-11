@@ -299,7 +299,7 @@ class ToggleLikeView(APIView):
         comment_id = request.data.get('comment_id')
 
         if not post_id and not comment_id:
-            return Response({"error": "Either 'post_id' or 'comment_id' is required."}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(message="Either 'post_id' or 'comment_id' is required.", data = {}, status_code=status.HTTP_400_BAD_REQUEST)
 
         if post_id:
             post_obj = get_object_or_404(CommunityPosts, pk=post_id)
@@ -316,11 +316,10 @@ class ToggleLikeView(APIView):
             total_likes = CommunityPostLikes.objects.filter(post=post_obj).count()
             CommunityPosts.objects.filter(pk=post_obj.pk).update(total_likes=total_likes)
 
-            return Response({
-                "message": message,
-                "liked": liked,
-                "total_likes": total_likes
-            }, status=status.HTTP_200_OK)
+            return success_response(message=message, data={
+                            "liked": liked,
+                            "total_likes": total_likes
+                        }, status_code=status.HTTP_200_OK)
 
         else:
             comment_obj = get_object_or_404(CommunityPostComments, pk=comment_id)
@@ -337,8 +336,7 @@ class ToggleLikeView(APIView):
             total_likes = CommunityPostLikes.objects.filter(comment=comment_obj).count()
             CommunityPostComments.objects.filter(pk=comment_obj.pk).update(total_likes=total_likes)
 
-            return Response({
-                "message": message,
+            return success_response(message=message, data={
                 "liked": liked,
                 "total_likes": total_likes
-            }, status=status.HTTP_200_OK)
+            }, status_code=status.HTTP_200_OK)
