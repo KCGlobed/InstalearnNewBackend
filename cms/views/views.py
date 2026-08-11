@@ -16,6 +16,8 @@ from rest_framework import serializers
 from django.conf import settings
 import os
 from google.cloud import storage
+from django.db.models import F
+from django.shortcuts import get_object_or_404
 
 
 class FaqTopicListView(APIView):
@@ -250,3 +252,93 @@ class CommunityPostListView(APIView):
         serializer = CommunityPostsListSerializer(page, many=True)
         
         return paginator.get_paginated_response(serializer.data)
+
+
+class ViewCommunityPostDetailView(APIView):
+    renderer_classes = [CMSRenderer]
+
+    def get(self, request, slug=None):
+        post = CommunityPosts.objects.filter(status=True, slug=slug).first()
+        if not post:
+            return error_response(message="Post not found", status_code=status.HTTP_404_NOT_FOUND)
+
+        CommunityPosts.objects.filter(pk=post.pk).update(total_views=F('total_views') + 1)
+        post.refresh_from_db()
+
+        serializer = ViewCommunityPostsDetailSerializer(post)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
+class ViewCommunityPostCommentsView(APIView):
+    renderer_classes = [CMSRenderer]
+    def get(self, request, slug=None):
+        category = CommunityPostComments.objects.filter(post__slug = slug)
+        serializer = CommunityPostCommentsSerializer(category, many=True)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+
+class AddCommunityPostCommentView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated]
+    def post(self, request, format=None):
+        serializer = AddCommunityPostCommentSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Comment Added Successfully", data=serializer.data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+class ToggleLikeView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        post_id = request.data.get('post_id')
+        comment_id = request.data.get('comment_id')
+
+        if not post_id and not comment_id:
+            return Response({"error": "Either 'post_id' or 'comment_id' is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if post_id:
+            post_obj = get_object_or_404(CommunityPosts, pk=post_id)
+            like, created = CommunityPostLikes.objects.get_or_create(user=user, post=post_obj)
+
+            if not created:
+                like.delete()
+                liked = False
+                message = "Post unliked successfully."
+            else:
+                liked = True
+                message = "Post liked successfully."
+
+            total_likes = CommunityPostLikes.objects.filter(post=post_obj).count()
+            CommunityPosts.objects.filter(pk=post_obj.pk).update(total_likes=total_likes)
+
+            return Response({
+                "message": message,
+                "liked": liked,
+                "total_likes": total_likes
+            }, status=status.HTTP_200_OK)
+
+        else:
+            comment_obj = get_object_or_404(CommunityPostComments, pk=comment_id)
+            like, created = CommunityPostLikes.objects.get_or_create(user=user, comment=comment_obj)
+
+            if not created:
+                like.delete()
+                liked = False
+                message = "Comment unliked successfully."
+            else:
+                liked = True
+                message = "Comment liked successfully."
+
+            total_likes = CommunityPostLikes.objects.filter(comment=comment_obj).count()
+            CommunityPostComments.objects.filter(pk=comment_obj.pk).update(total_likes=total_likes)
+
+            return Response({
+                "message": message,
+                "liked": liked,
+                "total_likes": total_likes
+            }, status=status.HTTP_200_OK)

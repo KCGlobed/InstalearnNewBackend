@@ -123,5 +123,9 @@ urlpatterns = [
 
     path('get-community-category-list/', CommunityCategoryListView.as_view(), name="get-community-category-list"),
     path('get-community-post-list/<str:slug>', CommunityPostListView.as_view(), name="get-community-post-list"), 
+    path('view-community-post-detail/<str:slug>', ViewCommunityPostDetailView.as_view(), name="view-community-post-detail"),
+    path('view-community-post-comments/<str:slug>', ViewCommunityPostCommentsView.as_view(), name="view-community-post-comment"),
+    path('add-community-post-comment/', AddCommunityPostCommentView.as_view(), name="add-community-post-comment"),
+    path('community/like/toggle/', ToggleLikeView.as_view(), name='toggle-like'),
 
 ]   

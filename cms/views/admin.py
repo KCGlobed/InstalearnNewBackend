@@ -1665,11 +1665,11 @@ class CommunitPostListingView(APIView):
         ordering_filter = filters.OrderingFilter()
         category = ordering_filter.filter_queryset(request, category, self)
 
-        if not category.ordered:
+        if category is not None and hasattr(category, 'ordered') and not category.ordered:
             category = category.order_by('-id')
 
         paginator = self.pagination_class()
-        page = paginator.paginate_queryset(category, request, view=self)
+        page = paginator.paginate_queryset(category or [], request, view=self)
         serializer = CommunityPostsListingSerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
     

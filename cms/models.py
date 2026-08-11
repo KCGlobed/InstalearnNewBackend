@@ -481,12 +481,15 @@ class CommunityPosts(models.Model):
     title = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     status = models.BooleanField(default=True)
+    total_comments = models.IntegerField(default=0)
+    total_likes = models.IntegerField(default=0)
+    total_views = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = 'Help Support Article'
-        verbose_name_plural = 'Help Support Article'
+        verbose_name = 'Community Posts'
+        verbose_name_plural = 'Community Posts'
 
     def save(self, *args, **kwargs):
         if self.pk:
@@ -513,11 +516,26 @@ class CommunityPosts(models.Model):
         return '%s' % self.title
 
 
+class CommunityPostLikes(models.Model):
+    user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
+    post = models.ForeignKey('CommunityPosts', null=True, blank=True, on_delete=models.CASCADE)
+    comment = models.ForeignKey('CommunityPostComments', null=True, blank=True, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Community Post Likes'
+        verbose_name_plural = 'Community Post Likes'
 
+    def __str__(self):
+        return '%s' % self.id
+
+    
 class CommunityPostComments(models.Model):
     user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
     post = models.ForeignKey('CommunityPosts', null=True, blank=True, on_delete=models.CASCADE)
     comment = models.TextField(null=True, blank=True)
+    total_likes = models.IntegerField(default=0)
     status = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

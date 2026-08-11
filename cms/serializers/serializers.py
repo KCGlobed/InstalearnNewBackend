@@ -7,6 +7,7 @@ from mini_lms.utils import *
 from django.template import loader
 from django.db.models import Q
 from django.core.mail import EmailMessage
+from django.contrib.humanize.templatetags.humanize import naturaltime
 
 
 class ContactUsSerializer(serializers.ModelSerializer) :
@@ -239,4 +240,71 @@ class CommunityPostsListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = CommunityPosts
-        fields = ['id',"slug","title","description","status","category","created_at"]
+        fields = ['id',"slug","title","status","total_comments","total_likes","total_views","category","created_at"]
+
+
+class ViewCommunityPostsDetailSerializer(serializers.ModelSerializer):
+    category = serializers.SerializerMethodField()
+    
+    def get_category(self, parent):
+        info = CommunityCategories.objects.get(id = parent.category.id)
+        return CommunityCategoriesListSerializer(info).data
+    
+    class Meta:
+        model = CommunityPosts
+        fields = ['id',"slug","title","description","total_comments","total_likes","total_views","status","category","created_at"]
+
+
+
+class UserInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id',"first_name","last_name","email","image"]
+
+
+class CommunityPostCommentsSerializer(serializers.ModelSerializer):
+    user_info = serializers.SerializerMethodField()
+    time_ago = serializers.SerializerMethodField()
+    
+    def get_time_ago(self, obj):
+        if obj.created_at:
+            return naturaltime(obj.created_at)
+        return None
+        
+    def get_user_info(self, parent):
+        info = User.objects.get(id = parent.user.id)
+        return UserInfoSerializer(info).data
+    
+    class Meta:
+        model = CommunityPostComments
+        fields = ["id","comment","total_likes","user_info","created_at","time_ago"]
+
+
+class AddCommunityPostCommentSerializer(serializers.ModelSerializer) :
+    post_id = serializers.IntegerField(required=True)
+    comment = serializers.CharField(required=True)
+    class Meta:
+        model = CommunityPostComments
+        fields = ['post_id','comment']
+        
+    def validate(self, data):
+
+        post_id = data.get('post_id')
+        course_count = CommunityPostComments.objects.filter(post_id=post_id, user = self.context.get('user')).count()
+        if course_count > 0:
+            raise serializers.ValidationError("You have already given comment to this post")
+        
+        return data
+
+
+    def create(self , validate_data):
+        post = CommunityPosts.objects.filter(id = validate_data.get('post_id')).first()
+        course_category = CommunityPostComments(
+            post = post,
+            user = self.context.get('user'),
+            comment = validate_data.get('comment'),
+
+        )
+        course_category.save()
+    
+        return course_category
