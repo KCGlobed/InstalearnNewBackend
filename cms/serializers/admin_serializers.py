@@ -1156,3 +1156,33 @@ class ChangeCommunityPostsstatusSerializer(serializers.ModelSerializer) :
         category.save()
 
         return category
+
+
+
+class CommunityPostsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommunityPosts
+        fields = ["id","title"]
+
+class CommunityPostsCommentSerializer(serializers.ModelSerializer):
+    post_info = CommunityPostsSerializer(source='post', read_only=True)
+    
+    class Meta:
+        model = CommunityPostComments
+        fields = "__all__"
+
+
+class ChangeCommunityPostStatusSerializer(serializers.ModelSerializer) :
+    status = serializers.BooleanField(required=True)
+    class Meta:
+        model = CommunityPostComments
+        fields = ['status']
+        
+    def validate(self, data):
+        return data
+
+    def update(self , category, validate_data):
+        category.status = validate_data.get('status', category.status)
+        category.save()
+
+        return category

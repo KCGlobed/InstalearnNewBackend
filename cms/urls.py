@@ -36,6 +36,7 @@ urlpatterns = [
 
     path('get-blogs-comments-listing/', BlogsCommentListingView.as_view(), name="get-blogs-comments-listing"),
     path('update-blog-comment-status/<int:cid>', UpdateBlogCommentStatusView.as_view(), name="update-blog-comment-status"),
+    path('delete-blog-comment/<int:cid>', DeleteBlogCommentView.as_view(), name="delete-blog-comment"),
 
 
     path('get-cms-pages-listing/', CMSPagesListingView.as_view(), name="get-cms-pages-listing"), 
@@ -127,5 +128,9 @@ urlpatterns = [
     path('view-community-post-comments/<str:slug>', ViewCommunityPostCommentsView.as_view(), name="view-community-post-comment"),
     path('add-community-post-comment/', AddCommunityPostCommentView.as_view(), name="add-community-post-comment"),
     path('community/like/toggle/', ToggleLikeView.as_view(), name='toggle-like'),
+
+    path('get-community-post-comments-listing/', CommunityPostCommentListingView.as_view(), name="get-community-post-comments-listing"),
+    path('update-community-post-comment-status/<int:cid>', UpdateCommunityPostCommentStatusView.as_view(), name="update-community-post-comment-status"),
+    path('delete-community-post-comment/<int:cid>', DeleteCommunityPostCommentView.as_view(), name="delete-community-post-comment"),
 
 ]   

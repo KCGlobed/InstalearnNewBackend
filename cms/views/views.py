@@ -272,7 +272,7 @@ class ViewCommunityPostDetailView(APIView):
 class ViewCommunityPostCommentsView(APIView):
     renderer_classes = [CMSRenderer]
     def get(self, request, slug=None):
-        category = CommunityPostComments.objects.filter(post__slug = slug)
+        category = CommunityPostComments.objects.filter(post__slug = slug,status = 1)
         serializer = CommunityPostCommentsSerializer(category, many=True)
         return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
     
@@ -285,7 +285,7 @@ class AddCommunityPostCommentView(APIView):
         serializer = AddCommunityPostCommentSerializer(data = request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception = True):
             user  = serializer.save()
-            return success_response(message="Comment Added Successfully", data=serializer.data, status_code=status.HTTP_200_OK)
+            return success_response(message="Comment Added Successfully and pending for approval!", data=serializer.data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
 
 
