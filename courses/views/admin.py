@@ -1893,6 +1893,238 @@ class CourseListingView(APIView):
         return paginator.get_paginated_response(serializer.data)
     
 
+class ExportCourseListingPDFView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "course_listing_pdf_report",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
+    ordering_fields = ['name', 'created_at', 'id', 'status',"level","price"] 
+    def get(self, request, format=None):
+        
+        course = Course.objects.all()
+        
+        name = request.query_params.get('name')
+        if name:
+            course = course.filter(name__icontains = name)
+
+        active = request.query_params.get('status')
+        if active:
+            course = course.filter(status=active)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                course = course.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                course = course.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+
+        
+        search_filter = filters.SearchFilter()
+        course = search_filter.filter_queryset(request, course, self)
+
+        ordering_filter = filters.OrderingFilter()
+        course = ordering_filter.filter_queryset(request, course, self)
+
+        if not course.ordered:
+            course = course.order_by('-id')
+        
+        serializer = CourseSerializer(course, many=True)
+
+        data = {
+                    "user_data":serializer.data
+                }
+        
+        template = get_template('pdf/course_report.html')
+        html  = template.render(data)
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            html = html.encode('latin-1', 'replace').decode('latin-1')
+            pdf = pisa.CreatePDF(BytesIO(html.encode("ISO-8859-1")), dest=temp_file)
+
+            if pdf.err:
+                raise Exception("PDF generation error!")
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            report_name = "course_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+
+    
+
+class ExportCourseListingExcelView(APIView):
+    renderer_classes = [CourseRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "course_listing_excel_report",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
+    ordering_fields = ['name', 'created_at', 'id', 'status',"level","price"] 
+    def get(self, request, format=None):
+        
+        course = Course.objects.all()
+        
+        name = request.query_params.get('name')
+        if name:
+            course = course.filter(name__icontains = name)
+
+        active = request.query_params.get('status')
+        if active:
+            course = course.filter(status=active)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                course = course.filter(created_at__gte=start_datetime)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                course = course.filter(created_at__lte=end_datetime)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+
+        
+        search_filter = filters.SearchFilter()
+        course = search_filter.filter_queryset(request, course, self)
+
+        ordering_filter = filters.OrderingFilter()
+        course = ordering_filter.filter_queryset(request, course, self)
+
+        if not course.ordered:
+            course = course.order_by('-id')
+
+        serializer = CourseSerializer(course, many=True)
+
+        lis = []
+        
+        lis.append({
+                "name":"Courses Report",
+                "level":'',
+                "duration":'',
+                "categories":'',
+                "pricing":'',
+                "active":"",
+                "created":""
+            })
+
+        
+        lis.append({
+                "name":"",
+                "level":'',
+                "duration":'',
+                "categories":'',
+                "pricing":'',
+                "active":"",
+                "created":""
+            })
+        
+        
+        lis.append({
+                "name":"Name",
+                "level":'Level',
+                "duration":'Duration',
+                "categories":'Categories',
+                "pricing":'Original Price / After Discount Price / Discount',
+                "active":"Is Active?",
+                "created":"Created At",
+            })
+  
+
+        LEVEL_MAPPING = {
+            1: 'All',
+            2: 'Beginner',
+            3: 'Intermediate',
+            4: 'Expert'
+        }
+
+        for order_info in serializer.data:
+            categories = [
+                cat.get('category_info', {}).get('name') 
+                for cat in order_info.get('categories', [])
+            ]
+            categories_str = ", ".join(filter(None, categories))
+
+            level_name = LEVEL_MAPPING.get(order_info.get('level'), 'N/A')
+            original_price = order_info.get('original_price', 0)
+            price = order_info.get('price', 0)
+            discount = order_info.get('discount', 0)
+            
+            pricing_str = f"{original_price} / {price} ({discount}% OFF)"
+
+            lis.append({
+                "name": order_info.get('name', ''),
+                "level": level_name,
+                "duration": order_info.get('duration', ''),
+                "categories": categories_str,
+                "pricing": pricing_str,
+                "active": "Active" if order_info.get('status') else "Inactive",
+                "created": order_info.get('created_at', ''),
+            })
+            
+        
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            df = pd.DataFrame.from_dict(lis)
+            df.to_excel(pdf_path, header=False, index=False)
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            report_name = "chapters_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+
+
+
 class ViewCourseDetailView(APIView):
     renderer_classes = [CourseRenderer]
     permission_classes = [IsAuthenticated, 

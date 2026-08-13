@@ -54,7 +54,7 @@ class UserDevicesListSerializer(serializers.ModelSerializer):
 class UserListingSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id','first_name','last_name', 'email','address',"city","state","country","pincode","dob","is_active","role","created_at",]
+        fields = ['id','first_name','last_name', 'email','address',"city","state","country","pincode","dob","is_active","role","created_at","updated_at"]
 
 
 

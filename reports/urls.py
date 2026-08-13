@@ -23,6 +23,9 @@ urlpatterns = [
     path('get-student-registration-report-pdf/', GetStudentRegistrationReportPDFView.as_view(), name="get-student-registration-report-pdf"),
     path('get-student-registration-report-excel/', GetStudentRegistrationReportExcelView.as_view(), name="get-student-registration-report-excel"),
 
+    path('get-instructor-report-pdf/', GetInstructorReportPDFView.as_view(), name="get-instructor-report-pdf"),
+    path('get-instructor-report-excel/', GetInstructorReportExcelView.as_view(), name="get-instructor-report-excel"),
+
     path('get-active-order-listing/', ActiveOrderListingView.as_view(), name="get-order-listing"),
     path('get-active-report-pdf/', ExportPDFActiveOrderListingView.as_view(), name="get-active-report-pdf"),
     path('get-active-report-excel/', ExportExcelActiveOrderListingView.as_view(), name="get-active-report-excel"),

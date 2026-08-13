@@ -956,6 +956,7 @@ class CourseTagsInfoSerializer(serializers.ModelSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     categories = serializers.SerializerMethodField('get_categories')
     tags = serializers.SerializerMethodField('get_tags')
     enrolled_students = serializers.SerializerMethodField()

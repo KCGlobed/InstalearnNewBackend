@@ -98,6 +98,9 @@ urlpatterns = [
     path('edit-course/<int:cid>', EditCourseView.as_view(), name="edit-course"),
     path('update-course-status/<int:cid>', UpdateCourseStatusView.as_view(), name="update-course-status"),
     path('delete-course/<int:cid>', DeleteCourseView.as_view(), name="delete-course"),
+    path('export-course-listing-pdf/', ExportCourseListingPDFView.as_view(), name="export-course-listing-pdf"),
+    path('export-course-listing-excel/', ExportCourseListingExcelView.as_view(), name="export-course-listing-excel"),
+
 
     path('get-courses-sample-video-listing/<int:cid>', GetCourseSampleVideoView.as_view(), name="get-course-sample-video"),
     path('delete-courses-sample-video/<int:cid>', DeleteCourseSampleVideoView.as_view(), name="delete-course-sample-video"),

@@ -1930,6 +1930,290 @@ class GetStudentRegistrationReportExcelView(APIView):
 
 
 
+class GetInstructorReportPDFView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "instructor__pdf_report",
+                            [SuperAdmin]
+                        )]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['first_name',"last_name","email","is_active","created_at","category"]
+    ordering_fields = ["id",'first_name',"last_name","email","is_active","created_at","category"] 
+    def get(self, request, format=None):
+        
+        topics = User.objects.all()
+        
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            topics = topics.filter(first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            topics = topics.filter(last_name__icontains = last_name)
+
+        email = request.query_params.get('email')
+        if email:
+            topics = topics.filter(email__icontains = email)
+
+        phone1 = request.query_params.get('phone')
+        if phone1:
+            topics = topics.filter(phone1__icontains = phone1)
+
+        is_active = request.query_params.get('status')
+        if is_active:
+            topics = topics.filter(is_active = is_active)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        category = request.query_params.get('category')
+        
+        if category:
+            category = category.split(',')
+            topics = topics.filter(category__in = category)
+
+        reference_ids_param = request.query_params.get('reference_id')
+        if reference_ids_param:
+            search_terms = [
+                term.strip() for term in reference_ids_param.split(',') if term.strip()
+            ]
+            if search_terms:
+                q_objects = Q()
+                for term in search_terms:
+                    q_objects |= Q(**{'reference_id__icontains': term})
+                
+                topics = topics.filter(q_objects)
+
+        student_type = request.query_params.get('student_type')
+        if student_type:
+            student_type = student_type.split(',')
+            topics = topics.filter(student_type__in =student_type)
+
+
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                start_datetime_aware = timezone.make_aware(start_datetime, timezone.get_current_timezone())
+                topics = topics.filter(created_at__gte=start_datetime_aware)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                end_datetime_aware = timezone.make_aware(end_datetime, timezone.get_current_timezone())
+                topics = topics.filter(created_at__lte=end_datetime_aware)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        topics = search_filter.filter_queryset(request, topics, self)
+
+        ordering_filter = filters.OrderingFilter()
+        topics = ordering_filter.filter_queryset(request, topics, self)
+
+        if not topics.ordered:
+            topics = topics.order_by('-id')
+
+        topics = [user for user in topics if has_role(user, Instructor)]
+
+        serializer = StudentRegistrationSerializer(topics, many=True)
+
+        data = {
+                    "user_data":serializer.data
+                }
+        
+
+        template = get_template('pdf/instructor_report.html')
+        html  = template.render(data)
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            html = html.encode('latin-1', 'replace').decode('latin-1')
+            pdf = pisa.CreatePDF(BytesIO(html.encode("ISO-8859-1")), dest=temp_file)
+
+            if pdf.err:
+                raise Exception("PDF generation error!")
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "instrcutor_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+    
+
+
+class GetInstructorReportExcelView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "instructor_excel_report",
+                            [SuperAdmin]
+                        )]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['first_name',"last_name","email","is_active","created_at","category"]
+    ordering_fields = ["id",'first_name',"last_name","email","is_active","created_at","category"] 
+    def get(self, request, format=None):
+        
+        topics = User.objects.all()
+        
+        first_name = request.query_params.get('first_name')
+        if first_name:
+            topics = topics.filter(first_name__icontains = first_name)
+
+        last_name = request.query_params.get('last_name')
+        if last_name:
+            topics = topics.filter(last_name__icontains = last_name)
+
+        email = request.query_params.get('email')
+        if email:
+            topics = topics.filter(email__icontains = email)
+
+        phone1 = request.query_params.get('phone')
+        if phone1:
+            topics = topics.filter(phone1__icontains = phone1)
+
+        is_active = request.query_params.get('status')
+        if is_active:
+            topics = topics.filter(is_active = is_active)
+              
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        category = request.query_params.get('category')
+        
+        if category:
+            category = category.split(',')
+            topics = topics.filter(category__in = category)
+
+        reference_ids_param = request.query_params.get('reference_id')
+        if reference_ids_param:
+            search_terms = [
+                term.strip() for term in reference_ids_param.split(',') if term.strip()
+            ]
+            if search_terms:
+                q_objects = Q()
+                for term in search_terms:
+                    q_objects |= Q(**{'reference_id__icontains': term})
+                
+                topics = topics.filter(q_objects)
+
+        student_type = request.query_params.get('student_type')
+        if student_type:
+            student_type = student_type.split(',')
+            topics = topics.filter(student_type__in =student_type)
+
+
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date)
+                start_datetime_aware = timezone.make_aware(start_datetime, timezone.get_current_timezone())
+                topics = topics.filter(created_at__gte=start_datetime_aware)
+            except ValueError:
+                raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
+                
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date)
+                end_datetime_aware = timezone.make_aware(end_datetime, timezone.get_current_timezone())
+                topics = topics.filter(created_at__lte=end_datetime_aware)
+            except ValueError:
+                raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
+            
+        search_filter = filters.SearchFilter()
+        topics = search_filter.filter_queryset(request, topics, self)
+
+        ordering_filter = filters.OrderingFilter()
+        topics = ordering_filter.filter_queryset(request, topics, self)
+
+        if not topics.ordered:
+            topics = topics.order_by('-id')
+
+        topics = [user for user in topics if has_role(user, Instructor)]
+        
+        serializer = StudentRegistrationSerializer(topics, many=True)
+        
+        lis = []
+        
+        lis.append({
+                "name":"Instructor Report",
+                "email":'',
+                "subject":'',
+                "Chapter":'',
+                "total_time_spend":'',
+                "courses":""
+            })
+
+        
+        lis.append({
+                "name":"",
+                "email":'',
+                "subject":'',
+                "Chapter":'',
+                "total_time_spend":'',
+                "courses":""
+            })
+        
+        
+        lis.append({
+                "name":"First Name",
+                "email":'Last Name',
+                "subject":'Email',
+                "Chapter":'Phone Number',
+                "total_time_spend":'Is Active?',
+                "courses":"Registration Date"
+            })
+  
+
+        for order_info in serializer.data:
+            
+            lis.append({
+                "name":order_info['first_name'],
+                "email":order_info['last_name'],
+                "subject":order_info['email'],
+                "Chapter":order_info['phone1'],
+                "total_time_spend":order_info['is_active'],
+                "courses":order_info['created_at']
+            })
+        
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            pdf_path = temp_file.name
+            
+            df = pd.DataFrame.from_dict(lis)
+            df.to_excel(pdf_path, header=False, index=False)
+        
+        try:
+            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            report_name = "instrcutor_report"
+            gcs_folder_name = "media/reports"
+            gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
+
+            bucket = client.get_bucket(settings.GS_BUCKET_NAME)
+            blob = bucket.blob(gcs_file_name)
+            blob.upload_from_filename(pdf_path)
+
+            return success_response(
+                message="Success",
+                data={"report_url": blob.public_url},
+                status_code=status.HTTP_200_OK
+            )
+        finally:
+            os.remove(pdf_path)
+
+
+
 class ActiveOrderListingView(APIView):
     renderer_classes = [ReportsRenderer]
     permission_classes = [IsAuthenticated, 
