@@ -357,7 +357,7 @@ class UserProfileView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_roles(
-                            [Student, CorporateAdmin]
+                            [Student, CorporateAdmin,SuperAdmin]
                         )]
     def get(self, request, format=None):
         serializer = UserProfileSerializer(request.user)
@@ -368,7 +368,7 @@ class UpdateUserProfileView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_roles(
-                            [Student, CorporateAdmin]
+                            [Student, CorporateAdmin,SuperAdmin]
                         )]
     def post(self, request, format=None):
         serializer = UpdateUserProfileSerializer(data = request.data, context={'user':request.user})
@@ -381,7 +381,7 @@ class UpdateUserProfileImageView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_roles(
-                            [Student, CorporateAdmin]
+                            [Student, CorporateAdmin,SuperAdmin]
                         )]
     def post(self, request, format=None):
         serializer = UpdateUserProfileImageSerializer(data = request.data, context={'user':request.user})
@@ -394,7 +394,7 @@ class RemoveUserProfileImageView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_roles(
-                            [Student, CorporateAdmin]
+                            [Student, CorporateAdmin,SuperAdmin]
                         )]
     def post(self, request, format=None):
         serializer = RemoveUserProfileSerializer(data = request.data, context={'user':request.user})
@@ -407,7 +407,7 @@ class UpdateUserBannerImageView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_roles(
-                            [Student, CorporateAdmin]
+                            [Student, CorporateAdmin,SuperAdmin]
                         )]
     def post(self, request, format=None):
         serializer = UpdateUserBannerImageSerializer(data = request.data, context={'user':request.user})

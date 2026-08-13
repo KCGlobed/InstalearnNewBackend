@@ -62,14 +62,14 @@ class GetUserReportPDFView(APIView):
         if start_date:
             try:
                 start_datetime = datetime.fromisoformat(start_date)
-                plans = plans.filter(created_at__gte=start_datetime)
+                topics = topics.filter(created_at__gte=start_datetime)
             except ValueError:
                 raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
                 
         if end_date:
             try:
                 end_datetime = datetime.fromisoformat(end_date)
-                plans = plans.filter(created_at__lte=end_datetime)
+                topics = topics.filter(created_at__lte=end_datetime)
             except ValueError:
                 raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
             
@@ -145,14 +145,14 @@ class GetUserReportExcelView(APIView):
         if start_date:
             try:
                 start_datetime = datetime.fromisoformat(start_date)
-                plans = plans.filter(created_at__gte=start_datetime)
+                topics = topics.filter(created_at__gte=start_datetime)
             except ValueError:
                 raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
                 
         if end_date:
             try:
                 end_datetime = datetime.fromisoformat(end_date)
-                plans = plans.filter(created_at__lte=end_datetime)
+                topics = topics.filter(created_at__lte=end_datetime)
             except ValueError:
                 raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
             

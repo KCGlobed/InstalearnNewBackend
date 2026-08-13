@@ -195,7 +195,7 @@ class ChangeBlogFeatureStatusSerializer(serializers.ModelSerializer) :
         return data
 
     def update(self , category, validate_data):
-        category.feature_status = validate_data.get('status', category.feature_status)
+        category.status = validate_data.get('status', category.status)
         category.save()
 
         return category
