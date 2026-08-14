@@ -340,3 +340,15 @@ class ToggleLikeView(APIView):
                 "liked": liked,
                 "total_likes": total_likes
             }, status_code=status.HTTP_200_OK)
+
+
+
+class SubmitPartnerRequestsView(APIView):
+    renderer_classes = [CMSRenderer]
+    def post(self, request, format=None):
+        serializer = SubmitPartnerRequestSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Application Submitted Successfully", data=serializer.data, status_code=status.HTTP_200_OK)
+
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)

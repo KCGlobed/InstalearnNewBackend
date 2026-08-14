@@ -621,7 +621,7 @@ class GetCourseCertificateView(APIView):
 
         get_certificate = UserCertificates.objects.filter(user_id = request.user.id, course_id = id).first()
         if get_certificate is None:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             input_file = "user_study/templates/certificate/dummy_certificate_template.svg"
             filename = f"mini_lms/certificate/{timestamp}_certificate.svg" # Clean cloud path for GCS
 

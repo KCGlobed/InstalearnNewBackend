@@ -820,3 +820,13 @@ class ActivityLogListingSerializer(serializers.ModelSerializer):
         if obj.created_at:
             return naturaltime(obj.created_at)
         return None
+
+
+
+class PartnerRequestsListSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(read_only=True, format="%Y-%m-%d")
+    partner_type = serializers.CharField(source="get_partner_type_display", read_only=True)
+    
+    class Meta:
+        model = PartnerRequests
+        fields = "__all__"

@@ -133,4 +133,6 @@ urlpatterns = [
     path('update-community-post-comment-status/<int:cid>', UpdateCommunityPostCommentStatusView.as_view(), name="update-community-post-comment-status"),
     path('delete-community-post-comment/<int:cid>', DeleteCommunityPostCommentView.as_view(), name="delete-community-post-comment"),
 
+    path('submit-partner-requests/', SubmitPartnerRequestsView.as_view(), name="submit-partner-requests"), 
+
 ]   

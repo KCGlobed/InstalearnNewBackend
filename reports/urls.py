@@ -87,4 +87,11 @@ urlpatterns = [
     path('get-students-activity-log/<int:id>', GetCorporateStudentsActivityLogListView.as_view(), name="get-students-activity-log"),
     path('export-students-activity-log-pdf/<int:id>', GetCorporateStudentsActivityLogPDFReportView.as_view(), name="export-students-activity-log-pdf"),
     path('export-students-activity-log-excel/<int:id>', GetCorporateStudentsActivityLogExcelReportView.as_view(), name="export-students-activity-log-excel"),
+
+
+    path('get-partner-request-list/', GetPartnerRequestListingView.as_view(), name="get-partner-request-list"),
+    path('get-partner-request-csv-report/', CSVPartnerRequestReportView.as_view(), name="get-partner-request-csv-report"),
+    path('get-partner-request-pdf-report/', PDFPartnerRequestReportView.as_view(), name="get-partner-request-pdf-report"),
+
+    
 ]   

@@ -308,3 +308,76 @@ class AddCommunityPostCommentSerializer(serializers.ModelSerializer) :
         course_category.save()
     
         return course_category
+
+
+
+class SubmitPartnerRequestSerializer(serializers.ModelSerializer) :
+    first_name = serializers.CharField(max_length = 255, required=True)
+    last_name = serializers.CharField(max_length = 255, required=True)
+    mobile = serializers.CharField(max_length = 255, required=True)
+    email = serializers.CharField(max_length = 255, required=True)
+    state = serializers.CharField(max_length = 255, required=True)
+    city = serializers.CharField(max_length = 255, required=True)
+    country = serializers.CharField(max_length = 255, required=True)
+    pincode = serializers.CharField(max_length = 255, required=True)
+    partner_type = serializers.CharField(max_length = 255, required=True)
+    address = serializers.CharField(max_length = 255, required=True)
+    comment = serializers.CharField(required=False, allow_blank=True)
+    document = serializers.FileField(required=False,allow_null=True, validators=[FileExtensionValidator( ['pdf','doc','docx'])])
+    
+    class Meta:
+        model = PartnerRequests
+        fields = ['first_name','last_name','mobile','email','state',"city","country","pincode","partner_type","address","comment","document"]
+        
+    def validate(self, data):
+
+        return data
+
+
+    def create(self , validate_data):
+        
+        course_category = PartnerRequests(
+            first_name = validate_data.get('first_name'),
+            mobile = validate_data.get('mobile'),
+            email = validate_data.get('email'),
+            state = validate_data.get('state'),
+            city = validate_data.get('city'),
+            last_name = validate_data.get('last_name'),
+            country = validate_data.get('country'),
+            pincode = validate_data.get('pincode'),
+            partner_type = validate_data.get('partner_type'),
+            address = validate_data.get('address'),
+            comment = validate_data.get('comment'),
+            document = validate_data.get('document'),
+        )
+        course_category.save()
+
+
+        subject = 'New Partner Request'
+        message = f'Hi you have got a contact us'
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [settings.ADMIN_EMAIL,]
+
+        html_message = loader.render_to_string(
+            'partner_request_email.html',
+            {
+                "first_name" : validate_data.get('first_name'),
+                "mobile" : validate_data.get('mobile'),
+                "email" : validate_data.get('email'),
+                "state" : validate_data.get('state'),
+                "city" : validate_data.get('city'),
+                "last_name" : validate_data.get('last_name'),
+                "country" : validate_data.get('country'),
+                "pincode" : validate_data.get('pincode'),
+                "partner_type" : validate_data.get('partner_type'),
+                "address" : validate_data.get('address'),
+                "comment" : validate_data.get('comment'),
+            }
+        )
+        email = EmailMessage(
+            subject, html_message, email_from, recipient_list)
+        
+        email.content_subtype = "html"
+        email.send()
+
+        return course_category

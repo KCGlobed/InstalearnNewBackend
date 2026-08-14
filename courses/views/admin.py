@@ -162,7 +162,7 @@ class ExportChapterListingPDFView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "chapter_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -284,7 +284,7 @@ class ExportChapterListingExcelView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "chapters_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
@@ -567,7 +567,7 @@ class ExportVideoListingPDFView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "video_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -688,7 +688,7 @@ class ExportVideoListingExcelView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "video_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
@@ -991,7 +991,7 @@ class ExportTagsListingPDFView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "tags_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -1097,7 +1097,7 @@ class ExportTagsListingExcelView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "tags_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
@@ -1244,7 +1244,7 @@ class ExportCategoryListingPDFView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "category_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -1364,7 +1364,7 @@ class ExportCategoryListingExcelView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "category_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
@@ -1517,7 +1517,7 @@ class ExportSubCategoryListingPDFView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "subcategory_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -1645,7 +1645,7 @@ class ExportSubCategoryListingExcelView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "subcategory_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
@@ -1961,7 +1961,7 @@ class ExportCourseListingPDFView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "course_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -2106,7 +2106,7 @@ class ExportCourseListingExcelView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "chapters_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
@@ -2399,7 +2399,7 @@ class ExportEbookListingPDFView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "ebook_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -2515,7 +2515,7 @@ class ExportEbookListingExcelView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "ebook_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"

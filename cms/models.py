@@ -546,3 +546,38 @@ class CommunityPostComments(models.Model):
 
     def __str__(self):
         return '%s' % self.id
+
+
+
+class PartnerRequests(models.Model):
+    # Choice Lists based on the form's radio buttons
+    PARTNER_TYPE = [
+        ('authorized_training_partner', 'Authorized Training Partner'),
+        ('business_associate', 'Business Associate'),
+        ('instructor', 'Instructor'),
+        ('corporate_partner', 'Corporate Partner'),
+        ('institutional_partner', 'Institutional Partner'),
+        ('Student_ambassador', 'Student Ambassador'),
+    ]
+
+    first_name = models.CharField(max_length=255,null=True, blank=True)
+    last_name = models.CharField(max_length=255,null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
+    mobile = models.CharField(max_length=20,null=True, blank=True)
+    state = models.CharField(max_length=100,null=True, blank=True)
+    city = models.CharField(max_length=100,null=True, blank=True)
+    country = models.CharField(max_length=100,null=True, blank=True)
+    pincode = models.CharField(max_length=255, null=True, blank=True)
+    partner_type = models.CharField(max_length=30, choices=PARTNER_TYPE,default='student')
+    address = models.CharField(max_length=255, blank=True, null=True)
+    comment = models.TextField(blank=True, null=True)
+    document = models.FileField(upload_to="document/", null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Partner Requests'
+        verbose_name_plural = 'Partner Requests'
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"

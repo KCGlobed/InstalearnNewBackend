@@ -360,7 +360,7 @@ class ExportPDFTrailUserListingView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "trail_user_report"
             gcs_folder_name = "media/lms_2/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -594,7 +594,7 @@ class ExportExcelTrailUserListingView(APIView):
         
         try:
             # GCS file naming logic
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "trail_user_report"
             gcs_folder_name = "media/lms_2/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"

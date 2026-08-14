@@ -210,7 +210,7 @@ class ExportMCQsListingExcelView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "mcq_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"

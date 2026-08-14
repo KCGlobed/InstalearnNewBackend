@@ -427,7 +427,7 @@ class ManageBackgroundTaskView(APIView):
                 # After the 'with' block, the file is closed, but not deleted yet
                 try:
                     # GCS file naming logic
-                    timestamp = datetime.now().strftime("%d_%m_%y_%H_%M_%S")
+                    timestamp = int(datetime.now().timestamp() * 1000)
                     report_name = "transcribe"
                     gcs_folder_name = "media/mini_lms/video_transcribe"
                     gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.vtt"
