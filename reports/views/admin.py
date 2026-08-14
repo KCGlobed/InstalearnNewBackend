@@ -101,7 +101,7 @@ class GetUserReportPDFView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "user_list_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{user_type}_{report_name}_{timestamp}.pdf"
@@ -237,7 +237,7 @@ class GetUserReportExcelView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "user_list_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{user_type}_{report_name}_{timestamp}.xlsx"
@@ -717,7 +717,7 @@ class DownloadChapterVideoReportView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "video_progress_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -877,7 +877,7 @@ class DownloadChapterVideoReportCSVView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "video_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
@@ -1026,7 +1026,7 @@ class GetStudentAccessLockReportPDFView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "student_access_lock_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -1169,7 +1169,7 @@ class GetStudentAccessLockReportExcelView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "student_access_lock_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
@@ -1735,7 +1735,7 @@ class GetStudentRegistrationReportPDFView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "student_registration_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -1911,7 +1911,7 @@ class GetStudentRegistrationReportExcelView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "student_registration_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
@@ -2036,7 +2036,7 @@ class GetInstructorReportPDFView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "instrcutor_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -2195,7 +2195,7 @@ class GetInstructorReportExcelView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "instrcutor_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
@@ -3522,7 +3522,7 @@ class GetStudentPerformanceReportPDFView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "student_performance_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -3694,7 +3694,7 @@ class GetStudentPerformanceReportExcelView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "student_registration_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
@@ -3917,7 +3917,7 @@ class GetAdminNotesListingReportPDFView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "notes_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -4100,7 +4100,7 @@ class GetAdminNotesListingReportExcelView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "notes_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
@@ -4283,7 +4283,7 @@ class GetStudentActivityPDFReportView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "student_login_activity_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -4448,7 +4448,7 @@ class GetStudentActivityExcelReportView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "student_login_activity_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
@@ -5388,7 +5388,7 @@ class GetNotesListingReportPDFView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "notes_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -5458,7 +5458,7 @@ class GetCorporateStudentsActivityLogPDFReportView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "activity_log_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -5578,7 +5578,7 @@ class GetCorporateStudentsActivityLogExcelReportView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "activity_log_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
@@ -5712,7 +5712,7 @@ class GetNotesListingReportExcelView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "notes_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
@@ -5780,7 +5780,7 @@ class DownloadStudentVideoReportView(APIView):
                 raise Exception("PDF generation error!")
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "video_progress_report"
             gcs_folder_name = "media/lms_2/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
@@ -5948,7 +5948,7 @@ class DownloadStudentVideoReportCSVView(APIView):
             df.to_excel(pdf_path, header=False, index=False)
         
         try:
-            timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
+            timestamp = int(datetime.now().timestamp() * 1000)
             report_name = "video_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.xlsx"
@@ -6117,14 +6117,14 @@ class PDFPartnerRequestReportView(APIView):
         if not plans.ordered:
             plans = plans.order_by('-id')
 
-        serializer = JobApplicationsListSerializer(plans, many=True)
+        serializer = PartnerRequestsListSerializer(plans, many=True)
         
         data = {
             "info":serializer.data
         }
 
 
-        template = get_template('pdf/job_application_report.html')
+        template = get_template('pdf/partner_requests_report.html')
         html  = template.render(data)
         # Use tempfile to create a temporary PDF file
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
@@ -6137,7 +6137,7 @@ class PDFPartnerRequestReportView(APIView):
         
         try:
             timestamp = int(datetime.now().timestamp() * 1000)
-            report_name = "job_application_report"
+            report_name = "partner_requests_report"
             gcs_folder_name = "media/reports"
             gcs_file_name = f"{gcs_folder_name}/{report_name}_{timestamp}.pdf"
 
@@ -6216,94 +6216,98 @@ class CSVPartnerRequestReportView(APIView):
         if not plans.ordered:
             plans = plans.order_by('-id')
         
-        serializer = JobApplicationsListSerializer(plans, many=True)
-        
-        lis = []
-        
-        lis.append({
-                "first_name":"Job Applications Report",
-                "last_name":'',
-                "email":'',
-                "phone":'',
-                "ordered_courses":'',
-                "total_amount":'',
-                "start_date":'',
-                "end_date":'',
-                "subscription_type":'',
-                "subscription_status":'',
-                "created_at":'',
-                "linkedin":"",
-                "notice":""
-            })
-        
-        lis.append({
-                "first_name":"",
-                "last_name":'',
-                "email":'',
-                "phone":'',
-                "ordered_courses":'',
-                "total_amount":'',
-                "start_date":'',
-                "end_date":'',
-                "subscription_type":'',
-                "subscription_status":'',
-                "created_at":'',
-                "linkedin":"",
-                "notice":"",
-                "updated_at":""
-            })
-        
-        lis.append({
-                "first_name":"",
-                "last_name":'',
-                "email":'',
-                "phone":'',
-                "ordered_courses":'',
-                "total_amount":'',
-                "start_date":'',
-                "end_date":'',
-                "subscription_type":'',
-                "subscription_status":'',
-                "created_at":'',
-                "linkedin":"",
-                "notice":"",
-                "updated_at":""
-            })
-        
-        lis.append({
-                "first_name":"Full Name",
-                "last_name":'Email ID',
-                "email":'Mobile Number',
-                "phone":'State/UT',
-                "ordered_courses":'Current City',
-                "total_amount":'Highest Qualification',
-                "start_date":'Current Employment Status',
-                "end_date":'Total Years of Experience',
-                "subscription_type":'Area of Interest / Role Applying For',
-                "subscription_status":'Other Area of Interest',
-                "created_at":'Summary',
-                "linkedin":"LinkedIn Profile / Portfolio Link ",
-                "notice":"Notice Period",
-                "updated_at":"Created At"
-            })
-        for order in serializer.data:
+        serializer = PartnerRequestsListSerializer(plans, many=True)
 
-            
+        lis = []
+
+        # Title Header
+        lis.append({
+            "first_name": "Partner Request Report",
+            "last_name": "",
+            "email": "",
+            "phone": "",
+            "ordered_courses": "",
+            "total_amount": "",
+            "start_date": "",
+            "end_date": "",
+            "subscription_type": "",
+            "subscription_status": "",
+            "created_at": "",
+            "linkedin": "",
+            "notice": "",
+            "updated_at": "",
+        })
+
+        # Empty Spacers
+        lis.append({
+            "first_name": "",
+            "last_name": "",
+            "email": "",
+            "phone": "",
+            "ordered_courses": "",
+            "total_amount": "",
+            "start_date": "",
+            "end_date": "",
+            "subscription_type": "",
+            "subscription_status": "",
+            "created_at": "",
+            "linkedin": "",
+            "notice": "",
+            "updated_at": "",
+        })
+
+        lis.append({
+            "first_name": "",
+            "last_name": "",
+            "email": "",
+            "phone": "",
+            "ordered_courses": "",
+            "total_amount": "",
+            "start_date": "",
+            "end_date": "",
+            "subscription_type": "",
+            "subscription_status": "",
+            "created_at": "",
+            "linkedin": "",
+            "notice": "",
+            "updated_at": "",
+        })
+
+        # Column Headers
+        lis.append({
+            "first_name": "First Name",
+            "last_name": "Last Name",
+            "email": "Email ID",
+            "phone": "Mobile Number",
+            "ordered_courses": "Partner Type",
+            "total_amount": "Address",
+            "start_date": "City",
+            "end_date": "State/UT",
+            "subscription_type": "Country",
+            "subscription_status": "Pincode",
+            "created_at": "Comment",
+            "linkedin": "Document",
+            "notice": "Created At",
+            "updated_at": "Updated At",
+        })
+
+        # Data Rows
+        for item in serializer.data:
             lis.append({
-                "first_name":order['full_name'],
-                "last_name":order['email'],
-                "email":order['mobile'],
-                "phone":order['state'],
-                "ordered_courses":order['city'],
-                "total_amount":order['highest_qualification'],
-                "start_date":order['current_employment_status'],
-                "end_date":order['total_years_of_experience'],
-                "subscription_type": order['role_applying_for'],
-                "subscription_status":order['other_role_specification'],
-                "created_at":order['summary'],
-                "linkedin":order['linkedin_portfolio'],
-                "notice":order['notice_period'],
-                "updated_at":order['created_at']
+                "first_name": item.get("first_name", ""),
+                "last_name": item.get("last_name", ""),
+                "email": item.get("email", ""),
+                "phone": item.get("mobile", ""),
+                "ordered_courses": item.get("partner_type", ""),
+                "total_amount": item.get("address", ""),
+                "start_date": item.get("city", ""),
+                "end_date": item.get("state", ""),
+                "subscription_type": item.get("country", ""),
+                "subscription_status": item.get("pincode", ""),
+                "created_at": item.get("comment", ""),
+                "linkedin": item.get("document", ""),
+                "notice": item.get("created_at", ""),
+                "updated_at": item.get("updated_at", ""),
             })
 
         
