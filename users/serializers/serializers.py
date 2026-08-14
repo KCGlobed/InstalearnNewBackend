@@ -14,6 +14,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import smart_str, force_bytes
 from mini_lms.utils import *
 from rolepermissions.permissions import grant_permission,revoke_permission
+import re
 
 
 
@@ -625,3 +626,39 @@ class UserDashboardSearchHistorySerializer(serializers.Serializer):
     recent_searches = serializers.ListField(
         child=serializers.CharField()
     )
+
+
+
+class UpdateStudentPasswordSerializer(serializers.ModelSerializer):
+    current_password = serializers.CharField(style = { 'input_type': 'password'}, write_only = True)
+    password = serializers.CharField(style = { 'input_type': 'password'}, write_only = True, min_length=8)
+    confirm_password = serializers.CharField(style = { 'input_type': 'password'}, write_only = True,min_length=8)
+    class Meta:
+        model = User
+        fields = ['password','confirm_password','current_password']
+
+    def validate_password(self, value):
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
+            raise serializers.ValidationError("Password must contain at least one special character.")
+        return value
+
+    
+    def validate(self, data):
+        current_password = data.get('current_password')
+        password = data.get('password')
+        confirm_password = data.get('confirm_password')
+        if password != confirm_password:
+            raise serializers.ValidationError("Password and confirm password doesn't match")
+
+        user = self.context.get('user')
+        if not user.check_password(current_password):
+            raise serializers.ValidationError("Current Password doesn't match")
+        return data
+    
+    
+    def create(self , validate_data):
+        user = self.context.get('user')
+        user.set_password(validate_data.get('password'))
+        user.save()
+
+        return user

@@ -472,3 +472,15 @@ class GetUserSearchHistoryView(APIView):
             "similar_to_activity": similar_courses_data,
             "recent_searches": recent_searches
         }, status=status.HTTP_200_OK)
+
+
+
+class UpdateStudentPasswordView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+    def post(self, request, format=None):
+        serializer = UpdateStudentPasswordSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user = serializer.save()
+            return success_response(message="Password Updated successfully!", data={}, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)

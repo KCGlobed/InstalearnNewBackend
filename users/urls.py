@@ -55,6 +55,8 @@ urlpatterns = [
     path('create-student/', CreateStudentView.as_view(), name="create-student"),
     path('update-student/<int:id>', UpdateStudentView.as_view(), name="update-student"),
     path('change-student-status/<int:id>', UpdateStudenStatustView.as_view(), name="change-student-status"),
+
+    path('update-password/', UpdateStudentPasswordView.as_view(), name="update-password"),
     
     
 ]
