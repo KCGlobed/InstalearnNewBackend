@@ -1127,7 +1127,7 @@ class EditCommunityPostsserializer(serializers.ModelSerializer):
 
     class Meta:
         model = CommunityPosts
-        fields = ['title',"main_topic","sub_topic","description"]
+        fields = ['title',"category","description"]
         
     def validate(self, data):
         return data

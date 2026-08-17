@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "questions",
     "forums",
     "reports",
+    "universities",
     "adminpanel.authentication",
     "adminpanel.layout",
     "adminpanel.course_app"
