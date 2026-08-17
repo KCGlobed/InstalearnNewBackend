@@ -117,6 +117,7 @@ urlpatterns = [
 
 
     path('get-community-post-listing/', CommunitPostListingView.as_view(), name="get-community-post-listing"), 
+    path('get-community-post-detail/<int:id>', ViewCommunityPostDetailView.as_view(), name="view-community-post-detail"),
     path('create-community-post/', CreateCommunitPostView.as_view(), name="create-community-post"),
     path('edit-community-post/<int:cid>', EditCommunitPostView.as_view(), name="edit-community-post"),
     path('update-community-post-status/<int:cid>', UpdateCommunitPostStatusView.as_view(), name="update-community-post-status"),

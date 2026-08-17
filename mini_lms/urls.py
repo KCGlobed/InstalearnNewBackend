@@ -10,6 +10,7 @@ urlpatterns = [
     path('api/questions/',include('questions.urls')),
     path('api/cms/',include('cms.urls')),
     path('api/reports/',include('reports.urls')),
+    path('api/university/',include('universities.urls')),
 
     #admin panel urls
     path('', include('adminpanel.authentication.urls')),

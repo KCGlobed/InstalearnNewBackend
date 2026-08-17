@@ -1691,6 +1691,21 @@ class CommunitPostListingView(APIView):
         return paginator.get_paginated_response(serializer.data)
     
 
+class ViewCommunityPostDetailView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                              RoleOrPermissionCheck.for_permission_or_roles(
+                                  "get_community_post",
+                                [SuperAdmin]
+                            )]
+    def get(self, request, id=None):
+        post = CommunityPosts.objects.filter(id=id).first()
+        if not post:
+            return error_response(message="Post not found", status_code=status.HTTP_404_NOT_FOUND)
+        serializer = ViewCommunityPostsDetailSerializer(post)
+        return success_response(message="", data=serializer.data, status_code=status.HTTP_200_OK)
+
+    
 class CreateCommunitPostView(APIView):
     renderer_classes = [CMSRenderer]
     permission_classes = [IsAuthenticated, 
