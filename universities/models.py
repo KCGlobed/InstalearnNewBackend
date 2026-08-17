@@ -54,7 +54,7 @@ class University(models.Model):
     country = models.CharField(max_length=255, null=True, blank=True)
     status = models.BooleanField(default=True)
     approved_status = models.IntegerField(choices=UniversityStatus.choices,default=UniversityStatus.New)
-    approved_by = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE, related_name="apporved_by")
+    approved_by = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE, related_name="apporved_by_user")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True) 
 
