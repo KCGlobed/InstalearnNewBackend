@@ -1644,19 +1644,18 @@ class CommunitPostListingView(APIView):
     search_fields = ['title']
     ordering_fields = ['title', 'created_at', 'id', 'status'] 
     def get(self, request, format=None):
-        category = CommunityPosts.objects.all()
-        
+        post = CommunityPosts.objects.all()
         title = request.query_params.get('title')
         if title:
-            category = category.filter(title__icontains=title)
+            post = post.filter(title__icontains=title)
 
         category = request.query_params.get('category')
         if category:
-            category = category.filter(category__title__icontains=category)
+            post = post.filter(category__title__icontains=category)
 
         active = request.query_params.get('status')
         if active:
-            category = category.filter(status=active)
+            post = post.filter(status=active)
 
 
         start_date = request.query_params.get('start_date')
@@ -1665,28 +1664,29 @@ class CommunitPostListingView(APIView):
         if start_date:
             try:
                 start_datetime = datetime.fromisoformat(start_date)
-                category = category.filter(created_at__gte=start_datetime)
+                post = post.filter(created_at__gte=start_datetime)
             except ValueError:
                 raise ValidationError("Invalid start_date format. Use YYYY-MM-DD.")
                 
         if end_date:
             try:
                 end_datetime = datetime.fromisoformat(end_date)
-                category = category.filter(created_at__lte=end_datetime)
+                post = post.filter(created_at__lte=end_datetime)
             except ValueError:
                 raise ValidationError("Invalid end_date format. Use YYYY-MM-DD.")
             
         search_filter = filters.SearchFilter()
-        category = search_filter.filter_queryset(request, category, self)
+        post = search_filter.filter_queryset(request, post, self)
 
         ordering_filter = filters.OrderingFilter()
-        category = ordering_filter.filter_queryset(request, category, self)
+        post = ordering_filter.filter_queryset(request, post, self)
 
-        if category is not None and hasattr(category, 'ordered') and not category.ordered:
-            category = category.order_by('-id')
+        if post is not None and hasattr(post, 'ordered') and not post.ordered:
+            post = post.order_by('-id')
+
 
         paginator = self.pagination_class()
-        page = paginator.paginate_queryset(category or [], request, view=self)
+        page = paginator.paginate_queryset(post or [], request, view=self)
         serializer = CommunityPostsListingSerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
     
