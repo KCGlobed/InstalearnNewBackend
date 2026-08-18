@@ -35,6 +35,7 @@ urlpatterns = [
     path('get-contact-us-pdf-report/', PDFContactUsReportView.as_view(), name="get-contact-us-pdf-report"),
 
     path('get-job-application-list/', GetJobApplicationsListingView.as_view(), name="get-job-application-list"),
+    path('view-job-application-detail/<sid>', ViewJobApplicationsDetailView.as_view(), name="view-job-application-detail"),
     path('get-job-application-csv-report/', CSVJobApplicationsReportView.as_view(), name="get-job-application-csv-report"),
     path('get-job-application-pdf-report/', PDFJobApplicationsReportView.as_view(), name="get-job-application-pdf-report"),
 
@@ -90,6 +91,7 @@ urlpatterns = [
 
 
     path('get-partner-request-list/', GetPartnerRequestListingView.as_view(), name="get-partner-request-list"),
+    path('view-partner-request-detail/<sid>', ViewPartnerRequestDetailView.as_view(), name="view-partner-request-detail"),
     path('get-partner-request-csv-report/', CSVPartnerRequestReportView.as_view(), name="get-partner-request-csv-report"),
     path('get-partner-request-pdf-report/', PDFPartnerRequestReportView.as_view(), name="get-partner-request-pdf-report"),
 

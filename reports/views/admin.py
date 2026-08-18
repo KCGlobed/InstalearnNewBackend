@@ -2656,6 +2656,21 @@ class ExportExcelActiveOrderListingView(APIView):
             os.remove(pdf_path)
 
 
+class ViewJobApplicationsDetailView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "view_job_applications_detail",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, sid=None):
+        users_list = JobApplications.objects.filter(id = sid).first()
+        if users_list is None:
+            raise ValidationError("Invalid Request ID!")
+        
+        serializer = JobApplicationsListSerializer(users_list)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
 
 class GetJobApplicationsListingView(APIView):
     renderer_classes = [ReportsRenderer]
@@ -5990,11 +6005,27 @@ class GetAdminDashboardRecentCorporateAdminView(APIView):
 
 
 
+class ViewPartnerRequestDetailView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "view_partner_request_detail",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, sid=None):
+        users_list = PartnerRequests.objects.filter(id = sid).first()
+        if users_list is None:
+            raise ValidationError("Invalid Request ID!")
+        
+        serializer = PartnerRequestsListSerializer(users_list)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+    
 class GetPartnerRequestListingView(APIView):
     renderer_classes = [ReportsRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "job_applications_report",
+                              "partner_request_report",
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
@@ -6021,6 +6052,10 @@ class GetPartnerRequestListingView(APIView):
         mobile = request.query_params.get('mobile')
         if mobile:
             plans = plans.filter(mobile__icontains = mobile)
+
+        partner_type = request.query_params.get('partner_type')
+        if partner_type:
+            plans = plans.filter(partner_type = partner_type)
 
         
         start_date = request.query_params.get('start_date')
@@ -6061,7 +6096,7 @@ class PDFPartnerRequestReportView(APIView):
     renderer_classes = [ReportsRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "job_application_pdf_report",
+                              "partner_request_pdf_report",
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
@@ -6160,7 +6195,7 @@ class CSVPartnerRequestReportView(APIView):
     renderer_classes = [ReportsRenderer]
     permission_classes = [IsAuthenticated, 
                           RoleOrPermissionCheck.for_permission_or_roles(
-                              "job_application_excel_report",
+                              "partner_request_excel_report",
                             [SuperAdmin]
                         )]
     pagination_class = CustomPageNumberPagination
