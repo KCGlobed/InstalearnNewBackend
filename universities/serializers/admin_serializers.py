@@ -20,3 +20,9 @@ from mini_lms.utils import *
 from subscription.models import *
 from django.core.validators import FileExtensionValidator
 
+
+class UniversityRequestsSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    class Meta:
+        model = University
+        fields = "__all__"

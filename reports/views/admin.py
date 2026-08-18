@@ -2666,8 +2666,8 @@ class GetJobApplicationsListingView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['full_name', "last_name","email","mobile"]
-    ordering_fields = ['full_name', "last_name","email","mobile",'created_at', 'id'] 
+    search_fields = ['full_name',"email","mobile"]
+    ordering_fields = ['full_name',"email","mobile",'created_at', 'id'] 
     def get(self, request, format=None):
         
         plans = JobApplications.objects.all()
@@ -2729,8 +2729,8 @@ class PDFJobApplicationsReportView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['full_name', "last_name","email","mobile"]
-    ordering_fields = ['full_name', "last_name","email","mobile",'created_at', 'id'] 
+    search_fields = ['full_name', "email","mobile"]
+    ordering_fields = ['full_name', "email","mobile",'created_at', 'id'] 
     def get(self, request, format=None):
         
         plans = JobApplications.objects.all()
@@ -2824,8 +2824,8 @@ class CSVJobApplicationsReportView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['full_name', "last_name","email","mobile"]
-    ordering_fields = ['full_name', "last_name","email","mobile",'created_at', 'id'] 
+    search_fields = ['full_name', "email","mobile"]
+    ordering_fields = ['full_name', "email","mobile",'created_at', 'id'] 
     def get(self, request, format=None):
         
         plans = JobApplications.objects.all()
