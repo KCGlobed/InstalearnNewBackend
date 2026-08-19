@@ -10,4 +10,10 @@ urlpatterns = [
 
 
    path('get-university-requests-listing/', GetUniversityRequestsListingView.as_view(), name="university-requests-listing"),
+   path('view-university-requests-detail/<sid>', ViewUniversityRequestDetailView.as_view(), name="view-university-requests-detail"),
+   path('update-university-requests-status/<int:cid>', UpdateUniversityRequestStatusView.as_view(), name="update-university-requests-status"),
+   path('approve-reject-university-requests-status/<int:cid>', ApproveRejectUniversityRequestStatusView.as_view(), name="approve-reject-university-requests-status"),
+   path('assign-subscription-to-university/<int:cid>', AssignSubscriptiontoCorporateAdminUserView.as_view(), name="assign-subscription-to-university"),
+      
+
 ]

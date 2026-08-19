@@ -38,6 +38,21 @@ class BlogsCommentSerializer(serializers.ModelSerializer):
         model = BlogComment
         fields = "__all__"
 
+class ChangeBlogCommentStatusSerializer(serializers.ModelSerializer) :
+    status = serializers.BooleanField(required=True)
+    class Meta:
+        model = BlogComment
+        fields = ['status']
+        
+    def validate(self, data):
+        return data
+
+    def update(self , category, validate_data):
+        category.status = validate_data.get('status', category.status)
+        category.save()
+
+        return category
+    
 
 class CMSPagesListingSerializer(serializers.ModelSerializer):
     class Meta:

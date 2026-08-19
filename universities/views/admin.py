@@ -91,3 +91,77 @@ class GetUniversityRequestsListingView(APIView):
         page = paginator.paginate_queryset(plans, request, view=self)
         serializer = UniversityRequestsSerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
+class ViewUniversityRequestDetailView(APIView):
+    renderer_classes = [UniversityRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "view_university_requests_detail",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, sid=None):
+        users_list = University.objects.filter(id = sid).first()
+        if users_list is None:
+            raise ValidationError("Invalid Request ID!")
+        
+        serializer = UniversityRequestsSerializer(users_list)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
+
+class UpdateUniversityRequestStatusView(APIView):
+    renderer_classes = [UniversityRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_university_requests_status",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = University.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Request ID!")
+        
+        serializer = ChangeUniversitystatusSerializer(category, data = request.data)
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="University Status Updated Successfully", data=UniversityRequestsSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+class ApproveRejectUniversityRequestStatusView(APIView):
+    renderer_classes = [UniversityRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_university_requests_status",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = University.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Request ID!")
+        
+        serializer = ApproveRejectUniversitystatusSerializer(category, data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="University Status Updated Successfully", data=UniversityRequestsSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+class AssignSubscriptiontoCorporateAdminUserView(APIView):
+    renderer_classes = [UniversityRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_university_subscription",
+                            [SuperAdmin]
+                        )]
+    def post(self, request,  cid , format=None):
+        category = University.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid University ID!")
+        
+        serializer = AssignSubscriptiontoUniversitySerializer(data = request.data, context={'university':category})
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="Blog Status Updated Successfully", data=UniversityRequestsSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)

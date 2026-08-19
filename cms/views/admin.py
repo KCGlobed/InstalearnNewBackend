@@ -390,7 +390,7 @@ class UpdateBlogCommentStatusView(APIView):
         if category is None:
             raise ValidationError("Invalid Blog Comment ID!")
         
-        serializer = ChangeBlogFeatureStatusSerializer(category, data = request.data)
+        serializer = ChangeBlogCommentStatusSerializer(category, data = request.data)
         if serializer.is_valid(raise_exception = True):
             user  = serializer.save()
             return success_response(message="Blog Comment Status Updated Successfully", data=BlogsCommentSerializer(user).data, status_code=status.HTTP_200_OK)
