@@ -67,7 +67,7 @@ class TestimonialsListSerializer(serializers.ModelSerializer):
 
 
 class ChangeBlogCommentStatusSerializer(serializers.ModelSerializer) :
-    status = serializers.BooleanField(required=True)
+    status = serializers.IntegerField(required=True)
     class Meta:
         model = BlogComment
         fields = ['status']

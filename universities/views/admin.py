@@ -163,5 +163,5 @@ class AssignSubscriptiontoCorporateAdminUserView(APIView):
         serializer = AssignSubscriptiontoUniversitySerializer(data = request.data, context={'university':category})
         if serializer.is_valid(raise_exception = True):
             user  = serializer.save()
-            return success_response(message="Blog Status Updated Successfully", data=UniversityRequestsSerializer(user).data, status_code=status.HTTP_200_OK)
+            return success_response(message="Subscription assigned Successfully", data=UniversityRequestsSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
