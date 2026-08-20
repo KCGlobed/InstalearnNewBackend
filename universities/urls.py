@@ -18,4 +18,6 @@ urlpatterns = [
    path('get-university-requests-csv-report/', CSVUniversityRequestsReportView.as_view(), name="get-university-requests-csv-report"),
    path('get-university-requests-pdf-report/', PDFUniversityRequestsReportView.as_view(), name="get-university-requests-pdf-report"),
 
+   path('import-students/', ImportUniversityStudentsView.as_view(), name='import-users'),
+
 ]

@@ -262,3 +262,21 @@ class AssignSubscriptiontoUniversitySerializer(serializers.ModelSerializer) :
         book_order.end_date = end_date
         book_order.save()
         return user
+
+
+
+class ImportStudentsSerializer(serializers.ModelSerializer) :
+    excel_file = serializers.FileField(required=True, validators=[FileExtensionValidator( ['xlsx','xls'])])
+    university_id = serializers.IntegerField(required=True)
+    
+    class Meta:
+        model = User
+        fields = ['excel_file',"university_id"]
+
+    def validate_university_id(self, value):
+        if not University.objects.filter(id=value).exists():
+            raise serializers.ValidationError("University with the provided ID does not exist.")
+        return value
+    
+    def validate(self, data):
+        return data

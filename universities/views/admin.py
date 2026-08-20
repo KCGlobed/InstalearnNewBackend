@@ -36,8 +36,8 @@ class GetUniversityRequestsListingView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['first_name','last_name',"email"]
-    ordering_fields = ['first_name', 'created_at', 'id', 'last_name',"email"] 
+    search_fields = ['first_name','last_name',"work_email","status"]
+    ordering_fields = ['first_name', 'created_at', 'id', 'last_name',"work_email","status","approved_status"] 
     def get(self, request, format=None):
         
         plans = University.objects.all()
@@ -433,3 +433,119 @@ class CSVUniversityRequestsReportView(APIView):
         finally:
             # Ensure the temporary file is deleted
             os.remove(pdf_path)
+
+
+
+class ImportUniversityStudentsView(APIView):
+    renderer_classes = [UniversityRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "import_students",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = ImportStudentsSerializer(data = request.data)
+        if serializer.is_valid(raise_exception = True):
+
+            excel_file = serializer.validated_data['excel_file']
+            university_id = serializer.validated_data['university_id']
+            university = University.objects.filter(id = university_id).first()
+            try:
+                imported_emails = []
+
+                colnames=['first_name', 'last_name', 'email','phone_number']
+
+                df = pd.read_excel(excel_file, names=colnames, skiprows=2)
+                df = df.fillna('')
+
+                # Clean string whitespace for email checking
+                df['email'] = df['email'].astype(str).str.strip().str.lower()
+                
+                # Extract non-empty emails list
+                file_emails = [email for email in df['email'].tolist() if email]
+
+                # 1. Check for duplicates WITHIN the Excel file itself
+                duplicate_file_emails = set([email for email in file_emails if file_emails.count(email) > 1])
+                if duplicate_file_emails:
+                    return error_response(
+                        message="Import failed: Duplicate emails found within the uploaded file.",
+                        data={"duplicate_emails": list(duplicate_file_emails)},
+                        status_code=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # 2. Check for emails that ALREADY EXIST in the database
+                existing_db_emails = set(
+                    User.objects.filter(email__in=file_emails).values_list('email', flat=True)
+                )
+                if existing_db_emails:
+                    return error_response(
+                        message="Import failed: Some emails already exist in the database.",
+                        data={"existing_emails": list(existing_db_emails)},
+                        status_code=status.HTTP_400_BAD_REQUEST
+                    )
+
+                valid_rows_df = df[
+                    (df['first_name'] != '') | 
+                    (df['last_name'] != '') | 
+                    (df['email'] != '') | 
+                    (df['phone_number'] != '')
+                ]
+                total_incoming_students = len(valid_rows_df)
+
+                total_licenses = Order.objects.filter(
+                    university_id=university_id
+                ).aggregate(total=Sum('no_of_licence'))['total'] or 0
+
+                if total_incoming_students > total_licenses:
+                    return error_response(
+                        message="Import failed: Student count exceeds available license limit.",
+                        data={
+                            "allowed_licenses": total_licenses,
+                            "excel_student_count": total_incoming_students
+                        },
+                        status_code=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                password = generate_random_password(8)
+
+                for index, row in df.iterrows():
+
+                    info = { "first_name": str(row['first_name']).strip(),"last_name": str(row['last_name']).strip(), 'email': row['email'].lower(), 'password': password}
+                    
+                    user_info = User.objects.create_user(**info)
+                    assign_role(user_info, "Student")
+        
+                    user_info.role = User.Student
+                    user_info.email_verified = 1
+                    user_info.university = university
+                    user_info.is_active = True
+                    user_info.save()
+        
+                    imported_emails.append(user_info.email)
+
+
+                url = settings.BASE_URL+"/login"
+                
+                subject = 'Thank you for registering!'
+        
+                message = f''
+                email_from = settings.EMAIL_HOST_USER
+                recipient_list = imported_emails
+                html_message = loader.render_to_string(
+                    'new_user_email.html',
+                    {
+                        'name': "User",
+                        'verification_link': url,
+                        "email": "Registered Email",
+                        "password": password,
+        
+                    }
+                )
+                send_mail( subject, message, email_from, recipient_list,html_message=html_message )
+
+                        
+            except Exception as e:
+                return error_response(message="failed", data = {"error": f"Error processing Excel file: {str(e)}"}, status_code=status.HTTP_400_BAD_REQUEST)
+
+            return success_response(message="Student Imported Successfully", data={"imported_emails": imported_emails}, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
