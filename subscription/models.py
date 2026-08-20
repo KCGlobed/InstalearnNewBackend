@@ -68,6 +68,7 @@ class PaymentType(models.IntegerChoices):
 
 class Order(models.Model):
     orderID = models.CharField(max_length=255, null=True, blank=True)
+    university = models.ForeignKey('universities.University', null=True, blank=True, on_delete=models.SET_NULL)
     user = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=255, null=True, blank=True)
     last_name = models.CharField(max_length=255, null=True, blank=True)

@@ -14,6 +14,8 @@ urlpatterns = [
    path('update-university-requests-status/<int:cid>', UpdateUniversityRequestStatusView.as_view(), name="update-university-requests-status"),
    path('approve-reject-university-requests-status/<int:cid>', ApproveRejectUniversityRequestStatusView.as_view(), name="approve-reject-university-requests-status"),
    path('assign-subscription-to-university/<int:cid>', AssignSubscriptiontoCorporateAdminUserView.as_view(), name="assign-subscription-to-university"),
-      
+
+   path('get-university-requests-csv-report/', CSVUniversityRequestsReportView.as_view(), name="get-university-requests-csv-report"),
+   path('get-university-requests-pdf-report/', PDFUniversityRequestsReportView.as_view(), name="get-university-requests-pdf-report"),
 
 ]

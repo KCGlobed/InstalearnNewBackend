@@ -56,7 +56,7 @@ class SubmitUniversityRequestSerializer(serializers.ModelSerializer) :
         user.role = User.UniversityAdmin
         user.university = course_category
         user.email_verified = 1
-        user.is_active = True
+        user.is_active = False
         user.save()
 
         subject = 'New University Request'

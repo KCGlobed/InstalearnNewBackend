@@ -30,6 +30,99 @@ class UniversityRequestsSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class AdminUserInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id','first_name','last_name', 'email','phone1',"is_active","date_joined","last_login","image"]
+
+
+class MyCourseDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ["id",'name']
+
+class UserCoursesListSerializer(serializers.ModelSerializer):
+    course_detail = MyCourseDetailSerializer(source="course", read_only=True)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Pass the context to the nested serializer
+        if 'context' in kwargs:
+            self.fields['course_detail'].context.update(kwargs['context'])
+
+    class Meta:
+        model = UserCourses
+        fields = ["id", "course_detail"]
+
+class StudentListingSerializer(serializers.ModelSerializer):
+    date_joined = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    courses = serializers.SerializerMethodField('get_courses')
+    courses_progress = serializers.SerializerMethodField('get_courses_progress')
+    
+    def get_courses_progress(self, obj):
+        users_courses = UserCourses.objects.filter(user=obj, paid=True).values_list("course")
+        total_video_duration = Course.objects.filter(id__in = users_courses).aggregate(Sum('total_video_duration')).get('total_video_duration__sum')  or 0
+
+        total_duration_video_watched = UserLectureProgress.objects.filter(course_id__in = users_courses, user_id = obj.id).aggregate(Sum('total_duration')).get('total_duration__sum')  or 0
+        video_duration_progress = 0
+        if total_duration_video_watched > total_video_duration:
+            video_duration_progress =  100
+        else:
+            if total_video_duration > 0:
+                video_duration_progress =  math.ceil(total_duration_video_watched * 100 / total_video_duration)
+
+        return video_duration_progress
+    
+    def get_courses(self, obj):
+        users_courses = UserCourses.objects.filter(user=obj, paid=True).select_related("course").order_by("-id")
+        return UserCoursesListSerializer(users_courses, many=True, context={"user": obj.id}).data
+    
+    class Meta:
+        model = User
+        fields = ['id','first_name','last_name', 'email','phone1',"is_active","date_joined","last_login","image","courses","courses_progress"]
+
+
+class PlanInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubscriptionPlans
+        fields = ["id",'plan_name']
+        
+class OrderListingSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    plan_info = serializers.SerializerMethodField('get_plan_info')
+    
+    def get_plan_info(self, obj):
+        return PlanInfoSerializer(obj.plan).data
+    
+    class Meta:
+        model = Order
+        fields = ["id","first_name","last_name","email","phone","total_amount","gst_amount","amount","start_date","next_due","end_date","no_of_licence","subscription_type","subscription_status","created_at","plan_info"]
+
+
+class UniversityRequestsDetailSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    admin_user = serializers.SerializerMethodField('get_admin_user')
+    student_lists = serializers.SerializerMethodField('get_student_lists')
+    active_subscription = serializers.SerializerMethodField('get_active_subscription')
+            
+    def get_active_subscription(self, obj):
+        users_list = Order.objects.filter(university = obj.id)
+        serializer = OrderListingSerializer(users_list, many=True)
+        return serializer.data
+        
+    def get_student_lists(self, obj):
+        users_list = User.objects.filter(university = obj.id, role = User.Student)
+        serializer = StudentListingSerializer(users_list, many=True)
+        return serializer.data
+        
+    def get_admin_user(self, obj):
+        university_admin = User.objects.filter(university = obj, role = User.UniversityAdmin).first()
+        return AdminUserInfoSerializer(university_admin).data
+    
+    class Meta:
+        model = University
+        fields = "__all__"
+
 class ChangeUniversitystatusSerializer(serializers.ModelSerializer) :
     status = serializers.BooleanField(required=True)
     class Meta:
@@ -47,7 +140,7 @@ class ChangeUniversitystatusSerializer(serializers.ModelSerializer) :
 
 
 class ApproveRejectUniversitystatusSerializer(serializers.ModelSerializer) :
-    approved_status = serializers.BooleanField(required=True)
+    approved_status = serializers.IntegerField(required=True)
     class Meta:
         model = University
         fields = ['approved_status']
@@ -66,6 +159,7 @@ class ApproveRejectUniversitystatusSerializer(serializers.ModelSerializer) :
                 for user in university_admin:
                     password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
                     user.set_password(password)
+                    user.is_active = True
                     user.save()
 
                     subject = 'Approved: Your University Account Access & Admin Credentials!'
@@ -92,10 +186,11 @@ class ApproveRejectUniversitystatusSerializer(serializers.ModelSerializer) :
 
 class AssignSubscriptiontoUniversitySerializer(serializers.ModelSerializer) :
     plan_id = serializers.IntegerField(required=True)
+    no_of_licence = serializers.IntegerField(required=True)
 
     class Meta:
         model = Order
-        fields = ["plan_id"]
+        fields = ["plan_id","no_of_licence"]
         
     def validate(self, data):
         plan_id = data.get('plan_id')
@@ -128,6 +223,7 @@ class AssignSubscriptiontoUniversitySerializer(serializers.ModelSerializer) :
         book_order = Order(
             orderID = order_id,
             user = user,
+            university = self.context.get('university'),
             first_name = user.first_name,
             last_name = user.last_name,
             email = user.email,
@@ -136,7 +232,7 @@ class AssignSubscriptiontoUniversitySerializer(serializers.ModelSerializer) :
             plan = subscription_plan,
             subscription_id = subscription_plan.id,
             subscription_type = subscription_plan.plan_type,
-            no_of_licence = subscription_plan.no_of_licence,
+            no_of_licence = validate_data.get('no_of_licence'),
             amount = total_amount,
             gst_amount = tax,
             total_amount = order_total_amount,
