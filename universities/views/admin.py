@@ -458,13 +458,10 @@ class ImportUniversityStudentsView(APIView):
                 df = pd.read_excel(excel_file, names=colnames, skiprows=2)
                 df = df.fillna('')
 
-                # Clean string whitespace for email checking
                 df['email'] = df['email'].astype(str).str.strip().str.lower()
                 
-                # Extract non-empty emails list
                 file_emails = [email for email in df['email'].tolist() if email]
 
-                # 1. Check for duplicates WITHIN the Excel file itself
                 duplicate_file_emails = set([email for email in file_emails if file_emails.count(email) > 1])
                 if duplicate_file_emails:
                     return error_response(
@@ -473,7 +470,6 @@ class ImportUniversityStudentsView(APIView):
                         status_code=status.HTTP_400_BAD_REQUEST
                     )
 
-                # 2. Check for emails that ALREADY EXIST in the database
                 existing_db_emails = set(
                     User.objects.filter(email__in=file_emails).values_list('email', flat=True)
                 )
@@ -548,4 +544,20 @@ class ImportUniversityStudentsView(APIView):
                 return error_response(message="failed", data = {"error": f"Error processing Excel file: {str(e)}"}, status_code=status.HTTP_400_BAD_REQUEST)
 
             return success_response(message="Student Imported Successfully", data={"imported_emails": imported_emails}, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+
+class CreateStudentView(APIView):
+    renderer_classes = [UniversityRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_university_student",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = CreateStudentSerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="User Created Successfully", data={}, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
