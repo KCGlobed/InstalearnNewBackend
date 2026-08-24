@@ -16,11 +16,11 @@ else:
 
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env.bool('DEBUG', default=True)
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', "instalearnnewbackend-114109844441.asia-south1.run.app","instalearn-610747130982.asia-south1.run.app","dev-instalearn-610747130982.asia-south1.run.app"])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', "devapi-instalearn.kcglobed.com","instalearn-610747130982.asia-south1.run.app","dev-instalearn-610747130982.asia-south1.run.app"])
 
-CSRF_TRUSTED_ORIGINS = ["https://instalearnnewbackend-114109844441.asia-south1.run.app","https://instalearn-610747130982.asia-south1.run.app","https://dev-instalearn-610747130982.asia-south1.run.app"]
+CSRF_TRUSTED_ORIGINS = ["https://devapi-instalearn.kcglobed.com","https://instalearn-610747130982.asia-south1.run.app","https://dev-instalearn-610747130982.asia-south1.run.app"]
 
-ADMIN_URL = "https://dev-instalearn-610747130982.asia-south1.run.app/"
+ADMIN_URL = "https://devapi-instalearn.kcglobed.com/"
 # Application definition
 
 INSTALLED_APPS = [
