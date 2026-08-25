@@ -561,3 +561,18 @@ class CreateStudentView(APIView):
             user  = serializer.save()
             return success_response(message="User Created Successfully", data={}, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+class CreateUniversityView(APIView):
+    renderer_classes = [UniversityRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "create_university",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = CreateUniversitySerializer(data = request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception = True):
+            user  = serializer.save()
+            return success_response(message="User Created Successfully", data=UniversityRequestsSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)

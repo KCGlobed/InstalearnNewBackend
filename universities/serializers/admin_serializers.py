@@ -280,3 +280,140 @@ class ImportStudentsSerializer(serializers.ModelSerializer) :
     
     def validate(self, data):
         return data
+
+
+
+class CreateStudentSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(max_length = 255, required=True)
+    last_name = serializers.CharField(max_length = 255, required=True)
+    email = serializers.EmailField(max_length = 255, required=True)
+    university_id = serializers.IntegerField(required=True)
+    phone = serializers.CharField(max_length = 255, required=False, allow_blank=True)
+    image = serializers.FileField(required=False,allow_null=True, validators=[FileExtensionValidator( ['png','jpg','jpeg',"webp","svg"])])
+
+    class Meta:
+        model = User
+        fields = ['email','first_name','last_name',"phone","image"]
+        
+
+    def validate(self, data):
+        user_count = User.objects.filter(email = data.get('email').lower()).count()
+        if user_count > 0:
+            raise serializers.ValidationError('Email address is already registered with Us')
+
+        if not University.objects.filter(id=data.get('university_id')).exists():
+            raise serializers.ValidationError("University with the provided ID does not exist.")
+
+        return data
+
+
+    def create(self, validate_data):
+        password = generate_random_password(8)
+        info = { "first_name": validate_data.get('first_name'),"last_name": validate_data.get('last_name'), 'email': validate_data.get('email').lower(), 'password': password}
+        user = User.objects.create_user(**info)
+        assign_role(user, "Student")
+
+        user.role = User.Student
+        user.email_verified = 1
+        user.student_type = "Institue"
+        user.category = "INSTITUTION"
+        user.university = University.objects.filter(id=validate_data.get('university_id')).first()
+        user.is_active = True
+        user.phone1 = validate_data.get('phone')
+        user.image = validate_data.get('image')
+        user.save()
+
+        subject = 'Welcome to KCGLOBED!'
+
+        message = f''
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [user.email, ]
+        html_message = loader.render_to_string(
+            'user_login_detail_email.html',
+            {
+                'name': user.first_name +' '+ user.last_name,
+                'verification_link': settings.BASE_URL,
+                "email": user.email,
+                "password": password,               
+
+            }
+        )
+
+        send_mail( subject, message, email_from, recipient_list,html_message=html_message )
+
+        return user
+
+
+
+class CreateUniversitySerializer(serializers.ModelSerializer) :
+    first_name = serializers.CharField(max_length = 255, required=True)
+    last_name = serializers.CharField(max_length = 255, required=True)
+    phone_number = serializers.CharField(max_length = 255, required=True)
+    work_email = serializers.CharField(max_length = 255, required=True)
+    institution_type = serializers.CharField(max_length = 255, required=True)
+    institution_name = serializers.CharField(max_length = 255, required=True)
+    country = serializers.CharField(max_length = 255, required=True)
+    job_role = serializers.CharField(max_length = 255, required=True)
+    department = serializers.CharField(max_length = 255, required=True)
+    
+    class Meta:
+        model = University
+        fields = ['first_name','last_name','phone_number','work_email','institution_type',"institution_name","country","job_role","department"]
+        
+    def validate(self, data):
+
+        user = User.objects.filter(email =data.get('work_email').lower()).count()
+        if user > 0:
+            raise serializers.ValidationError("Email already registered with us")
+
+        return data
+
+
+    def create(self , validate_data):
+        
+        course_category = University(
+            first_name = validate_data.get('first_name'),
+            phone_number = validate_data.get('phone_number'),
+            work_email = validate_data.get('work_email'),
+            institution_type = validate_data.get('institution_type'),
+            institution_name = validate_data.get('institution_name'),
+            last_name = validate_data.get('last_name'),
+            country = validate_data.get('country'),
+            job_role = validate_data.get('job_role'),
+            department = validate_data.get('department')
+        )
+        course_category.approved_status = UniversityStatus.Approved
+        course_category.approved_by = self.context.get('user')
+        course_category.save()
+        
+        password = generate_random_password(8)
+
+        info = { "first_name": validate_data.get('first_name'),"last_name": validate_data.get('last_name'), 'email': validate_data.get('work_email').lower(), 'password': password}
+        user = User.objects.create_user(**info)
+        assign_role(user, "UniversityAdmin")
+        user.role = User.UniversityAdmin
+        user.university = course_category
+        user.email_verified = 1
+        user.is_active = True
+        user.save()
+
+        subject = 'Approved: Your University Account Access & Admin Credentials!'
+        
+        url = settings.BASE_URL+"/login"
+        message = f''
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [user.email, ]
+        html_message = loader.render_to_string(
+            'approve_university_email.html',
+            {
+                'name': user.first_name +' '+ user.last_name,
+                'verification_link': url,
+                "email": user.email,
+                "password": password,
+            }
+        )
+        user = user
+        send_mail( subject, message, email_from, recipient_list,html_message=html_message )
+
+
+        return course_category

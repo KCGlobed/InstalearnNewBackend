@@ -7,7 +7,11 @@ urlpatterns = [
    path('get-institution-types/', InstitutionTypeChoicesView.as_view(), name='get-institution-type'),
    path('get-job-roles/', JobRolesChoicesView.as_view(), name='get-job-role'),
    path('get-department-types/', DepartmentTypeChoicesView.as_view(), name='get-department-type'),
-
+   path('get-university-dashboard-counters/', GetDashboardCountersView.as_view(), name="get-university-dashboard-counters"),
+   path('share-course-access/', ShareCourseAccessView.as_view(), name="share-course-access"),
+   path('get-university-student-list/', GetCorporateUsersListView.as_view(), name="get-university-student-list"),
+   path('assign-course-to-students/', AssignCourseAccessView.as_view(), name="assign-course-to-students"),
+   path('remove-course-to-students/', RemoveCourseAccessView.as_view(), name="remove-course-to-students"),
 
    path('get-university-requests-listing/', GetUniversityRequestsListingView.as_view(), name="university-requests-listing"),
    path('view-university-requests-detail/<sid>', ViewUniversityRequestDetailView.as_view(), name="view-university-requests-detail"),
@@ -19,6 +23,7 @@ urlpatterns = [
    path('get-university-requests-pdf-report/', PDFUniversityRequestsReportView.as_view(), name="get-university-requests-pdf-report"),
 
    path('import-students/', ImportUniversityStudentsView.as_view(), name='import-users'),
-   path('create-university-student/', CreateStudentView.as_view(), name="create-student"),
+   path('create-university-student/', CreateStudentView.as_view(), name="create-university-student"),
+   path('create-university/', CreateUniversityView.as_view(), name="create-university"),
 
 ]
