@@ -62,6 +62,14 @@ class GetUniversityRequestsListingView(APIView):
         if institution_name:
             plans = plans.filter(institution_name__icontains = institution_name)
 
+        status = request.query_params.get('status')
+        if status:
+            plans = plans.filter(status = status)
+
+        approved_status = request.query_params.get('approved_status')
+        if approved_status:
+            plans = plans.filter(approved_status = approved_status)
+
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         
