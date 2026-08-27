@@ -293,7 +293,7 @@ class CreateStudentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email','first_name','last_name',"phone","image"]
+        fields = ['email','first_name','last_name',"phone","image","university_id"]
         
 
     def validate(self, data):
