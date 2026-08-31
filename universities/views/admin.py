@@ -36,7 +36,7 @@ class GetUniversityRequestsListingView(APIView):
                         )]
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['first_name','last_name',"work_email","status",""approved_status""]
+    search_fields = ['first_name','last_name',"work_email","status","approved_status"]
     ordering_fields = ['first_name', 'created_at', 'id', 'last_name',"work_email","status","approved_status"] 
     def get(self, request, format=None):
         
