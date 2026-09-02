@@ -81,6 +81,7 @@ urlpatterns = [
 
 
     path('get-help-support-article-listing/', HelpSupportArticleListingView.as_view(), name="get-help-support-article-listing"), 
+    path('view-help-support-article-info/<int:cid>', ViewHelpSupportArticleInfoView.as_view(), name="view-help-support-article-info"),
     path('create-help-support-article/', CreateHelpSupportArticleView.as_view(), name="create-help-support-article"),
     path('edit-help-support-article/<int:cid>', EditHelpSupportArticleView.as_view(), name="edit-help-support-article"),
     path('update-help-support-article-status/<int:cid>', UpdateHelpSupportArticleStatusView.as_view(), name="update-help-support-article-status"),

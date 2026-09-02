@@ -1259,6 +1259,22 @@ class DeleteHelpSupportSubTopicView(APIView):
         
 
 
+class ViewHelpSupportArticleInfoView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "help_support_article_listing",
+                            [SuperAdmin]
+                        )]
+    def get(self, request,  cid , format=None):
+        category = HelpSupportArticle.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Testimonial ID!")
+        serializer = HelpSupportArticleListingSerializer(category)
+        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+    
+
 class HelpSupportArticleListingView(APIView):
     renderer_classes = [CMSRenderer]
     permission_classes = [IsAuthenticated, 
