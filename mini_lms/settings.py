@@ -16,9 +16,9 @@ else:
 
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env.bool('DEBUG', default=True)
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', "devapi-instalearn.kcglobed.com","instalearn-610747130982.asia-south1.run.app","dev-instalearn-610747130982.asia-south1.run.app"])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', "devapi-instalearn.kcglobed.com"])
 
-CSRF_TRUSTED_ORIGINS = ["https://devapi-instalearn.kcglobed.com","https://instalearn-610747130982.asia-south1.run.app","https://dev-instalearn-610747130982.asia-south1.run.app"]
+CSRF_TRUSTED_ORIGINS = ["https://devapi-instalearn.kcglobed.com"]
 
 ADMIN_URL = "https://devapi-instalearn.kcglobed.com/"
 # Application definition
@@ -228,6 +228,7 @@ CORS_ALLOWED_ORIGINS = [
 
 BASE_URL = "http://localhost:5173"
 ADMIN_BASE_URL = "http://localhost:3000"
+UNIVERSITY_BASE_URL = "http://localhost:3000"
 ADMIN_EMAIL="harish.kumar@kcglobed.com"
 
 # Google credentials from Google Cloud Console

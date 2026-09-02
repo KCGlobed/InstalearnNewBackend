@@ -28,6 +28,7 @@ urlpatterns = [
 
     
     path('get-testimonials-listing/', TestimonialsListingView.as_view(), name="get-testimonials-listing"), 
+    path('view-testimonials-info/<int:cid>', ViewTestimonialsInfoView.as_view(), name="view-testimonials-info"),
     path('create-testimonials/', CreateTestimonialsView.as_view(), name="create-testimonials"),
     path('edit-testimonials/<int:cid>', EditTestimonialsView.as_view(), name="edit-testimonials"),
     path('update-testimonials-status/<int:cid>', UpdateTestimonialsStatusView.as_view(), name="update-testimonials-status"),
@@ -50,6 +51,7 @@ urlpatterns = [
     path('delete-faq-topic/<int:cid>', DeleteFaqTopicView.as_view(), name="delete-faq-topic"),
 
     path('get-faq-listing/', FaqListingView.as_view(), name="get-faq-listing"), 
+    path('view-faq-info/<int:cid>', ViewFAQInfoView.as_view(), name="view-faq-info"),
     path('get-faq-topic-list/', FaqTopicListView.as_view(), name="get-faq-topic-list"), 
     path('create-faq/', CreateFaqView.as_view(), name="create-faq"),
     path('edit-faq/<int:cid>', EditFaqView.as_view(), name="edit-faq"),

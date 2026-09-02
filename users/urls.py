@@ -57,6 +57,9 @@ urlpatterns = [
     path('change-student-status/<int:id>', UpdateStudenStatustView.as_view(), name="change-student-status"),
 
     path('update-password/', UpdateStudentPasswordView.as_view(), name="update-password"),
-    
-    
+
+
+    path('university-login/', UniversityLoginView.as_view(), name="university-login"),
+    path('university-forgot-password/', UserForgotPasswordView.as_view(), name="university-forgot-password"),
+    path('university-reset-password/', UserResetPasswordView.as_view(), name="university-reset-password"),
 ]

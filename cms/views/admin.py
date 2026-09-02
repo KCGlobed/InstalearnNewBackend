@@ -645,6 +645,21 @@ class DeleteFaqTopicView(APIView):
             return error_response(message="FAQ Topic not found", data = [], status_code=status.HTTP_400_BAD_REQUEST)
         
 
+class ViewFAQInfoView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "faq_listing",
+                            [SuperAdmin]
+                        )]
+    def get(self, request,  cid , format=None):
+        category = FAQs.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Testimonial ID!")
+        serializer = FaqListingSerializer(category)
+        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+    
 
 class FaqListingView(APIView):
     renderer_classes = [CMSRenderer]
@@ -811,6 +826,21 @@ class UpdateSettingView(APIView):
     
 
 
+class ViewTestimonialsInfoView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "testimonials_listing",
+                            [SuperAdmin]
+                        )]
+    def get(self, request,  cid , format=None):
+        category = Testimonials.objects.filter(id=cid).first()
+        if category is None:
+            raise ValidationError("Invalid Testimonial ID!")
+        serializer = TestimonialsListingSerializer(category)
+        return success_response(message="success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+    
 class TestimonialsListingView(APIView):
     renderer_classes = [CMSRenderer]
     permission_classes = [IsAuthenticated, 
