@@ -24,6 +24,18 @@ from django.utils import timezone
 from datetime import timedelta
 
 
+class GetInstructorDetailView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "user_role_specific_permission_list",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, id=None,format=None):
+        subadmin_list = User.objects.filter(role = User.Instructor, id=id).first()
+        serializer = UserListingSerializer(subadmin_list,context={'user':request.user})
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
 class GetUserListingView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated, 

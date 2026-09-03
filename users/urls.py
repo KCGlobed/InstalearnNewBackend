@@ -40,6 +40,7 @@ urlpatterns = [
 
     # Admin APIS
     path('get-user-listing/<str:user_type>', GetUserListingView.as_view(), name="get-user-listing"),
+    path('view-user-detail/<int:id>', GetInstructorDetailView.as_view(), name="get-user-detail"),
     path('create-user/<str:user_type>', CreateUserView.as_view(), name="create-user"),
     path('update-user/<str:user_type>/<int:id>', UpdateUserView.as_view(), name="update-user"),
     path('change-user-status/<str:user_type>/<int:id>', UpdateUserStatustView.as_view(), name="change-user-status"),
