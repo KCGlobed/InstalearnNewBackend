@@ -61,7 +61,7 @@ class UserListingSerializer(serializers.ModelSerializer):
         
     def get_public_profile(self, obj):
         users_courses = InstructorProfile.objects.filter(user_id = obj.id).first()
-        return InstructorProfileSerializer(users_courses, many=True, context={"user": obj.id}).data
+        return InstructorProfileSerializer(users_courses, context={"user": obj.id}).data
 
     class Meta:
         model = User
