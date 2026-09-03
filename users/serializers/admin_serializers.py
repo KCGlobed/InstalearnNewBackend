@@ -50,11 +50,22 @@ class UserDevicesListSerializer(serializers.ModelSerializer):
         fields = ["id", "device_id","device_type","created_at"]
 
 
+class InstructorProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstructorProfile
+        fields = "__all__"
+
 
 class UserListingSerializer(serializers.ModelSerializer):
+    public_profile = serializers.SerializerMethodField('get_public_profile')
+        
+    def get_public_profile(self, obj):
+        users_courses = InstructorProfile.objects.filter(user_id = obj.id).first()
+        return InstructorProfileSerializer(users_courses, many=True, context={"user": obj.id}).data
+
     class Meta:
         model = User
-        fields = ['id','first_name','last_name', 'email','address',"city","state","country","pincode","dob","is_active","role","created_at","updated_at"]
+        fields = ['id','first_name','last_name', 'email','address',"city","state","country","pincode","dob","is_active","role","created_at","updated_at","public_profile"]
 
 
 
