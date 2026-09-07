@@ -223,7 +223,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "https://instalearn-website.web.app",
     "https://kcglobed-instalearn-adminpanel.web.app",
-    "https://instalearnadmin.kcglobed.com"
+    "https://instalearnadmin.kcglobed.com",
+    "https://instalearn.kcglobed.com"
 ]
 
 BASE_URL = "http://localhost:5173"

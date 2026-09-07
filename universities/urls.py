@@ -26,4 +26,7 @@ urlpatterns = [
    path('create-university-student/', CreateStudentView.as_view(), name="create-university-student"),
    path('create-university/', CreateUniversityView.as_view(), name="create-university"),
 
+   path('get-user-study-progress/', GetUserStudyProgressView.as_view(), name="get-user-study-progress"),
+   path('get-user-courses-progress/', GetUserCoursesProgressView.as_view(), name="get-user-courses-progress"),
+   
 ]
