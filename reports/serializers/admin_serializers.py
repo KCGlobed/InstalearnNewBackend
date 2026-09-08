@@ -830,3 +830,21 @@ class PartnerRequestsListSerializer(serializers.ModelSerializer):
     class Meta:
         model = PartnerRequests
         fields = "__all__"
+
+
+
+class CourseInfoListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ['id','name',"image","avg_rating","total_reviews","price","discount"]
+
+
+class GetUserWishlistSerializer(serializers.ModelSerializer):
+    course_info = serializers.SerializerMethodField('get_course_info')
+    def get_course_info(self, obj):
+        category = Course.objects.filter(id=obj.course.id).first()
+        return CourseInfoListSerializer(category).data
+    
+    class Meta:
+        model = UserWishlist
+        fields = ['id',"course_info"]

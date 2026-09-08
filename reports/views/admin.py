@@ -5357,6 +5357,19 @@ class GetStudentNotesListingView(APIView):
         return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
 
 
+class GetStudentWishlistListingView(APIView):
+    renderer_classes = [ReportsRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "view_student_wishlist_listing",
+                            [SuperAdmin]
+                        )]
+    def get(self, request, id=None):
+        notes = UserWishlist.objects.filter(user_id = id)
+        serializer = GetUserWishlistSerializer(notes, many= True, context={'user':id})
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+
+
 class GetAttemptedTestsListingView(APIView):
     renderer_classes = [ReportsRenderer]
     permission_classes = [IsAuthenticated, 
