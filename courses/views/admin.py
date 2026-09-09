@@ -3315,18 +3315,21 @@ class DeleteCoursReviewRatingView(APIView):
     def delete(self, request, cid, format=None):
         try:
             course = CourseReviewRating.objects.get(id = cid)
-            course_id = course.course.id
+            course_id = None
+            if course.course is not None:
+                course_id = course.course.id
             course.delete()
 
-            stats = CourseReviewRating.objects.filter(course_id=course_id,approved = 1, status = 1).aggregate(
-                    avg_rating=Avg('rating'),
-                    review_count=Count('id')
+            if course_id is not None:
+                stats = CourseReviewRating.objects.filter(course_id=course_id,approved = 1, status = 1).aggregate(
+                        avg_rating=Avg('rating'),
+                        review_count=Count('id')
+                    )
+                
+                Course.objects.filter(id=course_id).update(
+                    avg_rating=stats['avg_rating'] or 0,
+                    total_reviews=stats['review_count']
                 )
-            
-            Course.objects.filter(id=course_id).update(
-                avg_rating=stats['avg_rating'] or 0,
-                total_reviews=stats['review_count']
-            )
     
             return success_response(message="Review deleted successfully", data={}, status_code=status.HTTP_200_OK)
             
