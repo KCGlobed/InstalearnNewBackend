@@ -12,7 +12,7 @@ asn1crypto==1.5.1
 asteroid-filterbanks==0.4.0
 async-timeout==5.0.1
 attrs==26.1.0
-audioop-ltsaudioop-lts; python_version>='3.13'
+audioop-lts==0.2.2
 audioread==3.1.0
 av==18.0.0
 beautifulsoup4==4.15.0
@@ -22,6 +22,7 @@ celery==5.5.3
 certifi==2025.1.31
 cffi==1.17.1
 charset-normalizer==3.4.1
+click==8.1.8
 click-didyoumean==0.3.1
 click-plugins==1.1.1.2
 click-repl==0.3.0
@@ -219,13 +220,13 @@ torch==2.8.0
 torch-audiomentations==0.12.0
 torch_pitch_shift==1.2.5
 torchaudio==2.8.0
-torchcodec>=0.11.0
+torchcodec==0.7.0
 torchmetrics==1.9.0
 torchvision==0.23.0
 tqdm==4.67.1
 transformers==4.57.6
 treetable==0.2.6
-typer==0.25.1
+typer==0.11.1
 typing_extensions==4.16.0
 tzdata==2025.2
 tzlocal==5.3.1
