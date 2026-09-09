@@ -182,7 +182,7 @@ class ChapterTopicsSerializer(serializers.ModelSerializer) :
 class EbookDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChapterBooks
-        fields = ["id",'name']
+        fields = ["id",'name',"audio_file"]
 
 
 class ChapterLectureSerializer(serializers.ModelSerializer) :

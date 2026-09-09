@@ -29,7 +29,15 @@ credentials = service_account.Credentials.from_service_account_info(info)
 client = storage.Client(credentials=credentials, project=credentials.project_id)
 from google.cloud.video.transcoder_v1 import TranscoderServiceClient
 import whisper
-
+import io
+import asyncio
+import edge_tts
+from datetime import timedelta
+import pypdf
+import ebooklib
+from ebooklib import epub
+from bs4 import BeautifulSoup
+from django.core.files.base import ContentFile
 
 class AddtoCartView(APIView):
     renderer_classes = [SubscriptionRenderer]
@@ -307,7 +315,6 @@ class SubscriptionPlanListView(APIView):
 class ManageBackgroundTaskView(APIView):
     renderer_classes = [SubscriptionRenderer]
     def get(self, request, format=None):
-        
         calculate_video_duration_and_questions()
 
         info = json.loads(os.environ.get("GOOGLE_CREDENTIALS_JSON"))
@@ -315,6 +322,75 @@ class ManageBackgroundTaskView(APIView):
 
         storage_client = storage.Client(credentials=credentials, project=credentials.project_id)
 
+        bucket_name = settings.GS_BUCKET_NAME_2
+        public_bucket_name = settings.GS_BUCKET_NAME
+
+        ebook_list = ChapterBooks.objects.filter(audio_file = "") | ChapterBooks.objects.filter(audio_file__isnull = True)
+
+        if len(ebook_list) > 0:
+            for ebooks in ebook_list:
+                
+                bucketName, file_name = parse_gcs_url(ebooks.book_file.url)
+
+                bucket = storage_client.bucket(bucket_name)
+                public_bucket = storage_client.bucket(public_bucket_name)
+
+                source_blob = bucket.blob(file_name)
+                if not source_blob.exists():
+                    continue
+
+                file_bytes = source_blob.download_as_bytes()
+                extracted_text = ""
+
+                # Step 2: Extract text from PDF or EPUB
+                if file_name.endswith('.pdf'):
+                    pdf_reader = pypdf.PdfReader(io.BytesIO(file_bytes))
+                    for page in pdf_reader.pages:
+                        text = page.extract_text()
+                        if text:
+                            extracted_text += text + "\n"
+
+                elif file_name.endswith('.epub'):
+                    with open("/tmp/temp_book.epub", "wb") as f:
+                        f.write(file_bytes)
+                    book = epub.read_epub("/tmp/temp_book.epub")
+                    for item in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
+                        soup = BeautifulSoup(item.get_content(), 'html.parser')
+                        extracted_text += soup.get_text() + "\n"
+                else:
+                    continue
+
+                extracted_text = extracted_text.strip()
+                if not extracted_text:
+                    continue
+
+                # Step 3: Synthesize Speech (Using Microsoft Edge Neural Voice - Free & Human-like)
+                text_to_speak = extracted_text[:5000]
+
+                # Natural neural voices: "en-US-AvaNeural", "en-US-AndrewNeural", "en-US-ChristopherNeural"
+                VOICE = "en-IN-NeerjaNeural"
+                
+                # Increase volume by +20% for clearer/louder audio
+                communicate = edge_tts.Communicate(text=text_to_speak, voice=VOICE, volume="+50%")
+
+                # Since edge-tts is asynchronous, run it inside the synchronous DRF request
+                async def generate_audio():
+                    audio_data = b""
+                    async for chunk in communicate.stream():
+                        if chunk["type"] == "audio":
+                            audio_data += chunk["data"]
+                    return audio_data
+
+                audio_bytes = asyncio.run(generate_audio())
+                audio_buffer = io.BytesIO(audio_bytes)
+
+                current_GMT = time.gmtime()
+                clean_name = str(calendar.timegm(current_GMT))
+
+                django_file = ContentFile(audio_bytes, name=f"{clean_name}.mp3")
+                ebooks.audio_file.save(f"{clean_name}.mp3", django_file, save=True)
+
+    
         client = TranscoderServiceClient(credentials=credentials)
 
         video_list = Videos.objects.filter(is_uploaded = True, is_completed = True, transcoded_video = "") | Videos.objects.filter(is_uploaded = True, is_completed = True, transcoded_video__isnull = True)

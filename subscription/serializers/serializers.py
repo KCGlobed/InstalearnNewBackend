@@ -127,7 +127,7 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
                 raise serializers.ValidationError('Invalid User ID')
             
             if has_role(user, CorporateAdmin):
-                raise serializers.ValidationError("Direct course purchases are unavailable. You may only access this content via an active subscription.!")
+                raise serializers.ValidationError("This email is already registered with subscription plan!")
             
             course = Order.objects.filter(user = user, isPaid = True, payment_type = PaymentType.Subscription, subscription_status=OrderStatus.Active).order_by('-created_at').first()
 
@@ -141,7 +141,7 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
             user = User.objects.filter(email=email.lower()).first()
             if user is not None:
                 if has_role(user, CorporateAdmin):
-                    raise serializers.ValidationError("Direct course purchases are unavailable. You may only access this content via an active subscription.!")
+                    raise serializers.ValidationError("This email is already registered with subscription plan!")
             
                 course = Order.objects.filter(user = user, isPaid = True, payment_type = PaymentType.Subscription, subscription_status=OrderStatus.Active).order_by('-created_at').first()
 
