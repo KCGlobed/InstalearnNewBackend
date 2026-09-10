@@ -823,6 +823,38 @@ class UpdateSettingView(APIView):
             user= serializer.save()
             return success_response(message="Setting Updated Successfully", data=SettingSerializer(user).data, status_code=status.HTTP_200_OK)
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+
+class GetSMTPSettingView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                              RoleOrPermissionCheck.for_permission_or_roles(
+                                  "update_smtp_setting",
+                                [SuperAdmin]
+                            )]
+    def get(self, request, cid=None):
+        setting = SMTPConfiguration.objects.all().first()
+        if setting is None:
+            return success_response(message="Success", data={}, status_code=status.HTTP_200_OK)
+        serializer = SMTPSettingSerializer(setting)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+
+class UpdateSMTPSettingView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_smtp_setting",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = UpdateSMTPSettingSerializer(data = request.data, partial=True)
+        if serializer.is_valid(raise_exception = True):
+            user= serializer.save()
+            return success_response(message="SMTP Setting Updated Successfully", data=SMTPSettingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     
 
 

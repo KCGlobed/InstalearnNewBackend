@@ -60,6 +60,9 @@ urlpatterns = [
 
     path('get-setting/', GetSettingView.as_view(), name="get-setting"),
     path('update-setting/', UpdateSettingView.as_view(), name="update-setting"),
+
+    path('get-smtp-setting/', GetSMTPSettingView.as_view(), name="get-smtp-setting"),
+    path('update-smtp-setting/', UpdateSMTPSettingView.as_view(), name="update-smtp-setting"),
     
 
     path('get-help-support-topic-listing/', HelpSupportTopicListingView.as_view(), name="get-help-support-topic-listing"), 

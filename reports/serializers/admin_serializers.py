@@ -503,7 +503,6 @@ class CreateCorporateAdminUserSerializer(serializers.ModelSerializer):
         subject = 'Welcome to KCGLOBED!'
 
         message = f''
-        email_from = settings.EMAIL_HOST_USER
         recipient_list = [user.email, ]
         html_message = loader.render_to_string(
             'user_login_detail_email.html',
@@ -516,7 +515,10 @@ class CreateCorporateAdminUserSerializer(serializers.ModelSerializer):
             }
         )
 
-        send_mail( subject, message, email_from, recipient_list,html_message=html_message )
+        from_email = get_smtp_default_from_email()
+        connection = getSMTPConfiguration()
+        
+        send_mail( subject, message, from_email, recipient_list,html_message=html_message,connection = connection )
 
         return user
     

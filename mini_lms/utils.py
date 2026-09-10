@@ -4,6 +4,7 @@ from rest_framework import status
 from rolepermissions.checkers import has_role
 from mini_lms.roles import *
 from users.models import *
+from cms.models import *
 from user_study.models import *
 from questions.models import *
 import logging
@@ -20,6 +21,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.conf import settings
 from datetime import datetime
+from django.core.mail import get_connection
 
 
 CHUNK_SIZE = 1024 * 1024 * 10
@@ -467,3 +469,30 @@ def format_iso_time(iso_str):
         return dt.strftime("%d %b %Y, %I:%M %p")
     except (ValueError, TypeError):
         return str(iso_str)
+
+def getSMTPConfiguration():
+    smtp_config = SMTPConfiguration.objects.all().first()
+    if not smtp_config:
+        raise ValidationError("No SMTP configuration found in the database.")
+
+    connection = get_connection(
+        backend='django.core.mail.backends.smtp.EmailBackend',
+        host=smtp_config.host,
+        port=smtp_config.port,
+        username=smtp_config.username,
+        password=smtp_config.password,
+        use_tls=smtp_config.use_tls,
+        use_ssl=smtp_config.use_ssl,
+    )
+
+    connection.open()
+    
+    return connection
+
+
+def get_smtp_default_from_email():
+    smtp_config = SMTPConfiguration.objects.all().first()
+    if not smtp_config:
+        raise ValidationError("No SMTP configuration found in the database.")
+    return smtp_config.default_from_email
+   

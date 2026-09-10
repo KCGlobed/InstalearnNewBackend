@@ -545,7 +545,10 @@ class ImportUniversityStudentsView(APIView):
         
                     }
                 )
-                send_mail( subject, message, email_from, recipient_list,html_message=html_message )
+                from_email = get_smtp_default_from_email()
+                connection = getSMTPConfiguration()
+                
+                send_mail( subject, message, from_email, recipient_list,html_message=html_message,connection = connection)
 
                         
             except Exception as e:

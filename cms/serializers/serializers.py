@@ -38,8 +38,6 @@ class ContactUsSerializer(serializers.ModelSerializer) :
         course_category.save()
         
         subject = 'Contact Us'
-        message = f'Hi you have got a contact us'
-        email_from = settings.EMAIL_HOST_USER
         recipient_list = [settings.ADMIN_EMAIL,]
 
         html_message = loader.render_to_string(
@@ -52,8 +50,16 @@ class ContactUsSerializer(serializers.ModelSerializer) :
                 'message': validate_data.get('message')
             }
         )
+        from_email = get_smtp_default_from_email()
+        connection = getSMTPConfiguration()
+
         email = EmailMessage(
-            subject, html_message, email_from, recipient_list)
+                    subject=subject,
+                    body=html_message,
+                    from_email=from_email,
+                    to=recipient_list,
+                    connection=connection
+                )
         
         email.content_subtype = "html"
         email.send()
@@ -135,8 +141,16 @@ class AddBlogCommentSerializer(serializers.ModelSerializer) :
                 'comment': validate_data.get('comment')
             }
         )
+        from_email = get_smtp_default_from_email()
+        connection = getSMTPConfiguration()
+
         email = EmailMessage(
-            subject, html_message, email_from, recipient_list)
+                    subject=subject,
+                    body=html_message,
+                    from_email=from_email,
+                    to=recipient_list,
+                    connection=connection
+                )
         
         email.content_subtype = "html"
         email.send()
@@ -374,8 +388,16 @@ class SubmitPartnerRequestSerializer(serializers.ModelSerializer) :
                 "comment" : validate_data.get('comment'),
             }
         )
+        from_email = get_smtp_default_from_email()
+        connection = getSMTPConfiguration()
+
         email = EmailMessage(
-            subject, html_message, email_from, recipient_list)
+                    subject=subject,
+                    body=html_message,
+                    from_email=from_email,
+                    to=recipient_list,
+                    connection=connection
+                )
         
         email.content_subtype = "html"
         email.send()

@@ -217,7 +217,16 @@ class WebhookResponseView(APIView):
                     'raz_pay_id': order_info.orderID
                 })
                 
-                user_email = EmailMessage('Order Detail', user_html, email_from, [order_info.email])
+                from_email = get_smtp_default_from_email()
+                connection = getSMTPConfiguration()
+        
+                user_email = EmailMessage(
+                            subject='Order Detail',
+                            body=user_html,
+                            from_email=from_email,
+                            to=[order_info.email],
+                            connection=connection
+                        )
                 user_email.attach_file(pdf_path)
                 user_email.content_subtype = "html"
                 user_email.send()
@@ -232,8 +241,18 @@ class WebhookResponseView(APIView):
                     'price': order_info.total_amount,
                     'raz_pay_id': order_info.orderID
                 })
+
+                from_email = get_smtp_default_from_email()
+                connection = getSMTPConfiguration()
+        
+                admin_email = EmailMessage(
+                            subject='Course Order Detail',
+                            body=admin_html,
+                            from_email=from_email,
+                            to=[settings.ADMIN_EMAIL],
+                            connection=connection
+                        )
                 
-                admin_email = EmailMessage('Course Order Detail', admin_html, email_from, [settings.ADMIN_EMAIL])
                 admin_email.content_subtype = "html"
                 admin_email.send()
 
@@ -580,8 +599,16 @@ class ManageLearningRemindersView(APIView):
                         'course':reminder.course.name if reminder.course else '',
                     }
                 )
+                from_email = get_smtp_default_from_email()
+                connection = getSMTPConfiguration()
+        
                 email = EmailMessage(
-                    subject, html_message, email_from, recipient_list)
+                            subject=subject,
+                            body=html_message,
+                            from_email=from_email,
+                            to=recipient_list,
+                            connection=connection
+                        )
                 
                 email.content_subtype = "html"
                 email.send()
@@ -701,7 +728,11 @@ class PaymentResponseView(APIView):
                             'price': plan_info.amount,
                             'price_with_sign': plan_info.currency
                         })
-                        email = EmailMessage('Subscription Activated', html_message, settings.EMAIL_HOST_USER, [order_info.email])
+                        from_email = get_smtp_default_from_email()
+                        connection = getSMTPConfiguration()
+            
+        
+                        email = EmailMessage('Subscription Activated', html_message, from_email, [order_info.email], connection = connection)
                         email.content_subtype = "html"
                         email.send()
 
@@ -718,7 +749,11 @@ class PaymentResponseView(APIView):
                         'subscription_id': subscription_id,
                         "email": user_email
                     })
-                    email_admin = EmailMessage('Subscription Payment Received!', html_admin, settings.EMAIL_HOST_USER, [settings.ADMIN_EMAIL])
+                    from_email = get_smtp_default_from_email()
+                    connection = getSMTPConfiguration()
+            
+
+                    email_admin = EmailMessage('Subscription Payment Received!', html_admin, from_email, [settings.ADMIN_EMAIL],connection = connection)
                     email_admin.content_subtype = "html"
                     email_admin.send()
 
@@ -788,12 +823,17 @@ class PaymentResponseView(APIView):
                                         'order_info': order_info,
                                         "order_subscription": order_subscription.id
                                     })
+
+                                    from_email = get_smtp_default_from_email()
+                                    connection = getSMTPConfiguration()
+                            
                                     
                                     email = EmailMessage(
                                         'Subscription Invoice', 
                                         html_message, 
-                                        settings.EMAIL_HOST_USER, 
-                                        [order_info.email]
+                                        from_email, 
+                                        [order_info.email],
+                                        connection=connection
                                     )
                                     email.content_subtype = "html"
                                     email.attach(f"{order_info.user.id}_invoice.pdf", temp_pdf.read(), "application/pdf")

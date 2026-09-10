@@ -256,7 +256,6 @@ class RegisterForTrailSerializer(serializers.ModelSerializer) :
             url = settings.BASE_URL+"/login"
             subject = 'Thank you for registering!'
             message = f''
-            email_from = settings.EMAIL_HOST_USER
             recipient_list = [user.email, ]
             html_message = loader.render_to_string(
                 'trail_user_login_email.html',
@@ -270,7 +269,10 @@ class RegisterForTrailSerializer(serializers.ModelSerializer) :
                 }
             )
 
-            send_mail( subject, message, email_from, recipient_list,html_message=html_message )
+            from_email = get_smtp_default_from_email()
+            connection = getSMTPConfiguration()
+            
+            send_mail( subject, message, from_email, recipient_list,html_message=html_message, connection = connection )
 
             
             
@@ -363,7 +365,6 @@ class OfflineSubscriptionSerializer(serializers.ModelSerializer) :
             subject = 'Thank you for registering!'
 
             message = f''
-            email_from = settings.EMAIL_HOST_USER
             recipient_list = [user_info.email, ]
             html_message = loader.render_to_string(
                 'new_user_email.html',
@@ -376,7 +377,10 @@ class OfflineSubscriptionSerializer(serializers.ModelSerializer) :
                 }
             )
 
-            send_mail( subject, message, email_from, recipient_list,html_message=html_message )
+            from_email = get_smtp_default_from_email()
+            connection = getSMTPConfiguration()
+            
+            send_mail( subject, message, from_email, recipient_list,html_message=html_message, connection = connection)
 
         current_year = datetime.now().year
         count = Order.objects.all().count()

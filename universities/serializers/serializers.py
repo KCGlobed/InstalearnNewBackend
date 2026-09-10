@@ -79,8 +79,16 @@ class SubmitUniversityRequestSerializer(serializers.ModelSerializer) :
                 "department" : validate_data.get('department')
             }
         )
+        from_email = get_smtp_default_from_email()
+        connection = getSMTPConfiguration()
+
         email = EmailMessage(
-            subject, html_message, email_from, recipient_list)
+                    subject=subject,
+                    body=html_message,
+                    from_email=from_email,
+                    to=recipient_list,
+                    connection=connection
+                )
         
         email.content_subtype = "html"
         email.send()
@@ -170,7 +178,6 @@ class ShareCourseAccessSerializer(serializers.ModelSerializer) :
         subject = 'Thank you for registering!'
 
         message = f''
-        email_from = settings.EMAIL_HOST_USER
         recipient_list = [user_info.email, ]
         html_message = loader.render_to_string(
             'new_user_email.html',
@@ -183,7 +190,10 @@ class ShareCourseAccessSerializer(serializers.ModelSerializer) :
             }
         )
 
-        send_mail( subject, message, email_from, recipient_list,html_message=html_message )
+        from_email = get_smtp_default_from_email()
+        connection = getSMTPConfiguration()
+        
+        send_mail( subject, message, from_email, recipient_list,html_message=html_message,connection = connection)
 
         course_order = Order.objects.filter(
             user_id=self.context.get('user').id, 

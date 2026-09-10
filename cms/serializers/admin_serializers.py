@@ -500,6 +500,47 @@ class ChangeFAQStatusSerializer(serializers.ModelSerializer) :
         return category
     
 
+class SMTPSettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SMTPConfiguration
+        fields = "__all__"
+
+
+class UpdateSMTPSettingSerializer(serializers.ModelSerializer):
+    host = serializers.CharField(max_length=255, required=True)
+    port = serializers.IntegerField(required=True)
+    username = serializers.CharField(max_length=255, required=True)
+    password = serializers.CharField(max_length=255, required=True)
+    use_tls = serializers.BooleanField(required=False, default=True)
+    use_ssl = serializers.BooleanField(required=False, default=False)
+    default_from_email = serializers.EmailField(required=True)
+    
+    class Meta:
+        model = SMTPConfiguration
+        fields = [
+            "host", 
+            "port", 
+            "username", 
+            "password", 
+            "use_tls", 
+            "use_ssl", 
+            "default_from_email", 
+        ]
+        
+    def validate(self, data):
+        return data
+
+    def create(self, validated_data):
+        setting = SMTPConfiguration.objects.first()
+        if setting is None:
+            setting = SMTPConfiguration(**validated_data)
+        else:
+            for attr, value in validated_data.items():
+                setattr(setting, attr, value)
+        
+        setting.save()
+        return setting
+    
 
 class SettingSerializer(serializers.ModelSerializer):
     class Meta:
