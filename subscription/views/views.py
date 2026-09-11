@@ -557,10 +557,6 @@ class ManageLearningRemindersView(APIView):
             time__minute=current_time.minute
         ).select_related('user', 'course')
 
-        print(current_time.hour)
-        print(current_time.minute)
-        print(base_reminders)
-
         reminders_to_send = []
 
         # 2. Filter down based on Frequency
