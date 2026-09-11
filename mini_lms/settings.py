@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'import_export',
     "django_celery_results",
     'django_celery_beat',
+    "fcm_django",
     "users",
     "subscription",
     "courses",

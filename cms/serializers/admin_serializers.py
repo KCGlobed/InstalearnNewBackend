@@ -541,7 +541,41 @@ class UpdateSMTPSettingSerializer(serializers.ModelSerializer):
         setting.save()
         return setting
     
+class PaymentGatewaySettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentGatewaySetting
+        fields = "__all__"
 
+
+class UpdatePaymentGatewaySettingSerializer(serializers.ModelSerializer):
+    payment_type = serializers.IntegerField(required=True)
+    test_public_key = serializers.CharField(max_length = 255, required=False)
+    test_secret_key = serializers.CharField(max_length = 255, required=False)
+    live_public_key = serializers.CharField(max_length = 255, required=False)
+    live_secret_key = serializers.CharField(max_length = 255, required=False)
+    
+    class Meta:
+        model = PaymentGatewaySetting
+        fields =  ["payment_type","test_public_key","test_secret_key","live_public_key","live_secret_key"]
+        
+    def validate(self, data):
+        return data
+
+
+    def create(self , validate_data):
+        setting = PaymentGatewaySetting.objects.all().first()
+        if setting is None:
+            setting = PaymentGatewaySetting()
+        setting.payment_type = validate_data.get('payment_type', setting.payment_type)
+        setting.test_public_key = validate_data.get('test_public_key', setting.test_public_key)
+        setting.test_secret_key = validate_data.get('test_secret_key', setting.test_secret_key)
+        setting.live_public_key = validate_data.get('live_public_key', setting.live_public_key)
+        setting.live_secret_key = validate_data.get('live_secret_key', setting.live_secret_key)
+        setting.save()
+
+        return setting
+
+    
 class SettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = GeneralSettings
@@ -550,11 +584,6 @@ class SettingSerializer(serializers.ModelSerializer):
 
 
 class UpdateSettingSerializer(serializers.ModelSerializer):
-    payment_type = serializers.IntegerField(required=True)
-    test_public_key = serializers.CharField(max_length = 255, required=False)
-    test_secret_key = serializers.CharField(max_length = 255, required=False)
-    live_public_key = serializers.CharField(max_length = 255, required=False)
-    live_secret_key = serializers.CharField(max_length = 255, required=False)
     no_days_trail = serializers.IntegerField(required=False, allow_null=True)
     try_for_free = serializers.IntegerField(required=False, allow_null=True)
     allow_device_restriction = serializers.BooleanField(required=False, allow_null=True)
@@ -570,7 +599,7 @@ class UpdateSettingSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = GeneralSettings
-        fields =  ["payment_type","test_public_key","test_secret_key","live_public_key","live_secret_key","no_days_trail","try_for_free","allow_device_restriction","allowed_desktop","allowed_tablet","allowed_phone","facebook_url","instagram_url","linkedin_url","twitter_url","youtube_url"]
+        fields =  ["no_days_trail","try_for_free","allow_device_restriction","allowed_desktop","allowed_tablet","allowed_phone","facebook_url","instagram_url","linkedin_url","twitter_url","youtube_url"]
         
     def validate(self, data):
         return data
@@ -580,11 +609,6 @@ class UpdateSettingSerializer(serializers.ModelSerializer):
         setting = GeneralSettings.objects.all().first()
         if setting is None:
             setting = GeneralSettings()
-        setting.payment_type = validate_data.get('payment_type', setting.payment_type)
-        setting.test_public_key = validate_data.get('test_public_key', setting.test_public_key)
-        setting.test_secret_key = validate_data.get('test_secret_key', setting.test_secret_key)
-        setting.live_public_key = validate_data.get('live_public_key', setting.live_public_key)
-        setting.live_secret_key = validate_data.get('live_secret_key', setting.live_secret_key)
         setting.no_days_trail = validate_data.get('no_days_trail', setting.no_days_trail)
         setting.try_for_free = validate_data.get('try_for_free', setting.try_for_free)
         setting.allow_device_restriction = validate_data.get('allow_device_restriction', setting.allow_device_restriction)

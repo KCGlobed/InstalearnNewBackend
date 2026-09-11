@@ -825,6 +825,36 @@ class UpdateSettingView(APIView):
         return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
 
 
+class GetPaymentSettingView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                                  RoleOrPermissionCheck.for_permission_or_roles(
+                                      "update_payment_setting",
+                                    [SuperAdmin]
+                                )]
+    def get(self, request, cid=None):
+        setting = PaymentGatewaySetting.objects.all().first()
+        if setting is None:
+            return success_response(message="Success", data={}, status_code=status.HTTP_200_OK)
+        serializer = PaymentGatewaySettingSerializer(setting)
+        return success_response(message="Success", data=serializer.data, status_code=status.HTTP_200_OK)
+    
+
+
+class UpdatePaymentSettingView(APIView):
+    renderer_classes = [CMSRenderer]
+    permission_classes = [IsAuthenticated, 
+                          RoleOrPermissionCheck.for_permission_or_roles(
+                              "update_payment_setting",
+                            [SuperAdmin]
+                        )]
+    def post(self, request, format=None):
+        serializer = UpdatePaymentGatewaySettingSerializer(data = request.data, partial=True)
+        if serializer.is_valid(raise_exception = True):
+            user= serializer.save()
+            return success_response(message="Setting Updated Successfully", data=PaymentGatewaySettingSerializer(user).data, status_code=status.HTTP_200_OK)
+        return error_response(message="failed", data = serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    
 
 class GetSMTPSettingView(APIView):
     renderer_classes = [CMSRenderer]

@@ -22,6 +22,7 @@ from google.auth.transport import requests
 from django.conf import settings
 from datetime import datetime
 from django.core.mail import get_connection
+from firebase_admin import messaging
 
 
 CHUNK_SIZE = 1024 * 1024 * 10
@@ -495,4 +496,41 @@ def get_smtp_default_from_email():
     if not smtp_config:
         raise ValidationError("No SMTP configuration found in the database.")
     return smtp_config.default_from_email
-   
+
+
+def send_push_notification(token, title, body, data=None):
+    # Create notification message
+    message = messaging.Message(
+        notification=messaging.Notification(
+            title=title,
+            body=body,
+        ),
+        token=token,
+        data=data or {},  # Optional custom data
+    )
+
+    try:
+        # Send the message
+        response = messaging.send(message)
+        print(f"Successfully sent message: {response}")
+        return response
+    except Exception as e:
+        print(f"Error sending message: {e}")
+        return None
+
+
+def send_multicast_notification(tokens, title, body, data=None):
+    message = messaging.MulticastMessage(
+        notification=messaging.Notification(
+            title=title,
+            body=body,
+        ),
+        tokens=tokens,
+        data=data or {},
+    )
+    
+    response = messaging.send_multicast(message)
+    print(f"{response.success_count} messages sent successfully")
+    print(f"{response.failure_count} messages failed")
+    
+    return response

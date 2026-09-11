@@ -252,7 +252,7 @@ class StartPaymentSerializer(serializers.ModelSerializer) :
             )
             cart_order.save()
 
-        setting = GeneralSettings.objects.all().first()
+        setting = PaymentGatewaySetting.objects.all().first()
         if order_total_amount > 0 :
             if setting.payment_type == 1:
                 client = razorpay.Client(auth=(setting.test_public_key, setting.test_secret_key))
@@ -310,7 +310,7 @@ class CompletePaymentSerializer(serializers.ModelSerializer) :
         order.razorpay_signature = raz_signature
         order.save()
         
-        setting = GeneralSettings.objects.all().first()
+        setting = PaymentGatewaySetting.objects.all().first()
         try:
             if setting.payment_type == 1:
                 client = razorpay.Client(auth=(setting.test_public_key, setting.test_secret_key))
@@ -399,7 +399,7 @@ class StartSubscriptionSerializer(serializers.ModelSerializer) :
 
     def create(self , validate_data):
 
-        general_settings = GeneralSettings.objects.all().first()
+        general_settings = PaymentGatewaySetting.objects.all().first()
         subscription_plan = SubscriptionPlans.objects.filter(id=validate_data.get('plan_id')).first()
 
         
@@ -535,7 +535,7 @@ class CompleteSubscriptionSerializer(serializers.ModelSerializer) :
         order.razorpay_signature = raz_signature
         order.save()
         
-        setting = GeneralSettings.objects.all().first()
+        setting = PaymentGatewaySetting.objects.all().first()
         try:
             if setting.payment_type == 1:
                 client = razorpay.Client(auth=(setting.test_public_key, setting.test_secret_key))
@@ -786,7 +786,7 @@ class CancelSubscriptionSerializer(serializers.ModelSerializer) :
         except Order.DoesNotExist:
             raise serializers.ValidationError("Invalid order ID")
        
-        setting = GeneralSettings.objects.all().first()
+        setting = PaymentGatewaySetting.objects.all().first()
         try:
             if setting.payment_type == 1:
                 client = razorpay.Client(auth=(setting.test_public_key, setting.test_secret_key))
@@ -833,7 +833,7 @@ class UpgradeSubscriptionSerializer(serializers.ModelSerializer) :
        
         subscription_plan = SubscriptionPlans.objects.filter(id=validate_data.get('plan_id')).first()
     
-        setting = GeneralSettings.objects.all().first()
+        setting = PaymentGatewaySetting.objects.all().first()
         try:
             if setting.payment_type == 1:
                 client = razorpay.Client(auth=(setting.test_public_key, setting.test_secret_key))

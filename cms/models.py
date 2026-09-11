@@ -70,12 +70,24 @@ class PaymentMode(models.IntegerChoices):
     Test_Mode = 1, 'Test Mode'
     Live_Mode = 2, 'Live Mode'
 
-class GeneralSettings(models.Model):
+class PaymentGatewaySetting(models.Model):
     payment_type = models.IntegerField(choices=PaymentMode.choices,default=PaymentMode.Test_Mode)
     test_public_key = models.CharField(max_length=255, null=True, blank=True)
     test_secret_key = models.CharField(max_length=255, null=True, blank=True)
     live_public_key = models.CharField(max_length=255, null=True, blank=True)
     live_secret_key = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now = True)
+    
+    class Meta:
+        verbose_name = 'Payment Gateway Setting'
+        verbose_name_plural = 'Payment Gateway Setting'
+        
+    def __str__(self):
+        return '%s' % self.id
+
+    
+class GeneralSettings(models.Model):
     no_days_trail = models.IntegerField(null=True, blank=True, default=7)
     try_for_free = models.IntegerField(null=True, blank=True, default=30)
     allow_device_restriction = models.BooleanField(default=False)

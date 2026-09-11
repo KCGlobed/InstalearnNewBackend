@@ -787,7 +787,7 @@ class PaymentResponseView(APIView):
                         order_info.save()
                         
                         # Generate Razorpay Client for Invoice Download
-                        razorpay_key = GeneralSettings.objects.first()
+                        razorpay_key = PaymentGatewaySetting.objects.first()
                         if razorpay_key:
                             if razorpay_key.payment_type == 1:
                                 client = razorpay.Client(auth=(razorpay_key.test_public_key, razorpay_key.test_secret_key))
